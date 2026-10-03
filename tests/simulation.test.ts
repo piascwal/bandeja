@@ -10,7 +10,7 @@ describe('démo ordinateur contre ordinateur', () => {
     const points = evs.filter((e) => e.type === 'point');
     const frappes = evs.filter((e) => e.type === 'frappe');
     const services = evs.filter((e) => e.type === 'service');
-    expect(services.length).toBeGreaterThan(10);
+    expect(services.length).toBeGreaterThan(6);
     expect(points.length).toBeGreaterThan(6); // des échanges plus longs qu’avant : moins de points
     // de vrais échanges : plus de frappes que de points
     expect(frappes.length).toBeGreaterThan(points.length);

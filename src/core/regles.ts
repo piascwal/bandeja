@@ -63,6 +63,9 @@ function regleSortie(jeu: Partie, cote: Equipe): void {
   if (cote === b.camp && b.sol >= 1) {
     jeu.stats.portres[b.eqF]++;
     gagne(jeu, b.eqF, b.x < 0 || b.x > LONG ? 'POR CUATRO !' : 'POR TRES !');
+  } else if (cote !== b.camp && b.sol >= 1) {
+    // rebondie chez l'adversaire, puis revenue (vitre) de son côté d'où elle sort : comme un rebond chez soi
+    gagne(jeu, b.eqF, 'ELLE REVIENT !');
   } else if (b.service) fauteService(jeu, 'DEHORS');
   else gagne(jeu, b.camp, 'DEHORS');
 }

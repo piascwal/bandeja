@@ -35,6 +35,24 @@ describe('arbitrage', () => {
     expect(jeu.gagnant).toBe(0);
   });
 
+  it('rebond chez l’adversaire, vitre, puis sortie de son propre côté : point pour le frappeur', () => {
+    const jeu = enJeu(); // l'équipe 0 a frappé, la balle se joue côté équipe 1
+    jeu.balle.x = MIL + 3;
+    regle(jeu, 'sol', 1, 5);
+    regle(jeu, 'vitre', 1, 8);
+    // elle repasse le filet et sort derrière l'équipe 0
+    jeu.balle.x = -1;
+    regle(jeu, 'sortie', 0);
+    expect(jeu.phase).toBe('point');
+    expect(jeu.gagnant).toBe(0);
+  });
+
+  it('sortie sans aucun rebond chez l’adversaire : point pour lui', () => {
+    const jeu = enJeu();
+    regle(jeu, 'sortie', 0);
+    expect(jeu.gagnant).toBe(1);
+  });
+
   it('vitre directe avant tout rebond : point pour le camp qui reçoit', () => {
     const jeu = enJeu();
     regle(jeu, 'vitre', 1, 10);
