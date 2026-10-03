@@ -45,7 +45,7 @@ npm run format       # Prettier (format:check en CI)
 npm test             # Vitest
 npm run build        # build de prod dans dist/
 npm run preview      # sert le build de prod localement
-npm run icones       # régénère public/icons/ depuis le dessin du joueur
+npm run icones       # régénère public/icons/ depuis assets/icone-app.jpg
 ```
 
 En développement, l'application est accessible en `window.bandeja` (état du
@@ -62,7 +62,7 @@ src/
   app/      — assemble le tout : boucle de jeu, écrans, préférences
 public/
   sprites/  — les six poses du joueur (PNG, recolorées par équipe au chargement)
-  icons/    — icônes PWA (générées par scripts/genere-icones.mjs)
+  icons/    — icônes de l'app (générées depuis assets/icone-app.jpg)
   reference/— le POC d'origine, gelé
 tests/      — tests Vitest de la simulation
 ```
@@ -116,6 +116,23 @@ miroir : votre équipe joue à droite, loin du joystick.
 Le décor (foule, gazon, murs, vitre de devant) est calculé une fois par
 taille d'écran, pixel par pixel, en retrouvant pour chaque pixel le point de
 la piste qu'il montre (`decor.ts`, `decor-murs.ts`).
+
+## Plein écran (webview)
+
+Le jeu se comporte comme une app plein écran, sans barre de navigateur :
+
+- **Installé sur l'écran d'accueil** (« Ajouter à l'écran d'accueil ») : le
+  manifeste PWA (`display: fullscreen`, `orientation: landscape`) et les
+  balises `apple-mobile-web-app-*` l'ouvrent directement en plein écran,
+  y compris sur iPhone, avec l'illustration `assets/icone-app.jpg` comme
+  icône.
+- **Ouvert dans le navigateur** : un écran « APPUYEZ POUR COMMENCER »
+  couvre le menu ; ce premier geste ne fait que passer en plein écran et
+  verrouiller le paysage (`app/plein-ecran.ts`), sans toucher un bouton.
+  Safari sur iPhone n'a pas d'API plein écran : il faut installer l'app.
+
+Pour changer l'icône : remplacer `assets/icone-app.jpg` (carrée), puis
+`npm run icones`.
 
 ## Conventions
 

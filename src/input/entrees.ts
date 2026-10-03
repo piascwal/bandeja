@@ -18,8 +18,13 @@ export interface HotesEntrees {
   enJeu(): boolean;
   /** la balle est haute : le bouton aérien du centre est actif */
   aerienActif(): boolean;
-  /** premier geste : on peut démarrer l'audio */
-  geste(): void;
+  /**
+   * Un geste de l'utilisateur (audio, plein écran). Renvoie true s'il est
+   * consommé par l'écran de démarrage : il ne doit alors rien déclencher d'autre.
+   */
+  geste(): boolean;
+  /** moment où le navigateur accepte le plein écran (souris : appui ; doigt : relâché ; clavier) */
+  pleinEcran(): void;
   pause(): void;
   /** Échap / P */
   basculePause(): void;
@@ -57,7 +62,10 @@ export class Entrees {
   ) {
     ecran.addEventListener('pointerdown', (e) => this.surAppui(e), { passive: false });
     ecran.addEventListener('pointermove', (e) => this.surDeplacement(e));
-    ecran.addEventListener('pointerup', (e) => this.relache(e));
+    ecran.addEventListener('pointerup', (e) => {
+      if (e.pointerType !== 'mouse') this.h.pleinEcran();
+      this.relache(e);
+    });
     ecran.addEventListener('pointercancel', (e) => this.relache(e));
     ecran.addEventListener('contextmenu', (e) => e.preventDefault());
     window.addEventListener('keydown', (e) => this.surTouche(e));
@@ -108,7 +116,8 @@ export class Entrees {
   private surAppui(e: PointerEvent): void {
     e.preventDefault();
     if (e.pointerType === 'touch') this.tactile = true;
-    this.h.geste();
+    if (e.pointerType === 'mouse') this.h.pleinEcran();
+    if (this.h.geste()) return;
     if (this.h.portrait()) return;
     const p = this.h.versLogique(e);
     if (!this.h.enJeu()) {
@@ -162,7 +171,8 @@ export class Entrees {
 
   private surTouche(e: KeyboardEvent): void {
     if (e.repeat) return;
-    this.h.geste();
+    if (e.code !== 'Escape') this.h.pleinEcran();
+    if (this.h.geste()) return;
     this.touches.add(e.code);
     const coup = TOUCHES_COUPS[e.code];
     if (coup) {

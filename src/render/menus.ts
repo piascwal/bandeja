@@ -126,6 +126,19 @@ export function dessineFin(
   texte(g, bilan, cx, cy + 42, C.grisBleu, 1, 'c');
 }
 
+/**
+ * Premier écran, par-dessus le menu : un seul geste (clic, appui, touche)
+ * suffit à passer en plein écran, avant que le joueur touche un vrai bouton.
+ */
+export function dessineDemarrage(v: Vue, t: number): void {
+  const { g, W, H } = v;
+  voile(g, W, H, 0.82);
+  const cx = Math.round(W / 2);
+  const cy = Math.round(H / 2);
+  texte(g, 'APPUYEZ POUR COMMENCER', cx, cy - 5, Math.sin(t * 5) > 0 ? C.or : C.blanc, 2, 'c');
+  texte(g, 'LE JEU PASSE EN PLEIN ECRAN', cx, cy + 15, C.grisBleu, 1, 'c');
+}
+
 /** En portrait : un téléphone qui tourne, pour inviter à passer en paysage. */
 export function dessinePortrait(v: Vue, t: number): void {
   const { g, W, H } = v;

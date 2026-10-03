@@ -12,7 +12,7 @@ import { chargeSprites, type SpritesEquipe } from '@render/sprites';
 import { boutonSous, type ZoneBouton } from '@render/ui';
 import type { Vue } from '@render/vue';
 import { joueEvenements } from './evenements';
-import { pleinEcran } from './plein-ecran';
+import { estAutonome, PleinEcranAuPremierGeste } from './plein-ecran';
 import { chargePreferences, sauvePreferences, type Preferences } from './preferences';
 import { rendu } from './rendu';
 
@@ -42,6 +42,13 @@ export class BandejaApp {
   ecranUI: EcranUI = 'menu';
   /** boutons de l'image en cours (recalculés à chaque image) */
   boutons: ZoneBouton[] = [];
+  private readonly plein = new PleinEcranAuPremierGeste();
+  /**
+   * Hors app installée, un écran « appuyez pour commencer » couvre le menu :
+   * ce premier geste ne fait que passer en plein écran, sans toucher JOUER,
+   * pour que la bannière du navigateur ait disparu avant le match.
+   */
+  attenteDemarrage = !estAutonome();
   private dernier = 0;
   private cumul = 0;
 
@@ -54,7 +61,13 @@ export class BandejaApp {
       portrait: () => this.portrait,
       enJeu: () => this.ecranUI === 'jeu',
       aerienActif: () => balleHaute(this.jeu),
-      geste: () => this.son.init(),
+      geste: () => {
+        this.son.init();
+        if (!this.attenteDemarrage || this.ecranUI !== 'menu') return false;
+        this.attenteDemarrage = false;
+        return true;
+      },
+      pleinEcran: () => this.plein.tente(),
       pause: () => this.pause(true),
       basculePause: () => {
         if (this.ecranUI === 'jeu' || this.ecranUI === 'pause') this.pause(this.ecranUI === 'jeu');
@@ -128,7 +141,7 @@ export class BandejaApp {
 
   lanceMatch(): void {
     this.son.init();
-    pleinEcran();
+    this.plein.relance();
     this.jeu = this.partie('match');
     this.effets.vide();
     this.entrees.reinitialise();

@@ -1,6 +1,6 @@
 {
   "name": "bandeja",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Bandeja — padel arcade en pixel art, en double contre l'ordinateur.",
   "type": "module",

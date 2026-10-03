@@ -1,6 +1,6 @@
 import { dessineCommandes } from '@render/commandes';
 import { dessineBanniere, dessineJauge, dessineTableau } from '@render/hud';
-import { dessineFin, dessineMenu, dessinePause, dessinePortrait } from '@render/menus';
+import { dessineDemarrage, dessineFin, dessineMenu, dessinePause, dessinePortrait } from '@render/menus';
 import { C } from '@render/palette';
 import { dessineScene } from '@render/scene';
 import type { BandejaApp } from './app';
@@ -56,6 +56,7 @@ export function rendu(app: BandejaApp, t: number): void {
       basculeSon: () => app.basculeSon(),
     };
     dessineMenu(v, app.boutons, reglages, actions, app.entrees.tactile, t, __VERSION_APP__);
+    if (app.attenteDemarrage) dessineDemarrage(v, t);
   } else if (ecranUI === 'pause') {
     dessinePause(
       v,
