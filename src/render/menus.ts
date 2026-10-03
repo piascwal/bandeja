@@ -104,10 +104,11 @@ export function dessineFin(
   voile(g, W, H, 0.62);
   const cx = Math.round(W / 2);
   const cy = Math.round(H / 2);
-  const gagne = jeu.jeux[0] > jeu.jeux[1];
+  const moi = jeu.humain?.eq ?? 0;
+  const gagne = jeu.jeux[moi] > jeu.jeux[moi === 0 ? 1 : 0];
   const titre = gagne ? 'VICTOIRE !' : 'DEFAITE';
   texte(g, titre, cx, cy - 60 + Math.round(Math.sin(t * 4) * 1.5), gagne ? C.or : EQUIPES[1].maillot, 3, 'c');
-  texte(g, `${jeu.jeux[0]} - ${jeu.jeux[1]}`, cx, cy - 32, C.blanc, 2, 'c');
+  texte(g, `${jeu.jeux[moi]} - ${jeu.jeux[moi === 0 ? 1 : 0]}`, cx, cy - 32, C.blanc, 2, 'c');
   const st = jeu.stats;
   texte(g, `COUPS GAGNANTS  ${st.gagnants[0]} - ${st.gagnants[1]}`, cx, cy - 12, C.gris, 1, 'c');
   texte(g, `POR TRES  ${st.portres[0]} - ${st.portres[1]}`, cx, cy - 2, C.gris, 1, 'c');

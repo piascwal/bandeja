@@ -41,8 +41,6 @@ export function nouveauJoueur(
     face,
     tourne: 0,
     faceCoup: face,
-    regard: -face,
-    court: false,
   };
 }
 

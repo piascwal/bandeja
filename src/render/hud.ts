@@ -20,24 +20,32 @@ export function dessineTableau(v: Vue, jeu: Partie, boutonPause: boolean): void 
   px(g, x, y, lw, 19, C.panneau);
   px(g, x, y, lw, 1, '#2a3160');
   px(g, x, y + 18, lw, 1, '#0f1328');
-  const m = jeu.mode === 'match';
-  const nomG = m ? 'CPU' : 'ROUGES';
-  const nomD = m ? 'VOUS' : 'BLEUS';
-  px(g, x + 3, y + 3, 3, 13, EQUIPES[1].maillot);
-  px(g, x + lw - 6, y + 3, 3, 13, EQUIPES[0].maillot);
-  texte(g, nomG, x + 9, y + 6, EQUIPES[1].clair, 1, 'g');
-  texte(g, nomD, x + lw - 9, y + 6, EQUIPES[0].clair, 1, 'd');
+  // l'équipe de CET écran est à droite, comme sur la piste
+  const droite = jeu.humain?.eq ?? 0;
+  const gauche = droite === 0 ? 1 : 0;
+  const nom = (eq: 0 | 1): string => {
+    if (jeu.mode !== 'match') return eq === 0 ? 'BLEUS' : 'ROUGES';
+    if (eq === droite) return 'VOUS';
+    return jeu.humains.some((h) => h.eq === eq) ? 'ADV' : 'CPU';
+  };
+  const nomG = nom(gauche);
+  const nomD = nom(droite);
+  px(g, x + 3, y + 3, 3, 13, EQUIPES[gauche].maillot);
+  px(g, x + lw - 6, y + 3, 3, 13, EQUIPES[droite].maillot);
+  texte(g, nomG, x + 9, y + 6, EQUIPES[gauche].clair, 1, 'g');
+  texte(g, nomD, x + lw - 9, y + 6, EQUIPES[droite].clair, 1, 'd');
   // jeux
-  texte(g, jeu.jeux[1], cx - 38, y + 3, C.blanc, 2, 'c');
-  texte(g, jeu.jeux[0], cx + 38, y + 3, C.blanc, 2, 'c');
+  texte(g, jeu.jeux[gauche], cx - 38, y + 3, C.blanc, 2, 'c');
+  texte(g, jeu.jeux[droite], cx + 38, y + 3, C.blanc, 2, 'c');
   // points (OR à 40-40 : point en or)
   const or = jeu.pts[0] === 3 && jeu.pts[1] === 3;
   px(g, cx - 25, y + 4, 50, 11, '#05060f');
-  texte(g, or ? 'OR' : LIB_PTS[jeu.pts[1]]!, cx - 12, y + 6, C.or, 1, 'c', null);
+  texte(g, or ? 'OR' : LIB_PTS[jeu.pts[gauche]]!, cx - 12, y + 6, C.or, 1, 'c', null);
   texte(g, '-', cx, y + 6, C.gris, 1, 'c', null);
-  texte(g, or ? 'OR' : LIB_PTS[jeu.pts[0]]!, cx + 12, y + 6, C.or, 1, 'c', null);
+  texte(g, or ? 'OR' : LIB_PTS[jeu.pts[droite]]!, cx + 12, y + 6, C.or, 1, 'c', null);
   // qui sert
-  const sxv = jeu.serveur.eq === 1 ? x + 7 + largeurTexte(nomG) + 5 : x + lw - 9 - largeurTexte(nomD) - 6;
+  const sxv =
+    jeu.serveur.eq === gauche ? x + 7 + largeurTexte(nomG) + 5 : x + lw - 9 - largeurTexte(nomD) - 6;
   px(g, sxv, y + 7, 3, 3, C.balle);
   px(g, sxv - 1, y + 8, 5, 1, C.balle);
   px(g, sxv + 1, y + 6, 1, 5, C.balle);

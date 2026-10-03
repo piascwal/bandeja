@@ -9,6 +9,7 @@ import { construitDecor, type Decor } from '@render/decor';
 import { Effets } from '@render/effets';
 import { C } from '@render/palette';
 import { Projection } from '@render/projection';
+import { VueJoueurs } from '@render/regard';
 import { chargeSprites, type SpritesEquipe } from '@render/sprites';
 import { boutonSous, type ZoneBouton } from '@render/ui';
 import type { Vue } from '@render/vue';
@@ -29,6 +30,7 @@ export class BandejaApp {
   readonly g: CanvasRenderingContext2D;
   readonly K = new Projection();
   readonly effets = new Effets();
+  readonly vueJoueurs = new VueJoueurs();
   readonly pref: Preferences = chargePreferences();
   readonly son = new MoteurSon(this.pref.son);
   readonly entrees: Entrees;
@@ -102,7 +104,15 @@ export class BandejaApp {
   }
 
   private partie(mode: 'match' | 'demo'): Partie {
-    return nouvellePartie({ mode, niveau: this.pref.niveau, jeux: this.pref.jeux });
+    return this.adopte(nouvellePartie({ mode, niveau: this.pref.niveau, jeux: this.pref.jeux }));
+  }
+
+  /** Cale la vue sur le siège de cet écran : miroir ou non selon son équipe. */
+  adopte(jeu: Partie): Partie {
+    const miroir = jeu.humain?.miroir ?? true;
+    this.K.miroir = miroir;
+    this.vueJoueurs.miroir = miroir;
+    return jeu;
   }
 
   /** Recalcule l'échelle, la projection et le décor quand la fenêtre change. */
@@ -193,7 +203,8 @@ export class BandejaApp {
   private finMatch(): void {
     this.ecranUI = 'fin';
     this.entrees.reinitialise();
-    const gagne = this.jeu.jeux[0] > this.jeu.jeux[1];
+    const moi = this.jeu.humain?.eq ?? 0;
+    const gagne = this.jeu.jeux[moi] > this.jeu.jeux[moi === 0 ? 1 : 0];
     const n = this.pref.niveau;
     this.pref.matchs[n] = (this.pref.matchs[n] ?? 0) + 1;
     if (gagne) this.pref.victoires[n] = (this.pref.victoires[n] ?? 0) + 1;
@@ -211,6 +222,7 @@ export class BandejaApp {
       const lire = () => this.entrees.lireCommande();
       while (this.cumul >= PAS) {
         pas(this.jeu, PAS, lire);
+        this.vueJoueurs.majTous(this.jeu);
         this.cumul -= PAS;
       }
     }

@@ -1,7 +1,7 @@
 import type { Aleatoire } from './aleatoire';
 import { nouvelleBalle, physique } from './balle';
 import { DUREE_MAX_ECHANGE, DUREE_POINT, JEUX, NIVEAUX, VITESSE } from './constants';
-import { bouge, majRegard, separe } from './deplacement';
+import { bouge, separe } from './deplacement';
 import { appliqueCommande } from './humain';
 import { pilotageIA } from './ia';
 import { nouveauJoueur } from './joueurs';
@@ -111,7 +111,6 @@ export function pas(
     if (s.humain) appliqueCommande(jeu, s, lireCommande(s), dt);
     else pilotageIA(jeu, s);
     bouge(jeu, s, dt);
-    majRegard(jeu, s);
   }
   separe(jeu);
   if (jeu.phase === 'service') {

@@ -79,10 +79,6 @@ export interface Joueur {
   /** temps restant tourné vers sa vitre après un rebond voulu */
   tourne: number;
   faceCoup: 1 | -1;
-  /** où regarde le joueur à l'écran (+1 : à droite) */
-  regard: number;
-  /** pose de course affichée (avec hystérésis) */
-  court: boolean;
 }
 
 /** Ce que la physique a besoin de connaître de la balle. */

@@ -60,6 +60,8 @@ src/
   input/    — clavier + tactile → Commande
   render/   — tout le dessin canvas (décor, joueurs, balle, HUD, menus)
   app/      — assemble le tout : boucle de jeu, écrans, préférences
+  net/      — synchronisation réseau : instantané binaire, évènements, entrées
+              (le socle Wi-Fi vient de lan-kit)
 public/
   sprites/  — les six poses du joueur (PNG, recolorées par équipe au chargement)
   icons/    — icônes de l'app (générées depuis assets/icone-app.jpg)
@@ -103,6 +105,34 @@ pas(jeu, PAS, () => entrees.lireCommande()); // avance d'un pas fixe (1/120 s)
 | `humain.ts`                                                            | Application de la `Commande` du joueur (coups anticipés, visée, vitres)                  |
 | `deplacement.ts`                                                       | Course, écartement des partenaires, regard                                               |
 | `constants.ts`, `types.ts`, `terrain.ts`, `joueurs.ts`, `aleatoire.ts` | Dimensions, réglages, types, aides                                                       |
+
+### `net/` : la synchronisation réseau
+
+Un appareil héberge la partie (l'hôte simule, comme en solo), les autres
+reçoivent son état et envoient leurs commandes. Le socle de découverte et de
+liaison (salons chiffrés, WebRTC limité au réseau local, MQTT public comme
+boîte aux lettres) est le paquet partagé
+[`lan-kit`](https://github.com/piascwal/lan-kit), figé sur une étiquette dans
+`package.json` ; ce dossier n'en garde que ce qui est propre à Bandeja.
+
+| Fichier         | Rôle                                                                                                 |
+| --------------- | ---------------------------------------------------------------------------------------------------- |
+| `protocole.ts`  | Version du protocole, identité sur le réseau (`APP`), limites, listes d'énumérations                 |
+| `instantane.ts` | Photographie de la partie → 166 octets binaires ; décodage strict (tout ce qui est abîmé est rejeté) |
+| `appliquer.ts`  | Pose un instantané sur la partie locale d'un invité ; recalcule la prévision du rebond               |
+| `synchro.ts`    | Tampon de l'invité : léger retard adaptatif, interpolation, jamais d'extrapolation                   |
+| `evenements.ts` | Validation des évènements reçus (sons et effets), reconstruits champ par champ                       |
+| `entrees.ts`    | Commandes des joueurs distants, en compteurs cumulés : un appui n'est ni perdu ni doublé             |
+| `binaire.ts`    | Lecture et écriture binaires bornées                                                                 |
+
+Règles : **toute modification incompatible d'un message incrémente
+`VERSION_PROTOCOLE`** (c'est aussi le nom du salon : les appareils d'une autre
+version ne se voient pas) ; les listes d'énumérations ne se réordonnent jamais
+sans cela. L'hôte est autoritaire : il ne reçoit que des intentions bornées.
+
+Le regard des joueurs et la pose de course ne sont pas dans la simulation : ils
+dépendent de l'écran (`render/regard.ts`). Un humain de l'équipe 1 voit la
+piste retournée (`Projection.miroir`) et joue lui aussi à droite.
 
 ### Rendu
 

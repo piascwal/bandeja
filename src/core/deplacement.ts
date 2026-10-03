@@ -61,28 +61,3 @@ export function separe(jeu: Partie): void {
     }
   }
 }
-
-/**
- * Où regarde le joueur à l'écran (+1 : à droite). Pendant l'échange, c'est la
- * balle qui décide, sauf quand elle est au-dessus de lui ou juste derrière :
- * la pose de smash la couvre, inutile de se retourner. Hors échange, il
- * regarde là où il court, sinon le filet.
- */
-export function majRegard(jeu: Partie, s: Joueur): void {
-  const b = jeu.balle;
-  if (s.tourne > 0) {
-    s.regard = -s.faceCoup; // rebond voulu contre sa vitre
-    return;
-  }
-  if (jeu.phase === 'jeu') {
-    const dx = -(b.x - s.x); // en mètres, dans le sens de l'écran (vue en miroir)
-    const proche = Math.hypot(b.x - s.x, b.y - s.y) < 1.6;
-    const auDessus = proche && b.z > 1.6;
-    const justeDerriere = Math.sign(dx) === -s.regard && Math.abs(dx) < 1;
-    if (!auDessus && !justeDerriere && Math.abs(dx) > 0.15) s.regard = Math.sign(dx);
-  } else {
-    const vx = -s.vx;
-    if (Math.abs(vx) > 0.8) s.regard = Math.sign(vx);
-    else if (jeu.phase === 'service') s.regard = -s.face;
-  }
-}

@@ -32,6 +32,7 @@ export function rendu(app: BandejaApp, t: number): void {
     decor: app.decor,
     sprites: app.sprites,
     effets,
+    vueJoueurs: app.vueJoueurs,
     enMatch: !horsMatch,
     enJeu: ecranUI === 'jeu',
   });

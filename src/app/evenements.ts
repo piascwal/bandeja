@@ -22,6 +22,7 @@ export function joueEvenements(
   K: Projection,
 ): void {
   const match = jeu.mode === 'match';
+  const moi = jeu.humain?.eq ?? 0; // l'équipe de cet écran
   for (const ev of evs) {
     switch (ev.type) {
       case 'impact': {
@@ -80,12 +81,12 @@ export function joueEvenements(
         son.clic();
         break;
       case 'point': {
-        const sous = match ? (ev.gagnant === 0 ? 'POINT POUR VOUS' : 'POINT CPU') : null;
+        const sous = match ? (ev.gagnant === moi ? 'POINT POUR VOUS' : 'POINT ADVERSE') : null;
         fx.annonce(ev.raison, sous, EQUIPES[ev.gagnant].maillot, 1.6);
-        son.point(match ? ev.gagnant === 0 : true);
+        son.point(match ? ev.gagnant === moi : true);
         son.ovation(exploit(ev.raison) ? 1 : 0.45);
         fx.excite = exploit(ev.raison) ? 1 : 0.5;
-        if (match && ev.gagnant === 0) vibre(30);
+        if (match && ev.gagnant === moi) vibre(30);
         break;
       }
       case 'faute':
@@ -107,9 +108,9 @@ export function joueEvenements(
         fx.annonce('POINT EN OR', 'QUI LE PREND GAGNE LE JEU', C.or, 1.6);
         break;
       case 'finMatch':
-        if (ev.gagnant === 0) {
+        if (ev.gagnant === moi) {
           son.ovation(1);
-          fx.confettis(K.cx, K.yF, 0);
+          fx.confettis(K.cx, K.yF, moi);
         }
         break;
     }

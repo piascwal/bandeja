@@ -11,6 +11,7 @@ import { dessineJoueur } from './joueurs-render';
 import { C } from './palette';
 import { texte } from './police';
 import { croixSol, px } from './primitives';
+import type { VueJoueurs } from './regard';
 import { HAUT_JOUEUR, type SpritesEquipe } from './sprites';
 import type { Vue } from './vue';
 
@@ -21,6 +22,8 @@ export interface Scene {
   decor: Decor;
   sprites: [SpritesEquipe, SpritesEquipe];
   effets: Effets;
+  /** regard et pose de course des joueurs, propres à cet écran */
+  vueJoueurs: VueJoueurs;
   /** un match est en cours (pas le menu) : on montre les aides du joueur */
   enMatch: boolean;
   /** les commandes sont actives (ni pause ni fin) */
@@ -45,7 +48,10 @@ export function dessineScene(v: Vue, sc: Scene): void {
   if (hum && sc.enJeu) anneauJoueur(v, jeu, hum);
 
   // du fond vers l'avant
-  const liste = jeu.joueurs.map((s) => ({ y: s.y, f: () => dessineJoueur(v, jeu, s, sc.sprites[s.eq]) }));
+  const liste = jeu.joueurs.map((s) => ({
+    y: s.y,
+    f: () => dessineJoueur(v, jeu, s, sc.sprites[s.eq], sc.vueJoueurs),
+  }));
   liste.push({ y: clamp(b.y, 0, LARG) + 0.01, f: () => dessineBalle(v, jeu) });
   liste.sort((a, c) => a.y - c.y);
   for (const e of liste) e.f();

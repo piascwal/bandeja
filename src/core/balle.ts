@@ -71,7 +71,8 @@ function rebondSol(b: CorpsBalle, ev?: SurContact): void {
   b.z = 0;
   if (b.vz >= 0) return;
   const [rz, rh] = RESTIT[b.spin] ?? RESTIT.plat;
-  b.vz = -b.vz * rz;
+  const vImpact = -b.vz; // vitesse d'arrivée, avant le rebond : c'est elle qui donne la force du choc
+  b.vz = vImpact * rz;
   b.vx *= rh;
   b.vy *= rh;
   if (b.spin === 'vibora') b.vy += (b.spinDir || 0) * 1.6;
@@ -83,7 +84,7 @@ function rebondSol(b: CorpsBalle, ev?: SurContact): void {
     b.vy = (b.y < 5 ? -1 : 1) * 2.8;
   }
   const cote = coteDe(b.x);
-  ev?.('sol', cote, -b.vz);
+  ev?.('sol', cote, vImpact);
   if (b.vz < 0.7) {
     b.vz = 0;
     b.roule = true;

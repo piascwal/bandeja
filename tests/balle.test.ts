@@ -20,6 +20,16 @@ function vole(b = nouvelleBalle(), jusqua: (c: Contact) => boolean, max = 2000) 
 }
 
 describe('physique de la balle', () => {
+  it("signale la force d'un rebond au sol : positive, égale à la vitesse d'arrivée", () => {
+    const b = nouvelleBalle();
+    Object.assign(b, { x: 5, y: 5, z: 0.05, vx: 0, vy: 0, vz: -8 });
+    const sols = vole(b, (k) => k.t === 'sol').filter((c) => c.t === 'sol');
+    expect(sols[0]!.force).toBeGreaterThan(7.5);
+    expect(sols[0]!.force).toBeLessThan(9);
+    // la balle repart vers le haut
+    expect(b.vz).toBeGreaterThan(0);
+  });
+
   it('rebondit au sol de plus en plus bas, puis roule', () => {
     const b = nouvelleBalle();
     b.z = 2;

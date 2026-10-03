@@ -5,13 +5,17 @@ const HAUT_TABLEAU = 24;
 
 /**
  * Projection de la piste à l'écran, vue de côté en légère perspective. Elle
- * est en miroir : x = 0 est à droite de l'écran, pour que votre équipe
- * (l'équipe 0) joue à droite, loin des commandes de gauche.
+ * est en miroir pour l'équipe 0 : x = 0 est à droite de l'écran, pour que
+ * votre équipe joue à droite, loin des commandes de gauche. L'écran d'un
+ * humain de l'équipe 1 n'est pas en miroir : il joue lui aussi à droite.
+ * (Le décor est symétrique : il ne dépend pas du sens.)
  *
  * kF / kN : pixels par mètre au fond / devant ; kz : pixels par mètre de
  * hauteur (devant) ; yF / yN : lignes de fond à l'écran ; cx : le filet.
  */
 export class Projection {
+  /** vrai : x = 0 à droite de l'écran (équipe 0) ; faux pour l'écran d'un humain de l'équipe 1 */
+  miroir = true;
   cx = 200;
   yF = 80;
   yN = 170;
@@ -23,7 +27,10 @@ export class Projection {
   proj(x: number, y: number, z = 0): [number, number] {
     const t = y / LARG;
     const k = this.kF + (this.kN - this.kF) * t;
-    return [this.cx - (x - MIL) * k, this.yF + t * (this.yN - this.yF) - (z * this.kz * k) / this.kN];
+    return [
+      this.cx - (this.miroir ? 1 : -1) * (x - MIL) * k,
+      this.yF + t * (this.yN - this.yF) - (z * this.kz * k) / this.kN,
+    ];
   }
 
   /** Cale la piste dans un écran logique de W x H pixels (paysage). */
