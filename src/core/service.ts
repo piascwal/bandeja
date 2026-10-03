@@ -140,6 +140,7 @@ export function servir(jeu: Partie, s: Joueur, type: TypeService, gv: number, vi
   const tx = MIL + d * (m + gauss(jeu.rng) * err);
   const ty = c.y + gauss(jeu.rng) * err * 0.8;
   lance(b, tx, ty, v, type, gv < 0.22 ? -0.35 : 0.1);
+  b.vif = 0;
   b.eqF = eq;
   b.camp = autre(eq);
   b.sol = 0;

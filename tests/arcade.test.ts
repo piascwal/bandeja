@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
+import { physique } from '@core/balle';
 import { HAUT_SMASH, PAS } from '@core/constants';
+import { executeCoup } from '@core/coups';
+import { xProf } from '@core/terrain';
 import { cibleCoup, coupAerien, coupPrevu, directionVisee } from '@core/humain';
 import { pas } from '@core/partie';
 import type { Commande } from '@core/types';
@@ -28,7 +31,7 @@ describe('un jeu d’arcade : on touche presque toujours la balle', () => {
     jeu.tPred = 100; // le plan posé à la main ne doit pas être recalculé
     hum.x = 8;
     hum.y = 2;
-    jeu.plan[0] = { s: hum, x: 4, y: 7, z: 1, t: 1, sol: 1, ok: true, score: 0, sc: 0 };
+    jeu.plan[0] = { s: hum, x: 4, y: 7, z: 1, t: 1, sol: 1, ok: true, vitre: false, score: 0, sc: 0 };
     for (let i = 0; i < 120; i++) pas(jeu, PAS, () => VIDE);
     // à plus de 6 m au départ : il a bien avancé seul vers le point de frappe
     expect(Math.hypot(hum.x - 4, hum.y - 7)).toBeLessThan(4.2);
@@ -99,5 +102,51 @@ describe('la direction du coup', () => {
       return cibleCoup(s, 'plat').tx;
     };
     expect(long(-1)).toBeGreaterThan(long(1));
+  });
+});
+
+describe('le jeu de vitre du padel', () => {
+  it('un coup chargé rebondit, tape la vitre et revient en hauteur ; peu chargé, il garde la balle basse', () => {
+    const retour = (p: number): number => {
+      const jeu = partieTest({ mode: 'match', sieges: [0] }, 5);
+      const s = jeu.joueurs[0]!;
+      s.err = 0;
+      s.x = 6;
+      s.y = 5;
+      Object.assign(jeu.balle, { x: 6.5, y: 5, z: 0.8, vx: 5, vy: 0, vz: 0, sol: 1, camp: 0 });
+      jeu.phase = 'jeu';
+      executeCoup(jeu, s, 'plat', p, xProf(1, 2.8), 5);
+      let vitre = false;
+      let zMax = 0;
+      for (let i = 0; i < 240 * 4; i++) {
+        physique(jeu.balle, 1 / 240, (t) => {
+          if (t === 'vitre') vitre = true;
+        });
+        if (vitre && jeu.balle.x < 16) zMax = Math.max(zMax, jeu.balle.z);
+      }
+      expect(vitre).toBe(true);
+      return zMax;
+    };
+    expect(retour(0.9)).toBeGreaterThan(retour(0.55) + 0.8);
+  });
+
+  it('le joueur n’est pas guidé quand la balle va d’abord rebondir sur une vitre', () => {
+    const jeu = partieTest({ mode: 'match', sieges: [0] }, 8);
+    const hum = jeu.joueurs[0]!;
+    jeu.phase = 'jeu';
+    jeu.tPred = 100;
+    Object.assign(jeu.balle, { x: 4, y: 7, z: 1, vx: -2, vy: 0, vz: 0, camp: 0, sol: 1 });
+    hum.x = 8;
+    hum.y = 2;
+    jeu.plan[0] = { s: hum, x: 1, y: 7, z: 1, t: 1, sol: 1, ok: true, vitre: true, score: 0, sc: 0 };
+    for (let i = 0; i < 120; i++) pas(jeu, PAS, () => VIDE);
+    expect(Math.hypot(hum.x - 8, hum.y - 2)).toBeLessThan(0.01);
+  });
+
+  it('le joueur reste à distance du filet', () => {
+    const jeu = partieTest({ mode: 'match', sieges: [0] }, 8);
+    const hum = jeu.joueurs[0]!;
+    for (let i = 0; i < 240; i++) pas(jeu, PAS, () => ({ ...VIDE, dx: -1 }));
+    expect(Math.abs(hum.x - 10)).toBeGreaterThanOrEqual(0.79);
   });
 });

@@ -99,6 +99,8 @@ export interface CorpsBalle {
   dehors: boolean;
   /** smash « por tres » : le prochain rebond l'envoie hors de la piste */
   portres: boolean;
+  /** rebond vif : le prochain rebond au sol relance la balle (0 : aucun, 1 : vers la vitre en hauteur, au-delà : hors de la piste) */
+  vif: number;
 }
 
 export interface Balle extends CorpsBalle {
@@ -125,6 +127,8 @@ export interface PointPredit {
   z: number;
   sol: number;
   ok: boolean;
+  /** la balle a déjà touché une vitre ou un grillage : le point de frappe suit un rebond */
+  vitre: boolean;
 }
 
 export interface Prediction {

@@ -2,7 +2,7 @@ import { prevoir } from '@core/prevision';
 import type { Partie } from '@core/types';
 import type { Instantane } from './instantane';
 
-const LONGUEUR_TRACE = 9;
+const LONGUEUR_TRACE = 16;
 
 /**
  * Pose un instantané sur la partie locale d'un invité (ou d'un spectateur) :
@@ -59,6 +59,7 @@ export function appliqueInstantane(jeu: Partie, s: Instantane): void {
     roule: sb.roule,
     dehors: sb.dehors,
     portres: sb.portres,
+    vif: sb.vif,
     service: sb.service,
     filet: sb.filet,
     mur: sb.mur,

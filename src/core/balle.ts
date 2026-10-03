@@ -18,6 +18,7 @@ export function nouvelleBalle(): Balle {
     roule: false,
     dehors: false,
     portres: false,
+    vif: 0,
     eqF: 0,
     camp: 1,
     sol: 0,
@@ -76,6 +77,15 @@ function rebondSol(b: CorpsBalle, ev?: SurContact): void {
   b.vx *= rh;
   b.vy *= rh;
   if (b.spin === 'vibora') b.vy += (b.spinDir || 0) * 1.6;
+  if (b.vif > 0) {
+    // coup fort : la balle bondit haut et garde sa vitesse, elle file vers la vitre et en revient en hauteur
+    const k = Math.min(1, b.vif);
+    b.vz += 1.2 + 4.3 * k + (b.vif > 1 ? 11 : 0);
+    const garde = rh + (1 - rh) * 0.7 * k;
+    b.vx *= garde / rh;
+    b.vy *= garde / rh;
+    b.vif = 0;
+  }
   if (b.portres) {
     // le smash « por tres » : rebond énorme, la balle s'envole hors de la piste
     b.portres = false;

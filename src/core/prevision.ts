@@ -18,10 +18,12 @@ export function predit(b0: Balle, eq: Equipe): Prediction {
     roule: b0.roule,
     dehors: b0.dehors,
     portres: b0.portres,
+    vif: b0.vif,
   };
   let sol = b0.sol;
   let fin = false;
   let faute = false;
+  let vitre = false;
   let rebond: { x: number; y: number } | null = null;
   const ev: SurContact = (t, cote) => {
     if (t === 'sol') {
@@ -36,7 +38,8 @@ export function predit(b0: Balle, eq: Equipe): Prediction {
     } else if ((t === 'vitre' || t === 'grille') && cote === eq && sol === 0) {
       faute = true;
       fin = true;
-    } else if (t === 'sortie') {
+    } else if (t === 'vitre' || t === 'grille') vitre = true;
+    else if (t === 'sortie') {
       if (sol === 0) faute = true;
       fin = true;
     }
@@ -50,7 +53,7 @@ export function predit(b0: Balle, eq: Equipe): Prediction {
     const cote = eq === 0 ? b.x > 0.15 && b.x < MIL - 0.3 : b.x > MIL + 0.3 && b.x < LONG - 0.15;
     const ok =
       cote && b.y > 0.2 && b.y < LARG - 0.2 && b.z >= 0.1 && b.z <= HAUT_MAX && !(b0.service && sol === 0);
-    pts.push({ t: i * dt, x: b.x, y: b.y, z: b.z, sol, ok });
+    pts.push({ t: i * dt, x: b.x, y: b.y, z: b.z, sol, ok, vitre });
   }
   return { pts, faute, rebond, eq };
 }

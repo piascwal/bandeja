@@ -48,6 +48,23 @@ function trajectoire(type: Coup, p: number, dist: number): { v: number; spin: Ef
 }
 
 /**
+ * Rebond vif d'un coup fort ou coupé (voir `Balle.vif`) : plus on charge, plus
+ * la balle bondit, file à la vitre et en revient en hauteur ; à fond, elle
+ * peut même sortir de la piste. Le coupé bondit à peine, juste de quoi ne pas
+ * mourir au fond du court.
+ */
+function rebondVif(type: Coup, p: number, hasard: number): number {
+  if (type === 'plat') {
+    if (p < 0.5) return 0;
+    const k = (p - 0.5) / 0.5;
+    return p >= 0.92 && hasard < 0.35 ? 1.25 : k;
+  }
+  if (type === 'coupe') return 0.3;
+  if (type === 'bandeja') return 0.35;
+  return 0;
+}
+
+/**
  * Frappe la balle : type de coup, puissance p (0 → 1), point visé (tx, ty) et,
  * éventuellement, un rebond voulu contre sa propre vitre.
  */
@@ -90,7 +107,8 @@ export function executeCoup(
     lance(b, tx, ty, t.v, t.spin, marge);
     b.spinDir = ty < 5 ? -1 : 1;
     b.portres = type === 'smash' && p >= 0.8 && b.z > 2.2;
-  }
+    b.vif = rebondVif(type, p, rng());
+  } else b.vif = 0;
   b.eqF = eq;
   b.camp = autre(eq);
   b.sol = 0;

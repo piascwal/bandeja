@@ -278,6 +278,16 @@ mi-court, une víbora ; au fond, une bandeja. Sur une balle basse, c'est un
 coup à plat appuyé à fond, plus risqué. Un bon timing (balle proche de la
 raquette) rend le coup précis.
 
+**Jeu de vitre.** Un coup _plat_ chargé (au-delà de la moitié de la jauge) a un
+rebond vif (`Balle.vif`) : plus il est chargé, plus la balle bondit après son
+premier rebond, file vers la vitre et en revient en hauteur, jouable à ce
+moment-là ; à fond, elle peut sortir de la piste (par 3 / par 4) ou repartir très
+haut. Le coupé et la bandeja bondissent un peu, pour ne plus mourir au fond du
+court. Les coups très rapides laissent une traînée de feu (rouge, orange, jaune).
+Quand la balle va d'abord rebondir sur une vitre, le joueur n'est pas guidé :
+c'est à lui d'anticiper (se rapprocher du filet, par exemple). Il reste à 0,8 m
+du filet pour que son dessin ne le dépasse pas.
+
 **Viser.** Le joystick au moment de l'impact (sa dernière direction compte
 encore 0,4 s après le relâchement) donne le côté (haut / bas de l'écran) et la
 profondeur (vers le filet : plus long ; vers sa vitre : plus court). Au

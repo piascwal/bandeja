@@ -37,6 +37,8 @@ export interface BalleInstantane {
   roule: boolean;
   dehors: boolean;
   portres: boolean;
+  /** rebond vif en attente (0 → 1,25) */
+  vif: number;
   service: boolean;
   filet: boolean;
   mur: boolean;
@@ -68,8 +70,8 @@ export interface Instantane {
   stats: { gagnants: [number, number]; portres: [number, number]; fautes: [number, number]; vitres: number };
 }
 
-/** Taille fixe : 7 (en-tête) + 10 (score) + 5 (jauge) + 4 x 27 (joueurs) + 29 (balle) + 7 (stats). */
-export const TAILLE_INSTANTANE = 166;
+/** Taille fixe : 7 (en-tête) + 10 (score) + 5 (jauge) + 4 x 27 (joueurs) + 30 (balle) + 7 (stats). */
+export const TAILLE_INSTANTANE = 167;
 const TOURNE_MAX = 0.5;
 const POS_MAX = 100;
 const VIT_MAX = 200;
@@ -118,6 +120,7 @@ export function instantaneDe(jeu: Partie, seq: number): Instantane {
       roule: b.roule,
       dehors: b.dehors,
       portres: b.portres,
+      vif: b.vif,
       service: b.service,
       filet: b.filet,
       mur: b.mur,
@@ -155,7 +158,9 @@ export function encodeInstantane(s: Instantane): ArrayBuffer {
   w.f32(b.x).f32(b.y).f32(b.z).f32(b.vx).f32(b.vy).f32(b.vz);
   w.u8(indice(EFFETS, b.spin)).i8(b.spinDir);
   w.bits(b.roule, b.dehors, b.portres, b.service, b.filet, b.mur, b.eqF === 1, b.camp === 1);
-  w.u8(b.sol).u8(b.coup ? indice(COUPS, b.coup) : 255);
+  w.u8(b.sol)
+    .u8(b.coup ? indice(COUPS, b.coup) : 255)
+    .u8(b.vif * 100);
   const st = s.stats;
   w.u8(st.gagnants[0]).u8(st.gagnants[1]).u8(st.portres[0]).u8(st.portres[1]);
   w.u8(st.fautes[0]).u8(st.fautes[1]).u8(st.vitres);
@@ -227,6 +232,7 @@ export function decodeInstantane(buf: ArrayBuffer): Instantane | null {
     const [roule, dehors, portres, service, filet, mur, eqF, camp] = r.bits();
     const sol = r.u8();
     const c = r.u8();
+    const vif = Math.min(125, r.u8());
     if (c !== 255 && c >= COUPS.length) return null;
     const stats = {
       gagnants: [r.u8(), r.u8()] as [number, number],
@@ -261,6 +267,7 @@ export function decodeInstantane(buf: ArrayBuffer): Instantane | null {
         roule: roule!,
         dehors: dehors!,
         portres: portres!,
+        vif: vif / 100,
         service: service!,
         filet: filet!,
         mur: mur!,

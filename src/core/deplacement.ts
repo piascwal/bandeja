@@ -6,6 +6,8 @@ import type { Joueur, Partie, Point2 } from './types';
 /** Arcade : un humain court plus vite que le CPU, et ralentit à peine quand il arme un coup. */
 const FREIN_ARME = 0.9;
 const ECART_MIN = 0.7;
+/** Distance minimale au filet (m) : le dessin du joueur ne le dépasse pas. */
+const ECART_FILET = 0.8;
 /** Joystick au repos en dessous de cette inclinaison : le joueur est guidé vers la balle. */
 const REPOS = 0.2;
 
@@ -23,7 +25,8 @@ function versPoint(s: Joueur, p: Point2, vmax: number): [number, number] {
 function pointDeFrappe(jeu: Partie, s: Joueur): Point2 | null {
   if (jeu.phase !== 'jeu' || jeu.balle.camp !== s.eq) return null;
   const plan = jeu.plan[s.eq];
-  return plan && plan.s === s ? { x: plan.x - dir(s.eq) * 0.3, y: plan.y } : null;
+  // la balle va rebondir sur une vitre : le joueur anticipe lui-même (se rapprocher du filet...), on ne le guide pas
+  return plan && plan.s === s && !plan.vitre ? { x: plan.x - dir(s.eq) * 0.3, y: plan.y } : null;
 }
 
 export function bouge(jeu: Partie, s: Joueur, dt: number): void {
@@ -52,8 +55,9 @@ export function bouge(jeu: Partie, s: Joueur, dt: number): void {
   s.vy += (dvy - s.vy) * f;
   s.x += s.vx * dt;
   s.y += s.vy * dt;
-  if (s.eq === 0) s.x = clamp(s.x, 0.25, MIL - 0.3);
-  else s.x = clamp(s.x, MIL + 0.3, LONG - 0.25);
+  // le sprite a de la largeur : on ne le laisse pas déborder sur le filet
+  if (s.eq === 0) s.x = clamp(s.x, 0.25, MIL - ECART_FILET);
+  else s.x = clamp(s.x, MIL + ECART_FILET, LONG - 0.25);
   s.y = clamp(s.y, 0.25, LARG - 0.25);
   s.pas += Math.hypot(s.vx, s.vy) * dt;
   s.swing = Math.max(0, s.swing - dt / 0.32);
