@@ -28,9 +28,9 @@ export function lisEvenement(o: unknown): Evenement | null {
     case 'impact':
       if (
         !SURFACES.includes(e.surface as never) ||
-        !nombre(e.x, -100, 100) ||
-        !nombre(e.y, -100, 100) ||
-        !nombre(e.z, -100, 100) ||
+        !nombre(e.x, -1000, 1000) ||
+        !nombre(e.y, -1000, 1000) ||
+        !nombre(e.z, -1000, 1000) ||
         !nombre(e.force, 0, 1000)
       )
         return null;

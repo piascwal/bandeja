@@ -18,6 +18,8 @@ export const MIL = 10;
 export const SERV = 6.95;
 /** Vitesse de course (m/s). */
 export const VMAX = 4.8;
+/** Arcade : un joueur humain court plus vite que le CPU. */
+export const BONUS_HUMAIN = 1.2;
 /** Portée de la raquette (m). */
 export const PORTEE = 1.15;
 /** Plus haut, même en sautant, on ne touche pas. */
@@ -63,7 +65,7 @@ export const RESTIT: Record<Effet, readonly [number, number]> = {
   lobe: [0.56, 0.8],
   lift: [0.84, 0.9],
   smash: [0.82, 0.92],
-  coupe: [0.48, 0.76],
+  coupe: [0.5, 0.94],
   vibora: [0.52, 0.8],
 };
 

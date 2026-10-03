@@ -22,35 +22,28 @@ interface Ligne {
 }
 
 const COUPS: Ligne[] = [
-  { pastille: '#ff5470', touche: 'FRAPPE', action: 'COUP PUISSANT - SMASH SI BALLE HAUTE' },
-  { pastille: '#35c47a', touche: 'COUPE', action: 'COUP COUPE - PLUS COURT ET PLUS BAS' },
-  { pastille: '#3fb4e8', touche: 'LOBE', action: 'BALLE HAUTE PAR-DESSUS LES ADVERSAIRES' },
+  { pastille: '#ff5470', touche: 'FRAPPE', action: 'COUP DE BASE - COUPE SI PEU CHARGE' },
   { pastille: '#2fd0c6', touche: 'AMORTI', action: 'BALLE COURTE JUSTE DERRIERE LE FILET' },
-  { pastille: C.or, touche: 'CENTRE', action: 'BANDEJA - VIBORA SI JOYSTICK HAUT / BAS' },
+  { pastille: '#3fb4e8', touche: 'LOBE', action: 'BALLE HAUTE PAR-DESSUS LES ADVERSAIRES' },
+  { pastille: '#ffa24a', touche: 'SMASH', action: 'BALLE HAUTE : SMASH, VIBORA OU BANDEJA' },
 ];
 
-const TACTILE: Ligne[] = [
-  { touche: 'JOYSTICK', action: 'MOITIE GAUCHE : SE DEPLACER' },
-  ...COUPS,
-  { pastille: '#5a6082', touche: 'COURIR', action: 'COURIR PLUS VITE' },
-];
+const TACTILE: Ligne[] = [{ touche: 'JOYSTICK', action: 'MOITIE GAUCHE : SE DEPLACER ET VISER' }, ...COUPS];
 
 const CLAVIER: Ligne[] = [
-  { touche: 'FLECHES', action: 'SE DEPLACER - OU ZQSD / WASD' },
+  { touche: 'FLECHES', action: 'SE DEPLACER ET VISER - OU ZQSD / WASD' },
   { pastille: '#ff5470', touche: 'K', action: 'FRAPPE' },
-  { pastille: '#35c47a', touche: 'J', action: 'COUPE' },
+  { pastille: '#2fd0c6', touche: 'J', action: 'AMORTI' },
   { pastille: '#3fb4e8', touche: 'L', action: 'LOBE' },
-  { pastille: '#2fd0c6', touche: 'I', action: 'AMORTI' },
-  { pastille: C.or, touche: 'ESPACE', action: 'BANDEJA OU VIBORA - BALLE HAUTE' },
-  { touche: 'MAJ', action: 'COURIR' },
+  { pastille: '#ffa24a', touche: 'I', action: 'SMASH (OU ESPACE)' },
   { touche: 'ECHAP', action: 'PAUSE' },
 ];
 
 const ASTUCES = [
-  'APPUYEZ AVANT LA BALLE : PLUS TOT - PLUS FORT',
-  'JOYSTICK VERS SA VITRE A L IMPACT : REBOND',
+  'LA BALLE PART TOUTE SEULE DES QU ELLE EST A PORTEE',
+  'APPUYEZ PLUS TOT : COUP PLUS FORT (JAUGE AU DESSUS DU JOUEUR)',
+  'JOYSTICK : COTE ET PROFONDEUR - LE LOSANGE MONTRE OU ELLE IRA',
   'SERVICE : UN APPUI LANCE LA JAUGE - UN AUTRE SERT',
-  'VERT SUR LA JAUGE : SERVICE PARFAIT',
 ];
 
 /** Réglages : le son, puis l'aide des commandes (tactile ou clavier, au choix par onglet). */

@@ -1,5 +1,5 @@
 import { physique, type SurContact } from './balle';
-import { HAUT_MAX, HAUT_SMASH, LARG, LONG, MIL, PORTEE, VMAX } from './constants';
+import { BONUS_HUMAIN, HAUT_MAX, HAUT_SMASH, LARG, LONG, MIL, PORTEE, VMAX } from './constants';
 import { equipe } from './joueurs';
 import { autre } from './terrain';
 import type { Balle, Equipe, Joueur, Partie, Plan, PointPredit, Prediction } from './types';
@@ -62,7 +62,7 @@ export function meilleurPoint(
   P: Prediction,
 ): (PointPredit & { score: number }) | null {
   const reac = s.humain ? 0.05 : s.niv.reac;
-  const v = VMAX * (s.humain ? 1 : s.niv.vit);
+  const v = VMAX * (s.humain ? BONUS_HUMAIN : s.niv.vit);
   const attente = Math.max(0, reac - jeu.tFrappe);
   let best: (PointPredit & { score: number }) | null = null;
   let secours: (PointPredit & { score: number; marge: number }) | null = null;

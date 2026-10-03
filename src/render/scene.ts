@@ -1,21 +1,19 @@
 import { clamp } from '@core/aleatoire';
-import { HAUT_SMASH, LARG } from '@core/constants';
+import { LARG } from '@core/constants';
 import { frappable } from '@core/coups';
-import { BONUS_PORTEE, modeTir, viseServ } from '@core/humain';
+import { BONUS_PORTEE, cibleCoup, coupPrevu, viseServ } from '@core/humain';
 import { cibleService } from '@core/service';
 import type { Joueur, Partie } from '@core/types';
 import { dessineBalle, ombre } from './balle-render';
 import type { Decor } from './decor';
 import type { Effets } from './effets';
 import { dessineJoueur } from './joueurs-render';
-import { C } from './palette';
+import { C, NOMS_COUPS } from './palette';
 import { texte } from './police';
 import { croixSol, px } from './primitives';
 import type { VueJoueurs } from './regard';
 import { HAUT_JOUEUR, type SpritesEquipe } from './sprites';
 import type { Vue } from './vue';
-
-const NOMS_MODE = { fond: 'VITRE DU FOND', haut: 'VITRE DE COTE', bas: 'VITRE DE COTE' } as const;
 
 export interface Scene {
   jeu: Partie;
@@ -73,6 +71,18 @@ export function dessineScene(v: Vue, sc: Scene): void {
   }
 }
 
+/** Le point visé sur le terrain adverse : un losange creux. */
+function cibleVisee(g: CanvasRenderingContext2D, x: number, y: number, c: string): void {
+  const sx = Math.round(x);
+  const sy = Math.round(y);
+  for (let k = 0; k <= 3; k++) {
+    px(g, sx - 3 + k, sy - k, 1, 1, c);
+    px(g, sx + 3 - k, sy - k, 1, 1, c);
+    px(g, sx - 3 + k, sy + k, 1, 1, c);
+    px(g, sx + 3 - k, sy + k, 1, 1, c);
+  }
+}
+
 /** Repère du rebond (pour aller chercher la balle) et cible du service. */
 function dessineReperes(v: Vue, jeu: Partie, hum: Joueur): void {
   const b = jeu.balle;
@@ -83,6 +93,12 @@ function dessineReperes(v: Vue, jeu: Partie, hum: Joueur): void {
     const c = plan && plan.s === hum ? clignote(8) : 'rgba(255,255,255,0.45)';
     const [sx, sy] = v.K.proj(rebond.x, rebond.y, 0);
     croixSol(v.g, sx, sy, c);
+  }
+  // où ira votre coup avec la direction actuelle du joystick
+  if (jeu.phase === 'jeu' && b.camp === hum.eq && b.sol < 2) {
+    const c = cibleCoup(hum, coupPrevu(jeu, hum, hum.intent?.type ?? 'plat', hum.charge));
+    const [cx, cy] = v.K.proj(c.tx, c.ty, 0);
+    cibleVisee(v.g, cx, cy, clignote(5));
   }
   if (jeu.phase === 'service' && jeu.serveur === hum && jeu.pret) {
     const c = cibleService(hum, viseServ(hum));
@@ -118,8 +134,8 @@ function aidesJoueur(v: Vue, jeu: Partie, hum: Joueur): void {
   const y0 = yy - 5;
   px(g, x0 - 1, y0 - 1, w + 2, 4, C.contour);
   px(g, x0, y0, Math.round(w * hum.charge), 2, hum.charge > 0.8 ? '#ff7a3c' : C.or);
-  const md = jeu.balle.z > HAUT_SMASH ? null : modeTir(hum);
-  if (md) texte(g, NOMS_MODE[md], sx, y0 - 10, C.vitre, 1, 'c');
+  // le coup qui partira, et ce qu'il faut faire : la balle part toute seule dès qu'elle est à portée
+  texte(g, NOMS_COUPS[coupPrevu(jeu, hum, hum.intent.type, hum.charge)], sx, y0 - 10, C.or, 1, 'c');
 }
 
 /** Flèche rouge vif au-dessus d'un autre joueur humain : bien visible sur la piste. */

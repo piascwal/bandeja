@@ -8,7 +8,7 @@ import type { Coup, Effet, Joueur, Mur, Partie } from './types';
 /** Distance visée par rapport à la vitre adverse, selon le coup. */
 export const PROF: Partial<Record<Coup, number>> = {
   plat: 2.8,
-  coupe: 3.2,
+  coupe: 2.4,
   lobe: 2.0,
   smash: 5.5,
   bandeja: 2.5,
@@ -33,7 +33,7 @@ function trajectoire(type: Coup, p: number, dist: number): { v: number; spin: Ef
     case 'plat':
       return { v: 13 + 11 * p, spin: p > 0.75 ? 'lift' : 'plat', marge: 0.15 };
     case 'coupe':
-      return { v: 10.5 + 6 * p, spin: 'coupe', marge: 0.15 };
+      return { v: 12 + 7 * p, spin: 'coupe', marge: 0.15 };
     case 'lobe':
       return { v: dist / (1.45 + 0.3 * p + dist / 40), spin: 'lobe', marge: 0.6 };
     case 'amorti':
@@ -59,6 +59,8 @@ export function executeCoup(
   tx: number,
   ty: number,
   mur?: Mur | null,
+  /** réglages d'un coup d'humain : `precision` (0 → 1) selon le timing, `risque` pour un coup forcé */
+  humain?: { precision: number; risque: boolean },
 ): void {
   const b = jeu.balle;
   const eq = s.eq;
@@ -75,6 +77,8 @@ export function executeCoup(
   }
   if (type !== 'vitre' && type !== 'cote') {
     let e = s.err * (0.45 + 0.8 * p + vin / 34 + (b.mur ? 0.3 : 0));
+    // arcade : un bon timing rend le coup net, un coup forcé reste risqué
+    if (humain) e *= 1.2 - 0.6 * humain.precision + (humain.risque ? 0.35 : 0);
     if (type === 'bandeja' || type === 'lobe') e *= 0.7;
     if (type === 'amorti') e *= 0.45; // court et lent : l'erreur se joue sur le filet
     tx += gauss(rng) * e * 1.4;

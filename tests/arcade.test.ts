@@ -1,0 +1,103 @@
+import { describe, expect, it } from 'vitest';
+import { HAUT_SMASH, PAS } from '@core/constants';
+import { cibleCoup, coupAerien, coupPrevu, directionVisee } from '@core/humain';
+import { pas } from '@core/partie';
+import type { Commande } from '@core/types';
+import { zonesBoutons } from '@input/disposition';
+import { partieTest } from './outils';
+
+const VIDE: Commande = { dx: 0, dy: 0, appuis: [] };
+
+describe('un jeu d’arcade : on touche presque toujours la balle', () => {
+  it('sans toucher au joystick, un simple appui renvoie la balle échange après échange', () => {
+    const jeu = partieTest({ mode: 'match', jeux: 3, sieges: [0], niveau: 1 }, 31);
+    let coups = 0;
+    for (let i = 0; i < 120 * 90 && jeu.phase !== 'fin'; i++) {
+      const appuie = jeu.phase === 'jeu' && jeu.balle.camp === 0 && i % 50 === 0;
+      pas(jeu, PAS, () => (appuie ? { ...VIDE, appuis: ['plat'] } : VIDE));
+      for (const e of jeu.evenements.splice(0)) if (e.type === 'frappe' && e.humain) coups++;
+    }
+    expect(coups).toBeGreaterThan(8);
+  });
+
+  it('le joueur est guidé vers la balle quand le joystick est au repos', () => {
+    const jeu = partieTest({ mode: 'match', sieges: [0] }, 8);
+    const hum = jeu.joueurs[0]!;
+    jeu.phase = 'jeu';
+    Object.assign(jeu.balle, { x: 4, y: 7, z: 1, vx: -2, vy: 0, vz: 0, camp: 0, sol: 1 });
+    jeu.tPred = 100; // le plan posé à la main ne doit pas être recalculé
+    hum.x = 8;
+    hum.y = 2;
+    jeu.plan[0] = { s: hum, x: 4, y: 7, z: 1, t: 1, sol: 1, ok: true, score: 0, sc: 0 };
+    for (let i = 0; i < 120; i++) pas(jeu, PAS, () => VIDE);
+    // à plus de 6 m au départ : il a bien avancé seul vers le point de frappe
+    expect(Math.hypot(hum.x - 4, hum.y - 7)).toBeLessThan(4.2);
+  });
+});
+
+describe('les boutons', () => {
+  it('quatre petits boutons, sans COURIR ni bouton aérien', () => {
+    const z = zonesBoutons(400, 200);
+    expect(Object.keys(z).sort()).toEqual(['amorti', 'lobe', 'plat', 'smash']);
+    for (const r of Object.values(z)) expect(r.r).toBeLessThanOrEqual(13);
+  });
+
+  it('FRAPPE peu chargé est un coup coupé, chargé un coup plat', () => {
+    const jeu = partieTest({ mode: 'match', sieges: [0] }, 2);
+    const s = jeu.joueurs[0]!;
+    jeu.balle.z = 0.8;
+    expect(coupPrevu(jeu, s, 'plat', 0.1)).toBe('coupe');
+    expect(coupPrevu(jeu, s, 'plat', 0.9)).toBe('plat');
+    expect(coupPrevu(jeu, s, 'lobe', 0.1)).toBe('lobe');
+    expect(coupPrevu(jeu, s, 'amorti', 0.1)).toBe('amorti');
+  });
+
+  it('SMASH choisit seul selon la place et le timing', () => {
+    const jeu = partieTest({ mode: 'match', sieges: [0] }, 2);
+    const s = jeu.joueurs[0]!;
+    jeu.balle.z = HAUT_SMASH + 0.5;
+    s.x = 8; // au filet
+    expect(coupAerien(s, 0.9)).toBe('smash');
+    expect(coupAerien(s, 0.3)).toBe('bandeja');
+    s.x = 5; // à mi-court
+    expect(coupAerien(s, 0.8)).toBe('vibora');
+    expect(coupAerien(s, 0.3)).toBe('bandeja');
+    s.x = 1; // au fond : on garde l'échange
+    expect(coupAerien(s, 1)).toBe('bandeja');
+    expect(coupPrevu(jeu, s, 'smash', 0.5)).toBe('bandeja');
+    // balle basse : un coup à plat appuyé
+    jeu.balle.z = 0.8;
+    expect(coupPrevu(jeu, s, 'smash', 0.5)).toBe('plat');
+  });
+});
+
+describe('la direction du coup', () => {
+  it('le côté vient du joystick, et on peut le relâcher juste avant de frapper', () => {
+    const jeu = partieTest({ mode: 'match', sieges: [0] }, 2);
+    const s = jeu.joueurs[0]!;
+    s.y = 5;
+    jeu.phase = 'jeu';
+    pas(jeu, PAS, () => ({ ...VIDE, dy: -1 }));
+    expect(cibleCoup(s, 'plat').ty).toBeLessThan(2);
+    // joystick lâché : la direction tient encore un instant
+    pas(jeu, PAS, () => VIDE);
+    expect(directionVisee(s).y).toBe(-1);
+    expect(cibleCoup(s, 'plat').ty).toBeLessThan(2);
+    for (let i = 0; i < 120; i++) pas(jeu, PAS, () => VIDE);
+    expect(directionVisee(s)).toEqual({ x: 0, y: 0 });
+    pas(jeu, PAS, () => ({ ...VIDE, dy: 1 }));
+    expect(cibleCoup(s, 'plat').ty).toBeGreaterThan(8);
+  });
+
+  it('poussé vers le filet, le coup est plus long ; tiré en arrière, plus court', () => {
+    const jeu = partieTest({ mode: 'match', sieges: [0] }, 2);
+    const s = jeu.joueurs[0]!;
+    jeu.phase = 'jeu';
+    const long = (dx: number) => {
+      pas(jeu, PAS, () => ({ ...VIDE, dx }));
+      // équipe 0 : le miroir inverse dx, donc dx négatif = vers le filet (x croissant)
+      return cibleCoup(s, 'plat').tx;
+    };
+    expect(long(-1)).toBeGreaterThan(long(1));
+  });
+});

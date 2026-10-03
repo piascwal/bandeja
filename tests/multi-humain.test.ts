@@ -6,7 +6,7 @@ import { finPoint, gagne } from '@core/regles';
 import type { Commande, Joueur } from '@core/types';
 import { frappeurImmobile, partieTest, simule } from './outils';
 
-const VIDE: Commande = { dx: 0, dy: 0, appuis: [], sprint: false };
+const VIDE: Commande = { dx: 0, dy: 0, appuis: [] };
 
 describe('plusieurs humains sur la piste', () => {
   it('chaque siège humain pilote son propre joueur', () => {

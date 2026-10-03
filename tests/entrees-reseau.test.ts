@@ -7,19 +7,18 @@ import { lisEvenement, lisMessageEvenement } from '../src/net/evenements';
 import { VERSION_PROTOCOLE } from '../src/net/protocole';
 import { partieTest } from './outils';
 
-const cmd = (o: Partial<Commande> = {}): Commande => ({ dx: 0, dy: 0, appuis: [], sprint: false, ...o });
+const cmd = (o: Partial<Commande> = {}): Commande => ({ dx: 0, dy: 0, appuis: [], ...o });
 const appuis = (c: Commande) => c.appuis.join(',');
 
 describe('entrées distantes en compteurs cumulés', () => {
   it('transmet direction et course', () => {
     const e = new EmetteurEntrees();
     const h = new EntreeDistante();
-    e.suit(cmd({ dx: 0.6, dy: -0.8, sprint: true }));
+    e.suit(cmd({ dx: 0.6, dy: -0.8 }));
     expect(h.recoit(e.encode(), 0)).toBe(true);
     const c = h.commande(0.01);
     expect(c.dx).toBeCloseTo(0.6, 1);
     expect(c.dy).toBeCloseTo(-0.8, 1);
-    expect(c.sprint).toBe(true);
   });
 
   it('transmet chaque appui une seule fois', () => {
@@ -49,14 +48,14 @@ describe('entrées distantes en compteurs cumulés', () => {
     const e = new EmetteurEntrees();
     const h = new EntreeDistante();
     h.recoit(e.encode(), 0);
-    e.suit(cmd({ appuis: ['coupe'] }));
+    e.suit(cmd({ appuis: ['amorti'] }));
     const m1 = e.encode();
     e.suit(cmd({ dx: 1 }));
     const m2 = e.encode();
     expect(h.recoit(m2, 0.01)).toBe(true);
     expect(h.recoit(m1, 0.02)).toBe(false); // plus vieux, arrivé après
     expect(h.recoit(m2, 0.03)).toBe(false); // doublon
-    expect(appuis(h.commande(0.04))).toBe('coupe');
+    expect(appuis(h.commande(0.04))).toBe('amorti');
   });
 
   it("ne rejoue pas les appuis d'avant la connexion", () => {

@@ -29,7 +29,7 @@ export interface OptionsPartie {
   rng?: Aleatoire;
 }
 
-export const COMMANDE_VIDE: Commande = { dx: 0, dy: 0, appuis: [], sprint: false };
+export const COMMANDE_VIDE: Commande = { dx: 0, dy: 0, appuis: [] };
 
 export function nouvellePartie(o: OptionsPartie): Partie {
   const rng = o.rng ?? Math.random;

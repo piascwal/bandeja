@@ -83,7 +83,7 @@ pas(jeu, PAS, () => entrees.lireCommande()); // avance d'un pas fixe (1/120 s)
   filet à 10), y en profondeur (0 au fond de l'écran → 10 devant), z en
   hauteur. L'équipe 0 (vous) défend x < 10.
 - **Entrées** : le joueur humain reçoit une `Commande` (direction, boutons
-  appuyés, sprint) ; le code qui la fabrique (`src/input/`) est séparé de
+  appuyés) ; le code qui la fabrique (`src/input/`) est séparé de
   celui qui l'applique (`core/humain.ts`).
 - **Effets de bord** : la simulation ne joue jamais un son ni ne dessine une
   particule. Elle émet des `Evenement` (`jeu.evenements` : impact, frappe,
@@ -250,22 +250,41 @@ Pour changer l'icône : remplacer `assets/icone-app.jpg` (carrée), puis
 
 ## Commandes du jeu
 
-|                  | Tactile                                                     | Clavier               |
-| ---------------- | ----------------------------------------------------------- | --------------------- |
-| Se déplacer      | joystick (moitié gauche)                                    | flèches / ZQSD / WASD |
-| Frappe (✕)       | bouton rouge, en bas du losange                             | K                     |
-| Coupé (□)        | bouton vert, à gauche                                       | J                     |
-| Lobe (○)         | bouton bleu, à droite                                       | L                     |
-| Amorti (△)       | bouton turquoise, en haut                                   | I                     |
-| Bandeja / víbora | bouton du centre (balle haute) ; joystick haut/bas : víbora | Espace                |
-| Courir           | COURIR                                                      | Maj                   |
-| Pause            | ⏸ en haut à droite                                          | Échap / P             |
+|             | Tactile                         | Clavier               |
+| ----------- | ------------------------------- | --------------------- |
+| Se déplacer | joystick (moitié gauche)        | flèches / ZQSD / WASD |
+| Frappe      | bouton rouge, en bas du losange | K                     |
+| Amorti      | bouton turquoise, à gauche      | J                     |
+| Lobe        | bouton bleu, à droite           | L                     |
+| Smash       | bouton orange, en haut          | I ou Espace           |
+| Pause       | ⏸ en haut à droite              | Échap / P             |
 
-On peut appuyer **avant** que la balle arrive : le coup part dès qu'elle est
-à portée, et plus l'appui est précoce, plus il est puissant. Joystick vers sa
-vitre au moment de l'impact : rebond voulu contre la vitre du fond ou de côté.
-Au service, ✕ (plat) ou □ (coupé) lance la jauge, un second appui sert ;
-le vert de la jauge est le service parfait.
+**Arcade, pas simulation.** Il n'y a plus de course : le joueur est plus rapide
+que le CPU et, quand c'est lui qui va jouer la balle, il y est conduit tout
+seul si le joystick est au repos (le joystick ne le décale qu'un peu). La
+portée est généreuse : on touche presque toujours la balle.
+
+**Quand part le coup ?** Dès que la balle est à portée après l'appui, tout
+seul : on peut donc appuyer un peu avant. Plus l'appui est précoce, plus le
+coup est puissant (la jauge au-dessus du joueur se remplit) ; le nom du coup
+qui partira s'affiche au-dessus de la jauge, et un losange marque sur le
+terrain adverse où la balle ira. Armer un coup ralentit à peine la course.
+
+**Les coups.** FRAPPE peu chargé est un coup _coupé_ (lent, qui revient de la
+vitre), chargé un coup _plat_ (qui ricoche de la vitre vers le filet). SMASH
+choisit seul selon la balle, la place et la charge : balle haute, au filet et
+bien armé, un smash (par 3 / par 4 si c'est très fort et très haut) ; à
+mi-court, une víbora ; au fond, une bandeja. Sur une balle basse, c'est un
+coup à plat appuyé à fond, plus risqué. Un bon timing (balle proche de la
+raquette) rend le coup précis.
+
+**Viser.** Le joystick au moment de l'impact (sa dernière direction compte
+encore 0,4 s après le relâchement) donne le côté (haut / bas de l'écran) et la
+profondeur (vers le filet : plus long ; vers sa vitre : plus court). Au
+neutre, la balle part en croisé.
+
+Au service, FRAPPE (plat) ou AMORTI (coupé) lance la jauge, un second appui
+sert ; le vert de la jauge est le service parfait.
 
 ## Licence
 

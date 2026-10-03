@@ -5,8 +5,8 @@ export type Equipe = 0 | 1;
 export type Effet = 'plat' | 'lobe' | 'lift' | 'smash' | 'coupe' | 'vibora';
 /** Les coups, tels qu'annoncés à l'écran. */
 export type Coup = 'plat' | 'lobe' | 'coupe' | 'amorti' | 'smash' | 'vibora' | 'bandeja' | 'vitre' | 'cote';
-/** Les boutons du losange (et le bouton aérien au centre). */
-export type Bouton = 'plat' | 'coupe' | 'lobe' | 'amorti' | 'aerien';
+/** Les quatre boutons du losange : le SMASH choisit seul entre smash, víbora et bandeja. */
+export type Bouton = 'plat' | 'amorti' | 'lobe' | 'smash';
 /** Vitre visée pour un rebond voulu : celle du fond, ou celle de côté (haut / bas de l'écran). */
 export type Mur = 'fond' | 'haut' | 'bas';
 export type TypeService = 'plat' | 'coupe';
@@ -59,7 +59,10 @@ export interface Joueur {
   /** direction voulue (repère de la piste), pour le joueur humain */
   ex: number;
   ey: number;
-  sprint: boolean;
+  /** dernière direction du joystick tenue (repère de la piste) : retenue un instant après son relâchement */
+  visee: Point2;
+  /** temps restant pendant lequel `visee` compte encore (s) */
+  tVisee: number;
   cible: Point2;
   posServ: Point2;
   /** 1 au moment du coup, redescend à 0 */
@@ -143,7 +146,6 @@ export interface Commande {
   dx: number;
   dy: number;
   appuis: Bouton[];
-  sprint: boolean;
 }
 
 /**

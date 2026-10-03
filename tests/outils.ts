@@ -24,5 +24,4 @@ export const frappeurImmobile = (i: number): Commande => ({
   dx: 0,
   dy: 0,
   appuis: i % 36 === 0 ? ['plat'] : [],
-  sprint: false,
 });

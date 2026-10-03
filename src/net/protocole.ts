@@ -8,7 +8,7 @@ import type { Bouton, Coup, Effet, Phase, PoseCoup, TypeService } from '@core/ty
  * octet de version en tête de l'instantané protège en plus d'un décodage de
  * travers.
  */
-export const VERSION_PROTOCOLE = 2;
+export const VERSION_PROTOCOLE = 3;
 
 /** Identité de Bandeja sur le réseau local (voir lan-kit). */
 export const APP: AppLan = { id: 'bandeja', version: VERSION_PROTOCOLE };
@@ -37,7 +37,7 @@ export const COUPS: readonly Coup[] = [
   'vitre',
   'cote',
 ];
-export const BOUTONS: readonly Bouton[] = ['plat', 'coupe', 'lobe', 'amorti', 'aerien'];
+export const BOUTONS: readonly Bouton[] = ['plat', 'amorti', 'lobe', 'smash'];
 export const POSES_COUP: readonly PoseCoup[] = ['attente', 'smash2'];
 export const SERVICES: readonly TypeService[] = ['plat', 'coupe'];
 

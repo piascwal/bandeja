@@ -1,6 +1,5 @@
 import { MoteurSon } from '@audio/son';
 import { JEUX, NIVEAUX, PAS } from '@core/constants';
-import { balleHaute } from '@core/humain';
 import { nouvellePartie, pas } from '@core/partie';
 import type { Partie } from '@core/types';
 import { Entrees, type PointLogique } from '@input/entrees';
@@ -71,7 +70,6 @@ export class BandejaApp {
       versLogique: (e) => this.versLogique(e),
       portrait: () => this.portrait,
       enJeu: () => this.ecranUI === 'jeu' && !this.ralenti.actif,
-      aerienActif: () => balleHaute(this.jeu),
       geste: () => {
         this.son.init();
         if (!this.attenteDemarrage || this.ecranUI !== 'menu') return false;

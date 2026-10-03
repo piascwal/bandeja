@@ -16,8 +16,6 @@ export interface HotesEntrees {
   portrait(): boolean;
   /** un match se joue (ni menu, ni pause, ni fin) */
   enJeu(): boolean;
-  /** la balle est haute : le bouton aérien du centre est actif */
-  aerienActif(): boolean;
   /**
    * Un geste de l'utilisateur (audio, plein écran). Renvoie true s'il est
    * consommé par l'écran de démarrage : il ne doit alors rien déclencher d'autre.
@@ -34,13 +32,13 @@ export interface HotesEntrees {
   appuiInterface(p: PointLogique): void;
 }
 
-/** Au clavier, le même losange : I △, J □, L ○, K ✕ ; Espace pour le coup aérien. */
+/** Au clavier, le même losange : K FRAPPE, J AMORTI, L LOBE, I SMASH (Espace aussi). */
 const TOUCHES_COUPS: Record<string, Bouton> = {
   KeyK: 'plat',
-  KeyJ: 'coupe',
+  KeyJ: 'amorti',
   KeyL: 'lobe',
-  KeyI: 'amorti',
-  Space: 'aerien',
+  KeyI: 'smash',
+  Space: 'smash',
 };
 const GAUCHE = ['ArrowLeft', 'KeyA', 'KeyQ'];
 const DROITE = ['ArrowRight', 'KeyD'];
@@ -80,14 +78,6 @@ export class Entrees {
     this.touches.clear();
   }
 
-  sprintActif(): boolean {
-    return (
-      this.touches.has('ShiftLeft') ||
-      this.touches.has('ShiftRight') ||
-      [...this.ids.values()].includes('sprint')
-    );
-  }
-
   /** La commande du pas en cours ; les appuis ne sont rendus qu'une fois. */
   lireCommande(): Commande {
     const enfonce = (codes: string[]) => codes.some((c) => this.touches.has(c));
@@ -110,7 +100,7 @@ export class Entrees {
     }
     const appuis = this.appuis;
     this.appuis = [];
-    return { dx, dy, appuis, sprint: this.sprintActif() };
+    return { dx, dy, appuis };
   }
 
   private surAppui(e: PointerEvent): void {
@@ -135,9 +125,9 @@ export class Entrees {
       const by = clamp(p.y, RAYON_JOY + 30, H - RAYON_JOY - 4);
       this.joy = { id: e.pointerId, bx, by, x: p.x, y: p.y };
     } else {
-      const b = boutonProche(W, H, p.x, p.y, this.h.aerienActif());
+      const b = boutonProche(W, H, p.x, p.y);
       if (b) {
-        if (b !== 'sprint') this.appuis.push(b);
+        this.appuis.push(b);
         this.ids.set(e.pointerId, b);
       }
     }

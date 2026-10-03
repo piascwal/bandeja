@@ -57,7 +57,6 @@ export function rendu(app: BandejaApp, t: number): void {
       tactile: e.tactile,
       joy,
       actifs: new Set(e.ids.values()),
-      sprint: e.sprintActif(),
     });
   } else if (ecranUI === 'menu') {
     const actions = {

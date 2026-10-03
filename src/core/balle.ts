@@ -41,11 +41,11 @@ export function bruit(b: CorpsBalle): number {
 const coteDe = (x: number): Equipe => (x < MIL ? 0 : 1);
 
 function rebondVitre(b: CorpsBalle, axe: 'x' | 'y'): void {
-  const e = b.spin === 'coupe' || b.spin === 'vibora' ? 0.62 : 0.8;
+  const e = b.spin === 'vibora' ? 0.62 : b.spin === 'coupe' ? 0.8 : 0.8;
   if (axe === 'x') b.vx = -b.vx * e;
   else b.vy = -b.vy * e;
-  // le coupé et la víbora « meurent » contre la vitre : la balle redescend aussitôt
-  if (b.spin === 'coupe') b.vz = Math.min(b.vz, 0) * 0.6 - 0.8;
+  // le coupé revient mollement vers le filet, la víbora « meurt » contre la vitre : la balle redescend aussitôt
+  if (b.spin === 'coupe') b.vz = Math.min(b.vz, 0) * 0.8 - 0.4;
   else if (b.spin === 'vibora') {
     b.vz = Math.min(b.vz, 0) * 0.5 - 1.1;
     if (axe === 'x') b.vy += (b.spinDir || 0) * 1.2;

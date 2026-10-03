@@ -1,25 +1,33 @@
 import { alea, clamp } from './aleatoire';
-import { HAUT_SMASH, LARG } from './constants';
+import { HAUT_SMASH, LARG, MIL } from './constants';
 import { executeCoup, frappable, PROF } from './coups';
 import { jaugeVal, servir } from './service';
-import { autre, dir, fond, xProf } from './terrain';
-import type { Bouton, Commande, Coup, Joueur, Mur, Partie, TypeService } from './types';
+import { autre, dir, xProf } from './terrain';
+import type { Bouton, Commande, Coup, Joueur, Partie, TypeService } from './types';
 
-/** Au padel on sert surtout coupé, parfois à plat : deux services, sur ✕ et □. */
-export const TYPES_SERV: Partial<Record<Bouton, TypeService>> = { plat: 'plat', coupe: 'coupe' };
+/** Au padel on sert surtout coupé, parfois à plat : deux services, sur FRAPPE et sur le bouton de gauche. */
+export const TYPES_SERV: Partial<Record<Bouton, TypeService>> = { plat: 'plat', amorti: 'coupe' };
 
-/** Plus on appuie tôt avant l'impact, plus le coup est puissant ; au-delà, l'appui est oublié. */
-const DUREE_CHARGE = 0.75;
-const OUBLI_APPUI = 1.6;
-/** Portée un peu plus généreuse pour le joueur humain. */
-export const BONUS_PORTEE = 1.15;
+/** Plus on appuie tôt avant l'impact, plus le coup est puissant (durée de la charge, s). */
+const DUREE_CHARGE = 0.6;
+/** Un appui reste en attente de la balle ce temps-là : le coup part tout seul dès qu'elle est à portée. */
+const OUBLI_APPUI = 1.2;
+/** Portée généreuse pour un humain : on réussit presque toujours à toucher la balle. */
+export const BONUS_PORTEE = 1.3;
+/** Après le relâchement du joystick, sa dernière direction compte encore ce temps-là (s). */
+const MEMOIRE_VISEE = 0.4;
+/** Le joystick est « tenu » au-delà de cette inclinaison. */
+const SEUIL_VISEE = 0.3;
 
 /** Applique au joueur humain ce qu'il demande pendant ce pas. */
 export function appliqueCommande(jeu: Partie, s: Joueur, cmd: Commande, dt: number): void {
   // vue en miroir : x = 0 est à droite de l'écran de l'équipe 0
   s.ex = s.miroir ? -cmd.dx : cmd.dx;
   s.ey = cmd.dy;
-  s.sprint = cmd.sprint;
+  if (Math.hypot(s.ex, s.ey) > SEUIL_VISEE) {
+    s.visee = { x: s.ex, y: s.ey };
+    s.tVisee = MEMOIRE_VISEE;
+  } else s.tVisee = Math.max(0, s.tVisee - dt);
 
   if (jeu.phase === 'service') {
     s.cible = s.posServ;
@@ -65,59 +73,75 @@ export function appliqueCommande(jeu: Partie, s: Joueur, cmd: Commande, dt: numb
 /** Visée du service avec le joystick : -1 au centre, +1 vers la vitre. */
 export const viseServ = (s: Joueur): number => clamp(s.ey * (s.y > 5 ? -1 : 1), -1, 1);
 
+/** La direction que le joueur vise : le joystick, ou sa dernière position s'il vient de le lâcher. */
+export function directionVisee(s: Joueur): { x: number; y: number } {
+  if (Math.hypot(s.ex, s.ey) > SEUIL_VISEE) return { x: s.ex, y: s.ey };
+  return s.tVisee > 0 ? s.visee : { x: 0, y: 0 };
+}
+
 /**
- * Direction du joystick au moment de l'impact (dans le repère de la piste) :
- * vers le filet ou au neutre : coup direct ; vers sa vitre du fond : rebond
- * contre le fond ; en arrière et vers le haut / le bas : rebond contre la
- * vitre de côté.
+ * Le coup aérien, choisi seul selon la place et le timing : au filet et bien
+ * armé, un smash ; entre deux, une víbora (ou en visant un côté) ; au fond, une
+ * bandeja pour garder l'échange.
  */
-export function modeTir(s: Joueur): Mur | null {
-  const av = s.ex * dir(s.eq);
-  if (av > -0.35) return null;
-  // les vitres de côté ne couvrent que les 4 m près du fond : au-delà c'est du grillage
-  const recul = Math.abs(s.x - fond(s.eq));
-  if (recul >= 4.5) return null;
-  if (Math.abs(s.ey) > 0.5) return s.ey < 0 ? 'haut' : 'bas';
-  return 'fond';
+export function coupAerien(s: Joueur, p: number): Coup {
+  const loin = Math.abs(s.x - MIL);
+  const lateral = Math.abs(directionVisee(s).y) > 0.4;
+  if (loin < 4.5) return p >= 0.7 ? 'smash' : lateral ? 'vibora' : 'bandeja';
+  if (loin < 7) return p >= 0.55 || lateral ? 'vibora' : 'bandeja';
+  return 'bandeja';
+}
+
+/** Le coup qui partirait si la balle était à portée maintenant (affiché au-dessus du joueur). */
+export function coupPrevu(jeu: Partie, s: Joueur, bouton: Bouton, charge: number): Coup {
+  const p = 0.25 + 0.75 * charge;
+  const haut = jeu.balle.z > HAUT_SMASH;
+  switch (bouton) {
+    case 'plat':
+      return haut ? 'bandeja' : charge < 0.5 ? 'coupe' : 'plat';
+    case 'smash':
+      return haut ? coupAerien(s, p) : 'plat';
+    default:
+      return bouton;
+  }
+}
+
+/**
+ * Où la balle ira : le côté et la profondeur viennent du joystick. Poussé vers
+ * le filet, le coup est plus long ; tiré en arrière, plus court. À plat, la
+ * balle part en croisé.
+ */
+export function cibleCoup(s: Joueur, type: Coup): { tx: number; ty: number } {
+  const v = directionVisee(s);
+  const av = v.x * dir(s.eq); // > 0 : vers le filet
+  let m = PROF[type] ?? 3;
+  if (type === 'amorti') m += Math.max(0, -av) * 0.6;
+  else m -= av > 0 ? av * 1.0 : av * 1.4;
+  let ty: number;
+  if (Math.abs(v.y) > 0.25) ty = 5 + clamp(v.y * 1.5, -1, 1) * 3.9;
+  else ty = clamp(LARG - s.y, 1.4, 8.6);
+  if (type === 'vibora') ty = Math.abs(v.y) > 0.25 ? (v.y > 0 ? 8.9 : 1.1) : ty < 5 ? 1.1 : 8.9;
+  return { tx: xProf(autre(s.eq), m), ty: clamp(ty, 0.3, LARG - 0.3) };
 }
 
 function coupHumain(jeu: Partie, s: Joueur): void {
   const b = jeu.balle;
-  const eq = s.eq;
-  const haut = b.z > HAUT_SMASH;
-  let type: Coup | 'aerien' = s.intent!.type;
-  const av = s.ex * dir(eq); // > 0 : vers le filet
-  const p = 0.25 + 0.75 * s.charge;
-  const mur = haut ? null : modeTir(s);
-  if (mur) {
-    const ty = clamp(LARG - s.y, 1.5, 8.5);
-    const t: Coup = type === 'aerien' ? 'coupe' : type;
-    executeCoup(jeu, s, mur === 'fond' ? 'vitre' : t, p, xProf(autre(eq), PROF[t] ?? 3), ty, mur);
-    return;
-  }
-  // balle haute : ✕ reste la frappe puissante, le bouton du centre la bandeja ou,
-  // joystick vers le haut ou le bas (vers une vitre de côté), la víbora
-  if (type === 'aerien') type = haut ? (Math.abs(s.ey) > 0.4 ? 'vibora' : 'bandeja') : 'coupe';
-  else if (haut && type === 'plat') type = 'smash';
-  let m = PROF[type] ?? 3;
-  if (av > 0.3) m -= type === 'amorti' ? -av * 0.6 : av * 1.2;
-  let ty: number;
-  if (Math.abs(s.ey) > 0.3) ty = 5 + s.ey * 3.9;
-  else ty = clamp(LARG - s.y, 1.4, 8.6) + alea(jeu.rng, -0.6, 0.6); // croisé par défaut
-  if (type === 'vibora') ty = s.ey > 0.3 ? 8.9 : s.ey < -0.3 ? 1.1 : ty < 5 ? 1.1 : 8.9;
-  executeCoup(jeu, s, type, p, xProf(autre(eq), m), clamp(ty, 0.3, LARG - 0.3));
+  const bouton = s.intent!.type;
+  const type = coupPrevu(jeu, s, bouton, s.charge);
+  // SMASH sur une balle basse : un coup à plat appuyé à fond, plus risqué
+  const risque = bouton === 'smash' && b.z <= HAUT_SMASH;
+  const p = risque ? Math.max(0.85, 0.25 + 0.75 * s.charge) : 0.25 + 0.75 * s.charge;
+  const { tx, ty } = cibleCoup(s, type);
+  // la précision dépend du timing : balle bien au contact, coup net
+  const proche = 1 - Math.hypot(b.x - s.x, b.y - s.y) / (PORTEE_CONTACT * BONUS_PORTEE);
+  executeCoup(jeu, s, type, p, tx + alea(jeu.rng, -0.2, 0.2), ty, null, {
+    precision: clamp(proche, 0, 1),
+    risque,
+  });
 }
 
-/** Balle haute à jouer près du joueur humain : le bouton aérien apparaît. */
-export function balleHaute(jeu: Partie): boolean {
-  const hum = jeu.humain;
-  const b = jeu.balle;
-  if (!hum || jeu.phase !== 'jeu') return false;
-  return b.camp === hum.eq && b.z > HAUT_SMASH && Math.hypot(b.x - hum.x, b.y - hum.y) < 3.5;
-}
-
-/** Le coup aérien proposé : víbora si le joystick pointe vers une vitre de côté. */
-export const coupAerien = (s: Joueur): 'vibora' | 'bandeja' => (Math.abs(s.ey) > 0.4 ? 'vibora' : 'bandeja');
+/** Distance de contact de référence pour juger le timing (m). */
+const PORTEE_CONTACT = 1.15;
 
 /**
  * Un humain quitte la partie : son joueur reste sur la piste, repris par le
