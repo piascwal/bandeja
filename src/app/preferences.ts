@@ -6,6 +6,8 @@ export interface Preferences {
   /** indice dans JEUX */
   jeux: number;
   son: boolean;
+  /** nom affiché aux autres joueurs en réseau : majuscules, chiffres et espaces, 14 caractères au plus */
+  nom: string;
   /** par niveau */
   victoires: number[];
   matchs: number[];
@@ -14,10 +16,16 @@ export interface Preferences {
 /** Même clé que le POC : les bilans déjà enregistrés sont repris. */
 const CLE = 'padel-arcade-v1';
 
+const NOM_SUR = /^[A-Z0-9 ]{1,14}$/;
+
+/** Un nom par défaut, tiré au sort une fois : JOUEUR 42. */
+export const nomAuHasard = (): string => `JOUEUR ${10 + Math.floor(Math.random() * 90)}`;
+
 const DEFAUT = (): Preferences => ({
   niveau: 1,
   jeux: 1,
   son: true,
+  nom: nomAuHasard(),
   victoires: [0, 0, 0],
   matchs: [0, 0, 0],
 });
@@ -37,6 +45,7 @@ export function lisPreferences(brut: string | null): Preferences {
     p.niveau = indice(o.niveau, NIVEAUX.length, p.niveau);
     p.jeux = indice(o.jeux, JEUX.length, p.jeux);
     if (typeof o.son === 'boolean') p.son = o.son;
+    if (typeof o.nom === 'string' && NOM_SUR.test(o.nom)) p.nom = o.nom;
     p.victoires = compteurs(o.victoires);
     p.matchs = compteurs(o.matchs);
   } catch {
@@ -47,7 +56,11 @@ export function lisPreferences(brut: string | null): Preferences {
 
 export function chargePreferences(): Preferences {
   try {
-    return lisPreferences(localStorage.getItem(CLE));
+    const brut = localStorage.getItem(CLE);
+    const p = lisPreferences(brut);
+    // le nom tiré au sort est gardé : on le retrouve d'une partie à l'autre
+    if (!brut || !brut.includes('"nom"')) sauvePreferences(p);
+    return p;
   } catch {
     return DEFAUT(); // stockage indisponible
   }

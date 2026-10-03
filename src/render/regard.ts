@@ -62,6 +62,11 @@ export class VueJoueurs {
     }
   }
 
+  /** Nouvelle partie : on oublie le regard des joueurs de la précédente. */
+  reinitialise(): void {
+    this.etats.clear();
+  }
+
   majTous(jeu: Partie): void {
     for (const s of jeu.joueurs) this.maj(jeu, s);
   }

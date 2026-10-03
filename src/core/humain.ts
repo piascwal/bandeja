@@ -118,3 +118,18 @@ export function balleHaute(jeu: Partie): boolean {
 
 /** Le coup aérien proposé : víbora si le joystick pointe vers une vitre de côté. */
 export const coupAerien = (s: Joueur): 'vibora' | 'bandeja' => (Math.abs(s.ey) > 0.4 ? 'vibora' : 'bandeja');
+
+/**
+ * Un humain quitte la partie : son joueur reste sur la piste, repris par le
+ * CPU (un joueur humain n'a pas d'IA : sans cela, il resterait planté).
+ */
+export function donneAuCpu(jeu: Partie, id: number): void {
+  const s = jeu.joueurs[id];
+  if (!s || !s.humain) return;
+  s.humain = false;
+  s.err = s.niv.err;
+  s.intent = null;
+  s.charge = 0;
+  jeu.humains = jeu.humains.filter((h) => h !== s);
+  if (jeu.humain === s) jeu.humain = null;
+}

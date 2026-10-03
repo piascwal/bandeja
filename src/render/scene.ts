@@ -64,6 +64,8 @@ export function dessineScene(v: Vue, sc: Scene): void {
   g.drawImage(decor.devant, 0, 0);
 
   if (hum && sc.enMatch) aidesJoueur(v, jeu, hum);
+  // en réseau, une flèche rouge repère chaque autre humain
+  if (sc.enMatch) for (const h of jeu.humains) if (h !== hum) flecheAutreHumain(v, jeu, h);
   for (const bb of effets.bulles) {
     g.globalAlpha = Math.min(1, bb.vie * 3);
     texte(g, bb.txt, bb.x, bb.y, bb.c);
@@ -118,4 +120,15 @@ function aidesJoueur(v: Vue, jeu: Partie, hum: Joueur): void {
   px(g, x0, y0, Math.round(w * hum.charge), 2, hum.charge > 0.8 ? '#ff7a3c' : C.or);
   const md = jeu.balle.z > HAUT_SMASH ? null : modeTir(hum);
   if (md) texte(g, NOMS_MODE[md], sx, y0 - 10, C.vitre, 1, 'c');
+}
+
+/** Flèche rouge vif au-dessus d'un autre joueur humain : bien visible sur la piste. */
+function flecheAutreHumain(v: Vue, jeu: Partie, autre: Joueur): void {
+  const { g } = v;
+  const [sx, sy] = v.K.proj(autre.x, autre.y, 0);
+  const yy = Math.round(sy) - HAUT_JOUEUR - 8 + (Math.floor(jeu.temps * 3) & 1);
+  px(g, sx - 2, yy - 1, 5, 2, C.contour);
+  px(g, sx - 1, yy, 3, 2, C.contour);
+  px(g, sx - 1, yy - 1, 3, 1, '#ff3b3b');
+  px(g, sx, yy, 1, 1, '#ff3b3b');
 }

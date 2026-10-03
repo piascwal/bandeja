@@ -44,6 +44,7 @@ npm run lint
 npm run format       # Prettier (format:check en CI)
 npm test             # Vitest
 npm run build        # build de prod dans dist/
+npm run e2e          # tests de bout en bout (voir plus bas)
 npm run preview      # sert le build de prod localement
 npm run icones       # régénère public/icons/ depuis assets/icone-app.jpg
 ```
@@ -133,6 +134,59 @@ sans cela. L'hôte est autoritaire : il ne reçoit que des intentions bornées.
 Le regard des joueurs et la pose de course ne sont pas dans la simulation : ils
 dépendent de l'écran (`render/regard.ts`). Un humain de l'équipe 1 voit la
 piste retournée (`Projection.miroir`) et joue lui aussi à droite.
+
+### Multijoueur Wi-Fi
+
+Menu → **MULTI WIFI**. L'appareil qui fait **CREER UNE PARTIE** devient le
+serveur ; les autres appareils du même Wi-Fi voient la partie dans leur liste,
+sans saisir d'adresse. Chacun arrive d'abord en spectateur et prend un siège
+(**PRENDRE**) ; les sièges libres sont tenus par le CPU.
+
+| Format                  | Sièges ouverts aux humains          |
+| ----------------------- | ----------------------------------- |
+| COOP CONTRE CPU         | A1 (l'hôte) et A2 contre deux CPU   |
+| 1 CONTRE 1              | A1 contre B1                        |
+| 2 CONTRE 1 / 1 CONTRE 2 | A1 A2 contre B1, ou A1 contre B1 B2 |
+| 2 CONTRE 2              | quatre humains                      |
+
+L'hôte règle le format, le niveau du CPU et la longueur du match, exclut un
+joueur (la croix sur sa carte) et lance quand quelqu'un est en face (en coop :
+quand le second siège de l'équipe est pris). Une fois la partie lancée, les
+sièges sont verrouillés : quiconque arrive ensuite regarde. La pause est
+partagée ; en fin de match, l'hôte choisit REJOUER ou SALON. Un joueur qui part
+est remplacé par le CPU.
+
+Chaque joueur de l'équipe B voit la piste retournée et joue lui aussi à droite ;
+une flèche rouge repère les autres humains. Le code est dans `app/parcours-lan.ts`
+(navigation et boucle de match), `net/session-hote.ts` et `net/session-client.ts`
+(connexions), `net/salon.ts` et `net/formats.ts` (règles du salon, pures et
+testées), `net/ctrl.ts` (messages), `render/lan-liste.ts` et `render/lan-salon.ts`.
+
+**Limites connues.** Les Wi-Fi « invités » qui isolent les appareils, ou un
+réseau qui bloque STUN, empêchent la liaison ; le jeu par Internet est
+volontairement impossible (voir lan-kit). La reconnexion après une coupure et
+les spectateurs avec réactions ne sont pas encore là.
+
+En développement, `?reseau=xxx&courtier=ws://localhost:8883` remplace la
+détection du réseau et les serveurs publics par un courtier local (c'est ce
+qu'utilisent les tests de bout en bout).
+
+### Tests de bout en bout
+
+```bash
+npx playwright install chromium   # une fois
+npm run e2e                       # tous
+npm run e2e -- coop quatre        # certains
+```
+
+Les scénarios de `e2e/` pilotent le vrai jeu dans Chromium : chaque appareil est
+un contexte de navigateur séparé, avec un faux courtier MQTT local, sans matériel.
+
+| Scénario | Ce qu'il vérifie                                                                                                                                                                                             |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `coop`   | Découverte, salon, siège, match synchronisé, commandes de l'invité (dont un service), pause partagée, fin, retour au salon, départ                                                                           |
+| `quatre` | 2 contre 2 à quatre appareils plus un spectateur et un arrivant en plein match : écran retourné de l'équipe B, commandes routées vers le bon joueur, siège non volable, reprise d'un joueur parti par le CPU |
+| `depart` | L'hôte ferme sa partie : l'invité est prévenu, la partie disparaît de la liste, une nouvelle se rejoint                                                                                                      |
 
 ### Rendu
 

@@ -23,3 +23,21 @@ jobs:
       - run: npm run format:check
       - run: npm test
       - run: npm run build
+
+  e2e:
+    # tests de bout en bout dans Chromium : coop, 2 contre 2, départ de l'hôte (courtier MQTT local)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run e2e
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: captures-e2e
+          path: e2e/captures/

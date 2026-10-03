@@ -1,5 +1,7 @@
 import { dessineCommandes } from '@render/commandes';
 import { dessineBanniere, dessineJauge, dessineTableau } from '@render/hud';
+import { dessineListe } from '@render/lan-liste';
+import { dessineSalon } from '@render/lan-salon';
 import { dessineReglages } from '@render/reglages';
 import { dessineDemarrage, dessineFin, dessineMenu, dessinePause, dessinePortrait } from '@render/menus';
 import { C } from '@render/palette';
@@ -21,7 +23,8 @@ export function rendu(app: BandejaApp, t: number): void {
     return;
   }
   if (!app.decor || !app.sprites) return;
-  const horsMatch = ecranUI === 'menu' || ecranUI === 'reglages';
+  const horsMatch =
+    ecranUI === 'menu' || ecranUI === 'reglages' || ecranUI === 'lan-liste' || ecranUI === 'lan-salon';
   g.fillStyle = C.nuit;
   g.fillRect(0, 0, W, H);
   const sx = secousseAleatoire(effets.secousse);
@@ -57,9 +60,15 @@ export function rendu(app: BandejaApp, t: number): void {
       niveauSuivant: () => app.niveauSuivant(),
       jeuxSuivants: () => app.jeuxSuivants(),
       reglages: () => app.ouvreReglages(true),
+      multi: () => app.lan.ouvre(),
     };
     dessineMenu(v, app.boutons, reglages, actions, t, __VERSION_APP__);
     if (app.attenteDemarrage) dessineDemarrage(v, t);
+  } else if (ecranUI === 'lan-liste') {
+    dessineListe(v, app.boutons, app.lan.vueListe(), t);
+  } else if (ecranUI === 'lan-salon') {
+    const salon = app.lan.vueSalon();
+    if (salon) dessineSalon(v, app.boutons, salon);
   } else if (ecranUI === 'reglages') {
     dessineReglages(v, app.boutons, {
       son: app.pref.son,
@@ -73,18 +82,34 @@ export function rendu(app: BandejaApp, t: number): void {
       v,
       app.boutons,
       () => app.pause(false),
-      () => app.retourMenu(),
+      () => (app.lan.actif ? app.lan.quitte() : app.retourMenu()),
     );
   } else {
-    dessineFin(
-      v,
-      app.boutons,
-      jeu,
-      reglages,
-      () => app.lanceMatch(),
-      () => app.retourMenu(),
-      t,
-    );
+    const lan = app.lan;
+    const hote = lan.hote;
+    if (lan.actif) {
+      // en réseau, l'hôte décide de la revanche ; les autres attendent ou quittent
+      dessineFin(
+        v,
+        app.boutons,
+        jeu,
+        reglages,
+        hote ? () => hote.agit({ a: 'rejoue' }) : null,
+        hote ? () => hote.agit({ a: 'salon' }) : () => lan.quitte(),
+        t,
+        hote ? 'SALON' : 'QUITTER',
+      );
+    } else {
+      dessineFin(
+        v,
+        app.boutons,
+        jeu,
+        reglages,
+        () => app.lanceMatch(),
+        () => app.retourMenu(),
+        t,
+      );
+    }
   }
   if (effets.flash > 0) {
     g.fillStyle = `rgba(255,255,255,${effets.flash * 0.5})`;

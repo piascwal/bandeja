@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { PAS } from '@core/constants';
+import { donneAuCpu } from '@core/humain';
 import { pas } from '@core/partie';
 import { finPoint, gagne } from '@core/regles';
 import type { Commande, Joueur } from '@core/types';
@@ -79,5 +80,28 @@ describe('plusieurs humains sur la piste', () => {
     }
     // sur 8 jeux, les deux humains de l'équipe ont servi
     expect([...humainsVus].sort()).toEqual([0, 1]);
+  });
+
+  it('quand un humain part, le CPU reprend son joueur et il joue', () => {
+    const jeu = partieTest({ mode: 'match', sieges: [0, 1, 2], local: 0 }, 21);
+    const parti = jeu.joueurs[1]!;
+    donneAuCpu(jeu, 1);
+    expect(parti.humain).toBe(false);
+    expect(jeu.humains.map((h) => h.id)).toEqual([0, 2]);
+    // un joueur humain n'a pas d'IA : repris par le CPU, il se déplace maintenant seul
+    const x0 = parti.x;
+    const y0 = parti.y;
+    simule(jeu, 20);
+    expect(Math.hypot(parti.x - x0, parti.y - y0)).toBeGreaterThan(0.5);
+    // sans effet sur un CPU, un siège inconnu ni sur le joueur de cet écran des autres
+    donneAuCpu(jeu, 1);
+    donneAuCpu(jeu, 9);
+    expect(jeu.humains).toHaveLength(2);
+  });
+
+  it("si c'est le joueur de cet écran qui est repris, plus personne n'est « local »", () => {
+    const jeu = partieTest({ mode: 'match', sieges: [0, 1], local: 1 }, 4);
+    donneAuCpu(jeu, 1);
+    expect(jeu.humain).toBeNull();
   });
 });

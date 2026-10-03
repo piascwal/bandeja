@@ -19,6 +19,7 @@ export interface ActionsMenu {
   niveauSuivant: () => void;
   jeuxSuivants: () => void;
   reglages: () => void;
+  multi: () => void;
 }
 
 const BLEU = { couleur: '#1f7fb3', clair: '#6fd0ff', fonce: '#0f4d73' };
@@ -70,9 +71,9 @@ export function dessineMenu(
   const mt = r.matchs[r.niveau] ?? 0;
   const bas = py + ph + 8;
   if (mt && bas + 8 < H) texte(g, `VICTOIRES ${vict} / ${mt}`, cx, bas, C.gris, 1, 'c');
-  bouton(g, zones, 'REGLAGES', cx - 40, Math.min(H - 20, bas + 14), 80, 13, a.reglages, {
-    couleur: '#232a58',
-  });
+  const yb = Math.min(H - 20, bas + 14);
+  bouton(g, zones, 'MULTI WIFI', cx - 88, yb, 86, 13, a.multi, BLEU);
+  bouton(g, zones, 'REGLAGES', cx + 2, yb, 86, 13, a.reglages, { couleur: '#232a58' });
   texte(g, version, W - 3, H - 9, '#3a4166', 1, 'd', null);
 }
 
@@ -96,9 +97,10 @@ export function dessineFin(
   zones: ZoneBouton[],
   jeu: Partie,
   r: ReglagesMenu,
-  rejouer: () => void,
+  rejouer: (() => void) | null,
   menu: () => void,
   t: number,
+  libelleMenu = 'MENU',
 ): void {
   const { g, W, H } = v;
   voile(g, W, H, 0.62);
@@ -112,8 +114,13 @@ export function dessineFin(
   const st = jeu.stats;
   texte(g, `COUPS GAGNANTS  ${st.gagnants[0]} - ${st.gagnants[1]}`, cx, cy - 12, C.gris, 1, 'c');
   texte(g, `POR TRES  ${st.portres[0]} - ${st.portres[1]}`, cx, cy - 2, C.gris, 1, 'c');
-  bouton(g, zones, 'REJOUER', cx - 108, cy + 12, 100, 20, rejouer, ROUGE);
-  bouton(g, zones, 'MENU', cx + 8, cy + 12, 100, 20, menu);
+  if (rejouer) {
+    bouton(g, zones, 'REJOUER', cx - 108, cy + 12, 100, 20, rejouer, ROUGE);
+    bouton(g, zones, libelleMenu, cx + 8, cy + 12, 100, 20, menu);
+  } else {
+    texte(g, 'EN ATTENTE DE L HOTE', cx, cy + 12, C.or, 1, 'c');
+    bouton(g, zones, libelleMenu, cx - 50, cy + 24, 100, 16, menu);
+  }
   const bilan = `NIVEAU ${NIVEAUX[r.niveau]!.nom}   VICTOIRES ${r.victoires[r.niveau] ?? 0} / ${r.matchs[r.niveau] ?? 0}`;
   texte(g, bilan, cx, cy + 42, C.grisBleu, 1, 'c');
 }
