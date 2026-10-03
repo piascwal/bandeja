@@ -1,0 +1,87 @@
+import { defineConfig } from 'vite';
+import { readFileSync } from 'node:fs';
+import { VitePWA } from 'vite-plugin-pwa';
+import { ALIAS } from './alias.ts';
+
+// Déployé sur GitHub Pages en tant que site de projet
+// (https://piascwal.github.io/bandeja/) : tout doit être résolu sous ce
+// sous-chemin, pas à la racine du domaine. En dev, on reste à la racine pour
+// que `npm run dev` reste simple.
+const BASE = process.env.NODE_ENV === 'production' ? '/bandeja/' : '/';
+
+// Numéro affiché sur le menu : la version de package.json, suivie du numéro de
+// build GitHub Actions (+14...) pour savoir d'un coup d'œil si un téléphone a
+// bien reçu la dernière mise en ligne.
+const { version } = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')) as {
+  version: string;
+};
+const VERSION_APP = `V${version}${process.env.GITHUB_RUN_NUMBER ? `+${process.env.GITHUB_RUN_NUMBER}` : ''}`;
+
+/**
+ * Politique de sécurité du contenu, posée sur la page publiée (pas en
+ * développement : le serveur Vite injecte ses propres scripts) : rien d'autre
+ * que les fichiers du jeu, aucune connexion vers l'extérieur.
+ */
+const CSP = [
+  "default-src 'self'",
+  "script-src 'self'",
+  "style-src 'self'",
+  "img-src 'self' data: blob:",
+  "connect-src 'self'",
+  "worker-src 'self'",
+  "manifest-src 'self'",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'none'",
+].join('; ');
+
+export default defineConfig({
+  base: BASE,
+  define: {
+    __VERSION_APP__: JSON.stringify(VERSION_APP),
+  },
+  resolve: { alias: ALIAS },
+  plugins: [
+    {
+      name: 'bandeja-csp',
+      apply: 'build',
+      transformIndexHtml: (html) =>
+        html.replace(
+          '<meta charset="UTF-8" />',
+          `<meta charset="UTF-8" />\n<meta http-equiv="Content-Security-Policy" content="${CSP}" />`,
+        ),
+    },
+    VitePWA({
+      registerType: 'autoUpdate',
+      includeAssets: ['icons/*.png', 'sprites/*.png'],
+      manifest: {
+        id: BASE,
+        name: 'Bandeja — Padel Arcade',
+        short_name: 'Bandeja',
+        description: 'Padel arcade en pixel art, en double contre l’ordinateur, jouable en mode paysage.',
+        // "fullscreen" masque la barre d'adresse une fois l'app installée ; les
+        // navigateurs qui ne le supportent pas retombent sur "standalone".
+        display: 'fullscreen',
+        display_override: ['fullscreen', 'standalone'],
+        orientation: 'landscape',
+        start_url: BASE,
+        scope: BASE,
+        background_color: '#070914',
+        theme_color: '#070914',
+        icons: [
+          { src: 'icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: 'icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+          { src: 'icons/icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+        ],
+      },
+      workbox: {
+        // le POC gelé (public/reference/) n'a rien à faire dans le cache hors ligne
+        globPatterns: ['**/*.{js,css,html,png,svg,webmanifest}'],
+        globIgnores: ['reference/**'],
+      },
+    }),
+  ],
+  build: {
+    target: 'es2022',
+  },
+});

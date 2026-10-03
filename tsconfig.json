@@ -1,0 +1,28 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "noEmit": true,
+    "verbatimModuleSyntax": true,
+    "types": ["vite/client", "vite-plugin-pwa/client"],
+    "paths": {
+      "@core/*": ["./src/core/*"],
+      "@render/*": ["./src/render/*"],
+      "@audio/*": ["./src/audio/*"],
+      "@input/*": ["./src/input/*"],
+      "@app/*": ["./src/app/*"]
+    }
+  },
+  "include": ["src", "tests"]
+}

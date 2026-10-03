@@ -1,0 +1,201 @@
+import type { Aleatoire } from './aleatoire';
+
+export type Equipe = 0 | 1;
+/** Effet donné à la balle : règle son rebond au sol et contre les vitres. */
+export type Effet = 'plat' | 'lobe' | 'lift' | 'smash' | 'coupe' | 'vibora';
+/** Les coups, tels qu'annoncés à l'écran. */
+export type Coup = 'plat' | 'lobe' | 'coupe' | 'amorti' | 'smash' | 'vibora' | 'bandeja' | 'vitre' | 'cote';
+/** Les boutons du losange (et le bouton aérien au centre). */
+export type Bouton = 'plat' | 'coupe' | 'lobe' | 'amorti' | 'aerien';
+/** Vitre visée pour un rebond voulu : celle du fond, ou celle de côté (haut / bas de l'écran). */
+export type Mur = 'fond' | 'haut' | 'bas';
+export type TypeService = 'plat' | 'coupe';
+export type Surface = 'sol' | 'vitre' | 'grille' | 'filet' | 'sortie';
+export type Phase = 'service' | 'jeu' | 'point' | 'fin';
+export type Posture = 'fond' | 'filet';
+export type PoseCoup = 'attente' | 'smash2';
+
+export interface Niveau {
+  nom: string;
+  /** multiplicateur de vitesse de course */
+  vit: number;
+  /** temps de réaction (s) */
+  reac: number;
+  /** imprécision des coups */
+  err: number;
+  /** goût du risque (smash, frappes appuyées) */
+  agress: number;
+  /** imprécision de la jauge de service */
+  serv: number;
+}
+
+export interface Point2 {
+  x: number;
+  y: number;
+}
+
+export interface Joueur {
+  id: number;
+  eq: Equipe;
+  /** 0 : drive, 1 : revers */
+  poste: 0 | 1;
+  /** côté habituel en profondeur (2.5 ou 7.5) */
+  cote: number;
+  /** côté tenu sur le point en cours */
+  home: number;
+  humain: boolean;
+  niv: Niveau;
+  err: number;
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  /** direction voulue (repère de la piste), pour le joueur humain */
+  ex: number;
+  ey: number;
+  sprint: boolean;
+  cible: Point2;
+  posServ: Point2;
+  /** 1 au moment du coup, redescend à 0 */
+  swing: number;
+  haut: boolean;
+  poseCoup: PoseCoup;
+  /** coup demandé à l'avance par le joueur humain */
+  intent: { type: Bouton; t: number } | null;
+  /** puissance accumulée par l'appui anticipé (0 → 1) */
+  charge: number;
+  /** temps de récupération après un coup */
+  cd: number;
+  /** distance parcourue, pour l'animation des pas */
+  pas: number;
+  /** sens de l'attaque à l'écran */
+  face: 1 | -1;
+  /** temps restant tourné vers sa vitre après un rebond voulu */
+  tourne: number;
+  faceCoup: 1 | -1;
+  /** où regarde le joueur à l'écran (+1 : à droite) */
+  regard: number;
+  /** pose de course affichée (avec hystérésis) */
+  court: boolean;
+}
+
+/** Ce que la physique a besoin de connaître de la balle. */
+export interface CorpsBalle {
+  x: number;
+  y: number;
+  z: number;
+  vx: number;
+  vy: number;
+  vz: number;
+  spin: Effet;
+  /** sens latéral de l'effet (víbora) */
+  spinDir: number;
+  roule: boolean;
+  dehors: boolean;
+  /** smash « por tres » : le prochain rebond l'envoie hors de la piste */
+  portres: boolean;
+}
+
+export interface Balle extends CorpsBalle {
+  /** équipe qui a frappé */
+  eqF: Equipe;
+  /** camp où la balle doit être jouée */
+  camp: Equipe;
+  /** rebonds au sol depuis la frappe */
+  sol: number;
+  service: boolean;
+  /** a touché le filet */
+  filet: boolean;
+  coup: Coup | null;
+  /** a rebondi contre une vitre du camp qui doit jouer */
+  mur: boolean;
+  /** dernières positions (m), pour la traînée */
+  trace: [number, number, number][];
+}
+
+export interface PointPredit {
+  t: number;
+  x: number;
+  y: number;
+  z: number;
+  sol: number;
+  ok: boolean;
+}
+
+export interface Prediction {
+  pts: PointPredit[];
+  faute: boolean;
+  rebond: Point2 | null;
+  eq: Equipe;
+}
+
+export interface Plan extends PointPredit {
+  s: Joueur;
+  score: number;
+  sc: number;
+}
+
+/** Ce que le joueur humain demande à chaque pas (entrées déjà traduites). */
+export interface Commande {
+  /** direction à l'écran, chaque composante entre -1 et 1 */
+  dx: number;
+  dy: number;
+  appuis: Bouton[];
+  sprint: boolean;
+}
+
+/**
+ * Effets de bord émis par la simulation (son, particules, annonces...) :
+ * la simulation ne les joue jamais elle-même.
+ */
+export type Evenement =
+  | { type: 'impact'; surface: Exclude<Surface, 'sortie'>; x: number; y: number; z: number; force: number }
+  | { type: 'frappe'; coup: Coup; puissance: number; portres: boolean; humain: boolean; x: number; y: number }
+  | { type: 'service'; service: TypeService; jauge: number; humain: boolean; x: number; y: number }
+  | { type: 'jaugeLancee' }
+  | { type: 'point'; gagnant: Equipe; raison: string }
+  | { type: 'faute'; raison: string }
+  | { type: 'let' }
+  | { type: 'jeu'; gagnant: Equipe; jeux: [number, number] }
+  | { type: 'pointEnOr' }
+  | { type: 'finMatch'; gagnant: Equipe };
+
+export type Mode = 'match' | 'demo';
+
+export interface Partie {
+  mode: Mode;
+  niv: Niveau;
+  /** jeux à gagner pour remporter le match */
+  jeuxCible: number;
+  joueurs: Joueur[];
+  balle: Balle;
+  humain: Joueur | null;
+  jeux: [number, number];
+  pts: [number, number];
+  nJeu: number;
+  /** ordre de service, un joueur par jeu */
+  ordre: Joueur[];
+  /** 1 après une première faute de service */
+  faute: number;
+  /** le point se rejoue (faute de service, let) */
+  rejoue: boolean;
+  phase: Phase;
+  tPhase: number;
+  temps: number;
+  tFrappe: number;
+  gagnant: Equipe;
+  serveur: Joueur;
+  receveur: Joueur;
+  /** les joueurs sont en place pour servir */
+  pret: boolean;
+  jauge: { type: TypeService; t: number } | null;
+  cpuServ: { t: number; vise: number } | null;
+  posture: [Posture, Posture];
+  plan: [Plan | null, Plan | null];
+  pred: Prediction | null;
+  tPred: number;
+  stats: { gagnants: [number, number]; portres: [number, number]; fautes: [number, number]; vitres: number };
+  /** évènements du pas en cours, vidés par l'application à chaque image */
+  evenements: Evenement[];
+  rng: Aleatoire;
+}
