@@ -164,8 +164,18 @@ testées), `net/ctrl.ts` (messages), `render/lan-liste.ts` et `render/lan-salon.
 
 **Limites connues.** Les Wi-Fi « invités » qui isolent les appareils, ou un
 réseau qui bloque STUN, empêchent la liaison ; le jeu par Internet est
-volontairement impossible (voir lan-kit). La reconnexion après une coupure et
-les spectateurs avec réactions ne sont pas encore là.
+volontairement impossible (voir lan-kit). Les spectateurs avec réactions ne sont
+pas encore là.
+
+**Coupure et reprise.** Si un invité perd la connexion en plein match, l'hôte
+garde son siège, fige la partie et affiche « en attente de… » (60 s, ou
+« NE PLUS ATTENDRE » : le CPU prend le joueur). L'invité relance la découverte
+et se représente avec son identifiant et un jeton secret (`app/reconnexion-lan.ts`) :
+lui seul retrouve son siège. Un compte à rebours de 3 s relance ensuite le jeu,
+comme après une pause. Les règles sont pures et testées dans `net/absences.ts` ;
+en développement, `?reconnexion=20` raccourcit le délai. Le code à 4 chiffres
+affiché sur chaque carte du salon est le même chez l'hôte et chez le joueur :
+s'il diffère, quelqu'un s'est interposé.
 
 En développement, `?reseau=xxx&courtier=ws://localhost:8883` remplace la
 détection du réseau et les serveurs publics par un courtier local (c'est ce
@@ -182,11 +192,12 @@ npm run e2e -- coop quatre        # certains
 Les scénarios de `e2e/` pilotent le vrai jeu dans Chromium : chaque appareil est
 un contexte de navigateur séparé, avec un faux courtier MQTT local, sans matériel.
 
-| Scénario | Ce qu'il vérifie                                                                                                                                                                                             |
-| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `coop`   | Découverte, salon, siège, match synchronisé, commandes de l'invité (dont un service), pause partagée, fin, retour au salon, départ                                                                           |
-| `quatre` | 2 contre 2 à quatre appareils plus un spectateur et un arrivant en plein match : écran retourné de l'équipe B, commandes routées vers le bon joueur, siège non volable, reprise d'un joueur parti par le CPU |
-| `depart` | L'hôte ferme sa partie : l'invité est prévenu, la partie disparaît de la liste, une nouvelle se rejoint                                                                                                      |
+| Scénario      | Ce qu'il vérifie                                                                                                                                                                                             |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `coop`        | Découverte, salon, siège, match synchronisé, commandes de l'invité (dont un service), pause partagée, fin, retour au salon, départ                                                                           |
+| `quatre`      | 2 contre 2 à quatre appareils plus un spectateur et un arrivant en plein match : écran retourné de l'équipe B, commandes routées vers le bon joueur, siège non volable, reprise d'un joueur parti par le CPU |
+| `reconnexion` | Coupure brutale d'un invité : partie figée, siège gardé, reconnexion automatique, compte à rebours, le jeu repart                                                                                            |
+| `depart`      | L'hôte ferme sa partie : l'invité est prévenu, la partie disparaît de la liste, une nouvelle se rejoint                                                                                                      |
 
 ### Rendu
 

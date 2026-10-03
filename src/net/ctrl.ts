@@ -13,7 +13,7 @@ import { valideAction, valideEtat, type ActionSalon, type EtatSalon } from './sa
  * Dans les deux sens : `ping` / `pong` (latence et coupure, voir lan-kit).
  */
 export type MsgCtrl =
-  | { t: 'bonjour'; v: number; nom: string; appareil: string }
+  | { t: 'bonjour'; v: number; nom: string; appareil: string; jeton: string }
   | { t: 'action'; x: ActionSalon }
   | { t: 'pause'; oui: boolean }
   | { t: 'quitte' }
@@ -28,11 +28,17 @@ const APPAREIL = /^[0-9a-f]{16}$/;
 const entier = (v: unknown, min: number, max: number): v is number =>
   typeof v === 'number' && Number.isInteger(v) && v >= min && v <= max;
 
-export const bonjour = (nom: string, appareil: string): MsgCtrl => ({
+/**
+ * Se présenter à l'hôte. Le jeton est un secret tiré à l'arrivée : il ne voyage
+ * que dans la liaison chiffrée, et lui seul rend son siège à un joueur qui
+ * revient après une coupure.
+ */
+export const bonjour = (nom: string, appareil: string, jeton: string): MsgCtrl => ({
   t: 'bonjour',
   v: VERSION_PROTOCOLE,
   nom,
   appareil,
+  jeton,
 });
 
 /** Valide un message du canal fiable, champ par champ. Renvoie null si quoi que ce soit cloche. */
@@ -41,15 +47,10 @@ export function lisCtrl(o: unknown): MsgCtrl | null {
   const m = o as Record<string, unknown>;
   switch (m.t) {
     case 'bonjour':
-      if (
-        !entier(m.v, 0, 1000) ||
-        typeof m.nom !== 'string' ||
-        !NOM.test(m.nom) ||
-        typeof m.appareil !== 'string' ||
-        !APPAREIL.test(m.appareil)
-      )
-        return null;
-      return { t: 'bonjour', v: m.v, nom: m.nom, appareil: m.appareil };
+      if (!entier(m.v, 0, 1000) || typeof m.nom !== 'string' || !NOM.test(m.nom)) return null;
+      if (typeof m.appareil !== 'string' || !APPAREIL.test(m.appareil)) return null;
+      if (typeof m.jeton !== 'string' || !APPAREIL.test(m.jeton)) return null;
+      return { t: 'bonjour', v: m.v, nom: m.nom, appareil: m.appareil, jeton: m.jeton };
     case 'action': {
       const x = valideAction(m.x);
       return x ? { t: 'action', x } : null;

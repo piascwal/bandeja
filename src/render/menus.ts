@@ -47,8 +47,8 @@ export function dessineMenu(
   }
   texte(g, 'PADEL ARCADE', cx, ty + 7 * e + 5, C.or, 1, 'c');
 
-  const pw = 196;
-  const ph = 76;
+  const pw = 186;
+  const ph = 86;
   const py = ty + 7 * e + 16;
   panneau(g, cx - pw / 2, py, pw, ph);
   const lignes: [string, string, () => void][] = [
@@ -60,20 +60,21 @@ export function dessineMenu(
     texte(g, k, cx - pw / 2 + 10, y + 4, C.gris, 1, 'g');
     bouton(g, zones, `< ${val} >`, cx - 14, y, 104, 13, act, { couleur: '#232a58' });
   });
+  // comme dans Face-Off : JOUER et MULTI WIFI côte à côte, les réglages centrés dessous
+  const jy = py + 38;
   const pulse = Math.sin(t * 5) > 0;
-  bouton(g, zones, 'JOUER', cx - 50, py + ph - 29, 100, 24, a.joue, {
+  bouton(g, zones, 'JOUER', cx - 88, jy, 84, 22, a.joue, {
     ...ROUGE,
     e: 2,
     couleur: pulse ? '#e63a58' : ROUGE.couleur,
   });
+  bouton(g, zones, 'MULTI WIFI', cx + 4, jy, 84, 22, a.multi, BLEU);
+  bouton(g, zones, 'REGLAGES', cx - 60, jy + 28, 120, 13, a.reglages, { couleur: '#232a58' });
 
   const vict = r.victoires[r.niveau] ?? 0;
   const mt = r.matchs[r.niveau] ?? 0;
-  const bas = py + ph + 8;
+  const bas = py + ph + 6;
   if (mt && bas + 8 < H) texte(g, `VICTOIRES ${vict} / ${mt}`, cx, bas, C.gris, 1, 'c');
-  const yb = Math.min(H - 20, bas + 14);
-  bouton(g, zones, 'MULTI WIFI', cx - 88, yb, 86, 13, a.multi, BLEU);
-  bouton(g, zones, 'REGLAGES', cx + 2, yb, 86, 13, a.reglages, { couleur: '#232a58' });
   texte(g, version, W - 3, H - 9, '#3a4166', 1, 'd', null);
 }
 

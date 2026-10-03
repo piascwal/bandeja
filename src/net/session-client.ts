@@ -27,6 +27,12 @@ export type RaisonFin = 'quitte' | 'perdu' | 'complet' | 'version' | 'spectateur
 const PEREMPTION_MS = 75_000;
 const REPONSE_MAX_MS = 8_000;
 
+/** Ce qui rend son siège à un joueur qui revient. */
+export interface Identite {
+  appareil: string;
+  jeton: string;
+}
+
 /** Les paramètres d'un début de match reçus de l'hôte. */
 export interface DebutMatch {
   /** le siège de cet appareil, -1 s'il regarde */
@@ -43,7 +49,11 @@ export interface DebutMatch {
  * instantanés et ne lui envoie que ses commandes.
  */
 export class SessionClient {
-  readonly appareil = idAleatoire(8);
+  /** identifiant de cet appareil et jeton secret : conservés pour revenir à son siège après une coupure */
+  readonly appareil: string;
+  readonly jeton: string;
+  /** code à 4 chiffres, le même chez l'hôte : s'ils diffèrent, quelqu'un s'est interposé */
+  code: string | null = null;
   /** l'état du salon, tel que l'hôte l'a envoyé en dernier */
   etat: EtatSalon | null = null;
   siege = -1;
@@ -66,9 +76,23 @@ export class SessionClient {
     private readonly annuaire: Annuaire<AnnonceBandeja>,
     private readonly ips: string[],
     private readonly nom: string,
-  ) {}
+    identite?: Identite,
+  ) {
+    this.appareil = identite?.appareil ?? idAleatoire(8);
+    this.jeton = identite?.jeton ?? idAleatoire(8);
+  }
 
-  static async cree(nom: string): Promise<SessionClient> {
+  /** Identité à reprendre pour se reconnecter à un siège gardé. */
+  get identite(): Identite {
+    return { appareil: this.appareil, jeton: this.jeton };
+  }
+
+  /** L'identifiant de la partie rejointe (celui de son annonce). */
+  get idHote(): string | null {
+    return this.hote;
+  }
+
+  static async cree(nom: string, identite?: Identite): Promise<SessionClient> {
     const dev = reglagesDev();
     const { salons, ipsPubliques } = await salonsDuReseau(APP, dev.reseau);
     const annuaire = new Annuaire<AnnonceBandeja>({
@@ -78,7 +102,7 @@ export class SessionClient {
       courtiers: dev.courtiers ?? undefined,
     });
     await annuaire.ouvre();
-    const s = new SessionClient(annuaire, ipsPubliques, nom);
+    const s = new SessionClient(annuaire, ipsPubliques, nom, identite);
     annuaire.onAnnonce = (a) => {
       s.annonces.set(a.id, { a, vu: performance.now() });
       s.onListe();
@@ -143,7 +167,8 @@ export class SessionClient {
     };
     l.onFerme = () => this.finir('perdu');
     this.veille = new Veille(l, () => l.ferme());
-    l.envoieCtrl(bonjour(this.nom, this.appareil));
+    this.code = await l.codeVerification();
+    l.envoieCtrl(bonjour(this.nom, this.appareil, this.jeton));
   }
 
   private surCtrl(o: unknown): void {
@@ -193,6 +218,11 @@ export class SessionClient {
   envoieCommande(c: Commande): void {
     this.emetteur.suit(c);
     if (this.siege >= 0 && this.liaison?.ouverteMaintenant) this.liaison.envoieJeu(this.emetteur.encode());
+  }
+
+  /** Coupe brutalement la liaison, comme une panne de Wi-Fi (essais de reconnexion). */
+  perdre(): void {
+    this.liaison?.ferme();
   }
 
   private finir(raison: RaisonFin): void {

@@ -8,7 +8,7 @@ import type { Bouton, Coup, Effet, Phase, PoseCoup, TypeService } from '@core/ty
  * octet de version en tête de l'instantané protège en plus d'un décodage de
  * travers.
  */
-export const VERSION_PROTOCOLE = 1;
+export const VERSION_PROTOCOLE = 2;
 
 /** Identité de Bandeja sur le réseau local (voir lan-kit). */
 export const APP: AppLan = { id: 'bandeja', version: VERSION_PROTOCOLE };
@@ -19,6 +19,8 @@ export const SPECTATEURS_MAX = 8;
 
 /** L'hôte garde le siège d'un joueur déconnecté pendant ce délai (s). */
 export const RECONNEXION_S = 60;
+/** Compte à rebours avant la reprise du jeu après une pause ou une reconnexion (s). */
+export const REPRISE_S = 3;
 
 // Les listes ci-dessous donnent l'indice transmis pour chaque valeur : on n'en
 // retire ni n'en réordonne jamais sans changer VERSION_PROTOCOLE.

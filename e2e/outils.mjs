@@ -66,9 +66,9 @@ export async function environnement(nomTest) {
   const env = {
     urlJeu,
     navigateur,
-    /** Ouvre un appareil ; `options` : viewport, dpr, nom du joueur. */
+    /** Ouvre un appareil ; `options` : viewport, dpr, nom du joueur, `requete` (paramètres d'URL de développement en plus). */
     async appareil(nom, options = {}) {
-      const { largeur = 844, hauteur = 390, dpr = 2, pseudo = null } = options;
+      const { largeur = 844, hauteur = 390, dpr = 2, pseudo = null, requete = '' } = options;
       const contexte = await navigateur.newContext({
         viewport: { width: largeur, height: hauteur },
         deviceScaleFactor: dpr,
@@ -83,7 +83,7 @@ export async function environnement(nomTest) {
       page.on('console', (m) => {
         if (m.type() === 'error') console.log(`  [${nom}] console : ${m.text()}`);
       });
-      await page.goto(urlJeu);
+      await page.goto(urlJeu + requete);
       await page.waitForFunction(() => !!window.bandeja);
       await attends(800);
       if (pseudo) await page.evaluate((p) => (window.bandeja.pref.nom = p), pseudo);

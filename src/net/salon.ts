@@ -1,6 +1,6 @@
 import { JEUX, NIVEAUX } from '@core/constants';
 import { estFormat, peutLancer, siegeOuvert, type Format } from './formats';
-import { SIEGES_MAX, SPECTATEURS_MAX } from './protocole';
+import { REPRISE_S, SIEGES_MAX, SPECTATEURS_MAX } from './protocole';
 
 /** Un appareil assis à un siège. `appareil` est son identifiant (inconnu des autres joueurs, jamais affiché). */
 export interface Occupant {
@@ -28,6 +28,12 @@ export interface EtatSalon {
   phase: PhaseSalon;
   /** la partie est en pause pour tout le monde */
   pause: boolean;
+  /** sièges dont le joueur a perdu la connexion en plein match : l'hôte les garde et fige la partie */
+  absents: number[];
+  /** secondes qu'il reste aux absents pour revenir (0 : personne n'est absent) */
+  reconnexion: number;
+  /** secondes avant la reprise du jeu, après une pause ou un retour (0 : le jeu tourne) */
+  reprise: number;
 }
 
 /** Ce qu'un appareil demande (jamais « lancer » ni le format : ça ne vient pas du réseau). */
@@ -44,8 +50,21 @@ export type ActionHote =
   | { a: 'salon' };
 
 export function nouveauSalon(hote: Occupant, config: ConfigSalon): EtatSalon {
-  return { config, sieges: [hote, null, null, null], spectateurs: [], phase: 'attente', pause: false };
+  return {
+    config,
+    sieges: [hote, null, null, null],
+    spectateurs: [],
+    phase: 'attente',
+    pause: false,
+    absents: [],
+    reconnexion: 0,
+    reprise: 0,
+  };
 }
+
+/** La simulation tourne-t-elle ? Non en pause, tant qu'un joueur est absent, et pendant le compte à rebours de reprise. */
+export const jeuActif = (e: EtatSalon): boolean =>
+  e.phase === 'jeu' && !e.pause && e.absents.length === 0 && e.reprise <= 0;
 
 export const occupes = (e: EtatSalon): boolean[] => e.sieges.map((s) => s !== null);
 
@@ -192,12 +211,20 @@ export function valideEtat(o: unknown): EtatSalon | null {
     spectateurs.push(o2);
   }
   if (!PHASES.includes(e.phase as PhaseSalon) || typeof e.pause !== 'boolean') return null;
+  if (!Array.isArray(e.absents) || e.absents.length > SIEGES_MAX) return null;
+  if (!e.absents.every((i) => Number.isInteger(i) && i >= 0 && i < SIEGES_MAX && sieges[i])) return null;
+  const compte = (v: unknown, max: number): v is number =>
+    typeof v === 'number' && Number.isInteger(v) && v >= 0 && v <= max;
+  if (!compte(e.reconnexion, 600) || !compte(e.reprise, REPRISE_S)) return null;
   return {
     config: { format: c.format, niveau: c.niveau as number, jeux: c.jeux as number },
     sieges,
     spectateurs,
     phase: e.phase as PhaseSalon,
     pause: e.pause,
+    absents: [...(e.absents as number[])],
+    reconnexion: e.reconnexion,
+    reprise: e.reprise,
   };
 }
 

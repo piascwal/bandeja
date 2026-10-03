@@ -8,6 +8,8 @@ export interface SiegeVue {
   /** c'est cet appareil */
   moi: boolean;
   hote: boolean;
+  /** code de vérification de sa liaison (le même chez lui et chez l'hôte), s'il y en a un à montrer */
+  code: string | null;
 }
 
 export interface VueSalon {
@@ -15,7 +17,8 @@ export interface VueSalon {
   sieges: (SiegeVue | null)[];
   ouverts: boolean[];
   spectateurs: number;
-  format: string;
+  /** les formats au choix, avec celui qui est actif */
+  formats: { id: string; label: string; actif: boolean }[];
   niveau: string;
   jeux: string;
   jeSuisHote: boolean;
@@ -27,7 +30,7 @@ export interface VueSalon {
   onSiege: (s: number) => void;
   onRegarde: () => void;
   onExclut: (s: number) => void;
-  onFormat: () => void;
+  onFormat: (id: string) => void;
   onNiveau: () => void;
   onJeux: () => void;
   onLance: () => void;
@@ -73,13 +76,24 @@ export function dessineSalon(v: Vue, zones: ZoneBouton[], e: VueSalon): void {
   const yR = yS + 25;
   const pw = Math.min(W - 16, 250);
   panneau(g, cx - pw / 2, yR - 3, pw, 3 * 14 + 4);
+  // le format : toutes les options sous les yeux, celle de la partie en surbrillance
+  texte(g, 'FORMAT', cx - pw / 2 + 6, yR + 3, C.gris, 1, 'g');
+  const cwF = Math.floor((pw - 52) / e.formats.length);
+  e.formats.forEach((f, i) => {
+    const x = cx - pw / 2 + 46 + i * cwF;
+    if (e.jeSuisHote) {
+      bouton(g, zones, f.label, x, yR, cwF - 2, 12, () => e.onFormat(f.id), {
+        couleur: f.actif ? '#2d3a8c' : '#151a38',
+        texte: f.actif ? C.or : C.grisBleu,
+      });
+    } else texte(g, f.label, x + (cwF - 2) / 2, yR + 3, f.actif ? C.or : '#3a4166', 1, 'c', null);
+  });
   const lignes: [string, string, () => void][] = [
-    ['FORMAT', e.format, e.onFormat],
     ['CPU', e.niveau, e.onNiveau],
     ['MATCH', e.jeux, e.onJeux],
   ];
   lignes.forEach(([k, val, act], i) => {
-    const y = yR + i * 14;
+    const y = yR + (i + 1) * 14;
     texte(g, k, cx - pw / 2 + 6, y + 3, C.gris, 1, 'g');
     if (e.jeSuisHote) bouton(g, zones, `< ${val} >`, cx - 10, y, pw / 2 + 4, 12, act, { couleur: '#232a58' });
     else texte(g, val, cx + 6, y + 3, C.blanc, 1, 'g');
@@ -135,7 +149,16 @@ function carte(
       'c',
       null,
     );
-    texte(g, s.hote ? 'HOTE' : s.moi ? 'VOUS' : 'JOUEUR', x + w / 2, y + 28, C.grisBleu, 1, 'c', null);
+    texte(
+      g,
+      s.code ? `CODE ${s.code}` : s.hote ? 'HOTE' : s.moi ? 'VOUS' : 'JOUEUR',
+      x + w / 2,
+      y + 28,
+      s.code ? C.or : C.grisBleu,
+      1,
+      'c',
+      null,
+    );
     if (e.jeSuisHote && !s.hote) bouton(g, zones, 'X', x + w - 13, y + 5, 11, 10, () => e.onExclut(i), ROUGE);
     return;
   }

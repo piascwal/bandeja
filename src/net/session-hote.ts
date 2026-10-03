@@ -9,19 +9,20 @@ import {
 } from '@piascwal/lan-kit';
 import { COMMANDE_VIDE } from '@core/partie';
 import type { Commande } from '@core/types';
+import { basculePause, finAbsence, marqueAbsent, Minuteries, revient } from './absences';
 import { valideAnnonceBandeja, type AnnonceBandeja } from './annonce';
 import { lisCtrl, type MsgCtrl } from './ctrl';
-import { plageStricte, reglagesDev } from './dev';
+import { delaiReconnexion, plageStricte, reglagesDev } from './dev';
 import { EntreeDistante } from './entrees';
 import type { MessageEvenement } from './evenements';
 import { encodeInstantane, type Instantane } from './instantane';
 import { APP, SPECTATEURS_MAX, VERSION_PROTOCOLE } from './protocole';
 import {
+  appliqueAction,
   appliqueActionHote,
   arrive,
-  appliqueAction,
-  nouveauSalon,
   nbPresents,
+  nouveauSalon,
   part,
   siegeDe,
   siegesHumains,
@@ -44,6 +45,10 @@ interface Membre {
   veille: Veille | null;
   /** connu une fois son « bonjour » reçu */
   appareil: string | null;
+  /** secret de son arrivée : seul il rend son siège à un joueur qui revient */
+  jeton: string;
+  /** code de vérification de sa liaison (le même s'affiche chez lui) */
+  code: string | null;
   entree: EntreeDistante;
   limiteCtrl: Limiteur;
   limiteJeu: Limiteur;
@@ -53,6 +58,7 @@ interface Membre {
  * Session de l'hôte : il est le serveur. Il annonce la partie sur le Wi-Fi,
  * accepte les appareils (liaison WebRTC locale), arbitre le salon, simule le
  * match et le diffuse. Un invité ne lui envoie jamais que des intentions.
+ * Un joueur qui perd la connexion en plein match garde son siège un moment.
  */
 export class SessionHote {
   readonly etat: EtatSalon;
@@ -62,10 +68,15 @@ export class SessionHote {
   onDebut: () => void = () => {};
   /** un joueur demande la pause (ou la reprise) : l'app fige ou relance la simulation */
   onPause: (oui: boolean) => void = () => {};
-  /** un appareil est parti : son nom, pour l'afficher */
+  /** un appareil est parti pour de bon : son nom, pour l'afficher */
   onParti: (nom: string) => void = () => {};
+  /** un joueur est revenu après une coupure : l'app lui renvoie le match en cours */
+  onRevenu: (nom: string) => void = () => {};
 
   private membres: Membre[] = [];
+  /** le siège de chaque joueur absent, et ce qui prouve son identité s'il revient */
+  private readonly gardes = new Map<number, { appareil: string; jeton: string }>();
+  private readonly minuteries = new Minuteries();
   private score: [number, number] = [0, 0];
   private ferme_ = false;
 
@@ -110,6 +121,11 @@ export class SessionHote {
     return pire;
   }
 
+  /** Code de vérification de la liaison d'un appareil. */
+  codeDe(appareil: string): string | null {
+    return this.presents.find((m) => m.appareil === appareil)?.code ?? null;
+  }
+
   /** Annonce la partie, y compris lancée : on peut toujours venir la regarder. */
   private annonce(): void {
     if (this.ferme_) return;
@@ -130,15 +146,11 @@ export class SessionHote {
     this.annonce();
   }
 
-  private envoie(m: Membre, msg: MsgCtrl): void {
-    m.l.envoieCtrl(msg);
-  }
-
-  /** Envoie l'état du salon à tous les appareils, et prévient l'app. */
-  private diffuse(): void {
+  /** Envoie l'état du salon à tous les appareils, et prévient l'app (`annonce` : l'annonce réseau change aussi). */
+  private diffuse(annonce = true): void {
     const msg: MsgCtrl = { t: 'etat', e: this.etat };
-    for (const m of this.presents) this.envoie(m, msg);
-    this.annonce();
+    for (const m of this.presents) m.l.envoieCtrl(msg);
+    if (annonce) this.annonce();
     this.onChange();
   }
 
@@ -147,6 +159,7 @@ export class SessionHote {
     const exclu = x.a === 'exclut' ? this.etat.sieges[x.s]?.appareil : undefined;
     if (!appliqueActionHote(this.etat, x)) return;
     if (exclu) this.retire(this.presents.find((m) => m.appareil === exclu));
+    if (x.a === 'rejoue' || x.a === 'salon') this.score = [0, 0];
     this.diffuse();
     if (x.a === 'lance' || x.a === 'rejoue') this.onDebut();
   }
@@ -161,25 +174,45 @@ export class SessionHote {
 
   /** Pause (ou reprise) demandée par un joueur, hôte compris. */
   pause(oui: boolean): void {
-    if (this.etat.phase !== 'jeu' || this.etat.pause === oui) return;
-    this.etat.pause = oui;
+    if (!basculePause(this.etat, oui)) return;
     this.diffuse();
     this.onPause(oui);
   }
 
-  /** Le message de début de match de chaque appareil : son siège (-1 : il regarde) et les réglages. */
-  envoieDebut(graine: number): void {
+  /** À appeler à chaque image : fait avancer l'attente d'un joueur absent et le compte à rebours de reprise. */
+  avance(dt: number): void {
+    const r = this.minuteries.avance(this.etat, dt);
+    if (r === 'seconde') this.diffuse(false);
+    else if (r === 'fini') this.liberePlacesAbsentes();
+  }
+
+  /** L'hôte n'attend plus les joueurs absents : leurs sièges se libèrent, le CPU les remplace. */
+  arreteAttente(): void {
+    if (this.etat.absents.length > 0) this.liberePlacesAbsentes();
+  }
+
+  private liberePlacesAbsentes(): void {
+    const noms = finAbsence(this.etat);
+    this.gardes.clear();
+    this.diffuse();
+    for (const nom of noms) this.onParti(nom);
+  }
+
+  /** Le message de début de match d'un appareil : son siège (-1 : il regarde) et les réglages. */
+  private debutPour(m: Membre, graine: number): void {
     const e = this.etat;
-    for (const m of this.presents) {
-      this.envoie(m, {
-        t: 'debut',
-        siege: siegeDe(e, m.appareil!),
-        niveau: e.config.niveau,
-        jeux: e.config.jeux,
-        sieges: siegesHumains(e),
-        graine,
-      });
-    }
+    m.l.envoieCtrl({
+      t: 'debut',
+      siege: siegeDe(e, m.appareil!),
+      niveau: e.config.niveau,
+      jeux: e.config.jeux,
+      sieges: siegesHumains(e),
+      graine,
+    });
+  }
+
+  envoieDebut(graine: number): void {
+    for (const m of this.presents) this.debutPour(m, graine);
   }
 
   /** Commande d'un siège distant (COMMANDE_VIDE si le siège n'est pas à un humain connecté). */
@@ -197,7 +230,7 @@ export class SessionHote {
 
   diffuseEvenement(msg: MessageEvenement): void {
     const m: MsgCtrl = { t: 'evt', m: msg };
-    for (const x of this.presents) this.envoie(x, m);
+    for (const x of this.presents) x.l.envoieCtrl(m);
   }
 
   private async surSignal(de: string, salon: number, sig: Signal): Promise<void> {
@@ -214,6 +247,8 @@ export class SessionHote {
       l,
       veille: null,
       appareil: null,
+      jeton: '',
+      code: null,
       entree: new EntreeDistante(),
       limiteCtrl: new Limiteur(CTRL_PAR_S, CTRL_RAFALE),
       limiteJeu: new Limiteur(JEU_PAR_S, JEU_RAFALE),
@@ -223,6 +258,7 @@ export class SessionHote {
       const sdp = await l.accepteOffre(sig.sdp);
       await this.annuaire.signale(de, salon, { type: 'reponse', sdp });
       await l.ouverte();
+      m.code = await l.codeVerification();
     } catch {
       this.retire(m);
       return;
@@ -232,7 +268,7 @@ export class SessionHote {
     l.onJeu = (d) => {
       if (m.limiteJeu.accepte() && m.entree.recoit(d, performance.now() / 1000)) m.veille?.recuJeu();
     };
-    l.onFerme = () => this.retire(m);
+    l.onFerme = () => this.lache(m);
     m.veille = new Veille(l, () => l.ferme());
     setTimeout(() => {
       if (m.appareil === null) this.retire(m);
@@ -247,18 +283,25 @@ export class SessionHote {
     if (!m.limiteCtrl.accepte()) return;
     const e = this.etat;
     if (msg.t === 'bonjour') {
-      if (
-        msg.v !== VERSION_PROTOCOLE ||
-        m.appareil !== null ||
-        !arrive(e, { nom: msg.nom, appareil: msg.appareil })
-      ) {
-        this.retire(m);
+      if (msg.v !== VERSION_PROTOCOLE || m.appareil !== null) return this.retire(m);
+      // un joueur absent revient avec son jeton : il retrouve son siège
+      const siege = [...this.gardes].find(
+        ([, g]) => g.appareil === msg.appareil && g.jeton === msg.jeton,
+      )?.[0];
+      if (siege !== undefined) {
+        this.gardes.delete(siege);
+        Object.assign(m, { appareil: msg.appareil, jeton: msg.jeton });
+        revient(e, siege);
+        this.diffuse();
+        this.debutPour(m, Math.floor(Math.random() * 0xffffffff));
+        this.onRevenu(msg.nom);
         return;
       }
-      m.appareil = msg.appareil;
+      if (!arrive(e, { nom: msg.nom, appareil: msg.appareil })) return this.retire(m);
+      Object.assign(m, { appareil: msg.appareil, jeton: msg.jeton });
       this.diffuse();
       // un appareil qui arrive en plein match le prend en route, en spectateur
-      if (e.phase !== 'attente') this.envoieDebut(Math.floor(Math.random() * 0xffffffff));
+      if (e.phase !== 'attente') this.debutPour(m, Math.floor(Math.random() * 0xffffffff));
       return;
     }
     if (m.appareil === null) return;
@@ -271,38 +314,48 @@ export class SessionHote {
     }
   }
 
-  /** Un appareil part : son siège se libère, tout le monde est prévenu. */
-  private retire(m: Membre | undefined): void {
-    if (!m || !this.membres.includes(m)) return;
+  /**
+   * La liaison d'un appareil est tombée. En plein match, un joueur assis garde
+   * son siège (la partie attend son retour) ; sinon l'appareil est simplement retiré.
+   */
+  private lache(m: Membre): void {
+    const siege = m.appareil ? siegeDe(this.etat, m.appareil) : -1;
+    if (!this.ferme_ && siege > 0 && marqueAbsent(this.etat, siege, delaiReconnexion())) {
+      this.gardes.set(siege, { appareil: m.appareil!, jeton: m.jeton });
+      this.ferme(m);
+      this.diffuse();
+      return;
+    }
+    this.retire(m);
+  }
+
+  private ferme(m: Membre): void {
     this.membres = this.membres.filter((x) => x !== m);
     m.veille?.arrete();
-    const appareil = m.appareil;
     m.l.onFerme = () => {};
     m.l.ferme();
+  }
+
+  /** Un appareil part pour de bon : son siège se libère, tout le monde est prévenu. */
+  private retire(m: Membre | undefined): void {
+    if (!m || !this.membres.includes(m)) return;
+    this.ferme(m);
+    const appareil = m.appareil;
     if (appareil === null || this.ferme_) return;
     const nom =
       [...this.etat.sieges, ...this.etat.spectateurs].find((o) => o?.appareil === appareil)?.nom ?? '';
     part(this.etat, appareil);
-    // un joueur parti en plein match ramène tout le monde au salon : la partie ne peut pas continuer sans lui
-    if (
-      this.etat.phase !== 'attente' &&
-      ![...this.etat.sieges].some((s) => s && s.appareil !== this.appareil)
-    )
-      this.etat.phase = 'attente';
     this.diffuse();
     this.onParti(nom);
   }
 
-  ferme(): void {
+  fermeSession(): void {
     if (this.ferme_) return;
     this.ferme_ = true;
     for (const m of [...this.membres]) {
-      if (m.appareil !== null) this.envoie(m, { t: 'quitte' });
-      m.veille?.arrete();
-      m.l.onFerme = () => {};
-      m.l.ferme();
+      if (m.appareil !== null) m.l.envoieCtrl({ t: 'quitte' });
+      this.ferme(m);
     }
-    this.membres = [];
     this.annuaire.ferme();
   }
 }

@@ -1,20 +1,24 @@
-import { JEUX, NIVEAUX, PAS } from '@core/constants';
+import { PAS } from '@core/constants';
 import { graine } from '@core/aleatoire';
 import { donneAuCpu } from '@core/humain';
 import { nouvellePartie, pas } from '@core/partie';
 import type { Evenement, Joueur } from '@core/types';
 import { appliqueInstantane, rafraichitPrevision } from '../net/appliquer';
-import { FORMATS, NOMS_FORMATS, peutLancer, siegeOuvert, type Format } from '../net/formats';
+import { NOMS_FORMATS } from '../net/formats';
 import { instantaneDe } from '../net/instantane';
 import { Synchro } from '../net/synchro';
-import { SessionClient, type DebutMatch, type RaisonFin } from '../net/session-client';
+import { SessionClient, type DebutMatch, type Identite, type RaisonFin } from '../net/session-client';
 import { SessionHote } from '../net/session-hote';
-import { occupes, siegesHumains, type EtatSalon } from '../net/salon';
-import type { LignePartie, VueListe } from '@render/lan-liste';
+import { delaiReconnexion } from '../net/dev';
+import { jeuActif, siegesHumains, type EtatSalon } from '../net/salon';
+import type { VueListe } from '@render/lan-liste';
 import type { VueSalon } from '@render/lan-salon';
+import type { AttenteLan } from '@render/lan-etats';
 import { C } from '@render/palette';
 import type { BandejaApp } from './app';
 import { joueEvenements } from './evenements';
+import { Reconnexion } from './reconnexion-lan';
+import { construitVueListe, construitVueSalon, type ContexteVues } from './vues-lan';
 
 const MESSAGES_FIN: Record<RaisonFin, string> = {
   quitte: 'L HOTE A QUITTE LA PARTIE',
@@ -39,12 +43,14 @@ export class ParcoursLan {
   private seq = 0;
   /** la session en cours d'ouverture quand on la ferme : à refermer dès qu'elle arrive */
   private annule = false;
+  /** essais de retour de CET appareil dans le match qu'il vient de perdre */
+  private reco: Reconnexion | null = null;
 
   constructor(private readonly app: BandejaApp) {}
 
   /** Une partie en réseau est en cours (ou le salon d'une partie) : la boucle ne simule plus comme en solo. */
   get actif(): boolean {
-    return this.hote !== null || (this.client !== null && this.client.etat !== null);
+    return this.hote !== null || this.reco !== null || (this.client !== null && this.client.etat !== null);
   }
 
   private get etat(): EtatSalon | null {
@@ -87,7 +93,7 @@ export class ParcoursLan {
     const a = this.app;
     SessionHote.cree(a.pref.nom, { format: 'coop', niveau: a.pref.niveau, jeux: a.pref.jeux })
       .then((h) => {
-        if (this.annule || a.ecranUI !== 'lan-liste') return h.ferme();
+        if (this.annule || a.ecranUI !== 'lan-liste') return h.fermeSession();
         this.hote = h;
         h.onChange = () => this.surEtat();
         h.onDebut = () => this.debutHote();
@@ -108,36 +114,76 @@ export class ParcoursLan {
     if (!c || !partie) return;
     this.phaseListe = 'connexion';
     this.message = null;
-    c.onEtat = () => this.surEtat();
-    c.onDebut = (d) => this.debutInvite(d);
-    c.onInstantane = (s) => this.synchro.recoit(s, performance.now());
-    c.onEvenement = (m) => this.synchro.recoitEvenement(m.e, m.t);
+    this.branche(c);
     c.rejoint(partie).catch((e: Error) => {
       this.phaseListe = 'pret';
       this.message = MESSAGES_FIN[e.message as RaisonFin] ?? MESSAGES_FIN.injoignable;
     });
   }
 
+  /** Branche une session d'invité sur le jeu : état du salon, début de match, instantanés et évènements. */
+  private branche(c: SessionClient): void {
+    c.onEtat = () => this.surEtat();
+    c.onDebut = (d) => this.debutInvite(d);
+    c.onInstantane = (s) => this.synchro.recoit(s, performance.now());
+    c.onEvenement = (m) => this.synchro.recoitEvenement(m.e, m.t);
+    c.onFin = (raison) => this.surFinInvite(raison);
+  }
+
   /** L'hôte ferme sa partie, ou l'invité la quitte : retour au menu. */
   quitte(message: string | null = null): void {
     this.annule = true;
+    this.reco?.arrete();
+    this.reco = null;
     this.fermeSessions();
     this.message = message;
     this.app.retourMenu();
   }
 
   private fermeSessions(): void {
-    this.hote?.ferme();
+    this.hote?.fermeSession();
     this.client?.quitte();
     this.hote = null;
     this.client = null;
   }
 
   private surFinInvite(raison: RaisonFin): void {
+    const c = this.client;
+    const e = c?.etat;
+    // connexion coupée en plein match, assis : on essaie de revenir à son siège
+    if (raison === 'perdu' && c && e && e.phase === 'jeu' && c.idHote) {
+      const assis = e.sieges.findIndex((s) => s?.appareil === c.appareil) > 0;
+      if (assis) return this.reconnecte(c.identite, c.idHote);
+    }
     this.client = null;
     this.app.retourMenu();
     this.ouvre(); // retour à la liste, avec la raison
     this.message = MESSAGES_FIN[raison];
+  }
+
+  private reconnecte(identite: Identite, idHote: string): void {
+    this.client = null;
+    this.reco = new Reconnexion({
+      nom: this.app.pref.nom,
+      identite,
+      idHote,
+      delaiS: delaiReconnexion(),
+      branche: (c) => {
+        this.client = c;
+        this.branche(c);
+      },
+      reussi: () => {
+        this.reco = null;
+        this.synchro.reinitialise();
+      },
+      echec: () => {
+        this.reco = null;
+        this.client = null;
+        this.app.retourMenu();
+        this.ouvre();
+        this.message = MESSAGES_FIN.perdu;
+      },
+    });
   }
 
   // ------------------------------------------------------------ états partagés
@@ -157,9 +203,10 @@ export class ParcoursLan {
 
   private appliquePause(oui: boolean): void {
     const a = this.app;
-    this.synchro.reinitialise();
     if (oui && a.ecranUI === 'jeu') a.ecranUI = 'pause';
     else if (!oui && a.ecranUI === 'pause') a.ecranUI = 'jeu';
+    else return;
+    this.synchro.reinitialise();
     a.entrees.reinitialise();
   }
 
@@ -199,6 +246,8 @@ export class ParcoursLan {
   simuleHote(cumul: number): number {
     const a = this.app;
     const h = this.hote!;
+    // un joueur absent, ou la reprise après une pause : le match est figé, on ne rattrape rien
+    if (!jeuActif(h.etat)) return 0;
     const lire = (s: Joueur) =>
       s.id === 0 ? a.entrees.lireCommande() : h.commande(s.id, performance.now() / 1000);
     while (cumul >= PAS) {
@@ -219,6 +268,11 @@ export class ParcoursLan {
     if (a.jeu.phase === 'fin') h.finMatch();
   }
 
+  /** À chaque image : l'hôte fait avancer les attentes (absents, reprise). */
+  avance(dt: number): void {
+    this.hote?.avance(dt);
+  }
+
   /** Un tour de boucle côté invité : on dessine l'état reçu, et on envoie sa commande. */
   tourInvite(dt: number): void {
     const a = this.app;
@@ -230,61 +284,47 @@ export class ParcoursLan {
       rafraichitPrevision(a.jeu, dt);
     }
     joueEvenements(a.jeu, this.synchro.evenementsAJouer(maintenant), a.effets, a.son, a.K);
-    if (a.ecranUI === 'jeu') c?.envoieCommande(a.entrees.lireCommande());
+    if (a.ecranUI === 'jeu' && c?.etat && jeuActif(c.etat)) c.envoieCommande(a.entrees.lireCommande());
   }
 
   // ------------------------------------------------------------ vues
 
   vueListe(): VueListe {
-    const c = this.client;
-    const parties: LignePartie[] = (c?.parties ?? []).map((p) => ({
-      id: p.id,
-      nom: p.nom,
-      format: NOMS_FORMATS[p.format],
-      joueurs: p.joueurs,
-      spect: p.spect,
-      enCours: p.enCours,
-      score: p.score,
-    }));
-    return {
-      phase: this.phaseListe,
-      message: this.message,
-      parties,
-      onRejoint: (id) => this.rejoint(id),
-      onCree: () => this.cree(),
-      onActualise: () => this.actualise(),
-      onRetour: () => this.quitte(),
-    };
+    return construitVueListe(this.contexte());
   }
 
   vueSalon(): VueSalon | null {
-    const e = this.etat;
-    if (!e) return null;
-    const moi = this.hote?.appareil ?? this.client?.appareil ?? '';
-    const h = this.hote;
-    const c = this.client;
-    const f = e.config.format;
-    const suivant = <T>(liste: readonly T[], i: number): T => liste[(i + 1) % liste.length]!;
+    return construitVueSalon(this.contexte());
+  }
+
+  private contexte(): ContexteVues {
     return {
-      sieges: e.sieges.map((s, i) => (s ? { nom: s.nom, moi: s.appareil === moi, hote: i === 0 } : null)),
-      ouverts: [0, 1, 2, 3].map((i) => siegeOuvert(f, i)),
-      spectateurs: e.spectateurs.length,
-      format: NOMS_FORMATS[f],
-      niveau: NIVEAUX[e.config.niveau]!.nom,
-      jeux: `${JEUX[e.config.jeux]} JEUX`,
-      jeSuisHote: h !== null,
-      monSiege: e.sieges.findIndex((s) => s?.appareil === moi),
-      peutLancer: peutLancer(f, occupes(e)),
-      latenceMs: h?.latenceMs ?? c?.latenceMs ?? null,
+      hote: this.hote,
+      client: this.client,
+      etat: this.etat,
+      phaseListe: this.phaseListe,
       message: this.message,
-      onSiege: (s) => c?.agit({ a: 'siege', s }),
-      onRegarde: () => c?.agit({ a: 'regarde' }),
-      onExclut: (s) => h?.agit({ a: 'exclut', s }),
-      onFormat: () => h?.agit({ a: 'format', f: suivant<Format>(FORMATS, FORMATS.indexOf(f)) }),
-      onNiveau: () => h?.agit({ a: 'niveau', n: (e.config.niveau + 1) % NIVEAUX.length }),
-      onJeux: () => h?.agit({ a: 'jeux', n: (e.config.jeux + 1) % JEUX.length }),
-      onLance: () => h?.agit({ a: 'lance' }),
-      onQuitte: () => this.quitte(),
+      rejoint: (id) => this.rejoint(id),
+      cree: () => this.cree(),
+      actualise: () => this.actualise(),
+      quitte: () => this.quitte(),
     };
+  }
+
+  /** Ce qui fige le match à l'écran : joueurs absents, retour du jeu, ou cet appareil qui se reconnecte. */
+  vueAttente(): AttenteLan | null {
+    if (this.reco) return { type: 'reconnexion', onQuitte: () => this.quitte() };
+    const e = this.etat;
+    if (!e || e.phase !== 'jeu' || this.app.ecranUI !== 'jeu') return null;
+    if (e.absents.length > 0)
+      return {
+        type: 'absents',
+        noms: e.absents.map((s) => e.sieges[s]?.nom ?? ''),
+        reste: Math.ceil(e.reconnexion),
+        jeSuisHote: this.hote !== null,
+        onNePlusAttendre: () => this.hote?.arreteAttente(),
+      };
+    if (e.reprise > 0) return { type: 'reprise', n: Math.ceil(e.reprise) };
+    return null;
   }
 }

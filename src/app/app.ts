@@ -227,7 +227,8 @@ export class BandejaApp {
     this.dernier = t;
     const lan = this.lan;
     const actif = !this.portrait && this.ecranUI !== 'pause';
-    if (lan.actif && lan.client) {
+    lan.avance(dt);
+    if (lan.actif && !lan.hote) {
       // invité : on ne simule rien, on dessine ce que l'hôte envoie
       if (!this.portrait && (this.ecranUI === 'jeu' || this.ecranUI === 'fin')) lan.tourInvite(dt);
     } else if (actif && this.ecranUI !== 'fin' && this.ecranUI !== 'lan-salon') {
