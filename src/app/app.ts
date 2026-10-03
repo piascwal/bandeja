@@ -17,6 +17,7 @@ import { joueEvenements } from './evenements';
 import { estAutonome, PleinEcranAuPremierGeste } from './plein-ecran';
 import { chargePreferences, sauvePreferences, type Preferences } from './preferences';
 import { ParcoursLan } from './parcours-lan';
+import { Ralenti } from './ralenti';
 import { rendu } from './rendu';
 
 export type EcranUI = 'menu' | 'reglages' | 'lan-liste' | 'lan-salon' | 'jeu' | 'pause' | 'fin';
@@ -37,6 +38,8 @@ export class BandejaApp {
   readonly entrees: Entrees;
   /** le multijoueur Wi-Fi : liste des parties, salle d'attente, match en réseau */
   readonly lan = new ParcoursLan(this);
+  /** le rejeu au ralenti des beaux points */
+  readonly ralenti = new Ralenti();
   /** Taille logique de l'écran (gros pixels du décor) et facteur d'agrandissement. */
   W = 400;
   H = 200;
@@ -67,7 +70,7 @@ export class BandejaApp {
       dims: () => ({ W: this.W, H: this.H }),
       versLogique: (e) => this.versLogique(e),
       portrait: () => this.portrait,
-      enJeu: () => this.ecranUI === 'jeu',
+      enJeu: () => this.ecranUI === 'jeu' && !this.ralenti.actif,
       aerienActif: () => balleHaute(this.jeu),
       geste: () => {
         this.son.init();
@@ -83,7 +86,8 @@ export class BandejaApp {
         else if (this.ecranUI === 'jeu' || this.ecranUI === 'pause') this.pause(this.ecranUI === 'jeu');
       },
       valide: () => {
-        if (this.ecranUI === 'menu' || (this.ecranUI === 'fin' && !this.lan.actif)) this.lanceMatch();
+        if (this.ralenti.actif) this.passeRalenti();
+        else if (this.ecranUI === 'menu' || (this.ecranUI === 'fin' && !this.lan.actif)) this.lanceMatch();
         else if (this.ecranUI === 'pause') this.pause(false);
       },
       appuiInterface: (p) => this.appuiInterface(p),
@@ -161,6 +165,7 @@ export class BandejaApp {
     this.son.init();
     this.plein.relance();
     this.jeu = this.partie('match');
+    this.ralenti.reinitialise();
     this.effets.vide();
     this.entrees.reinitialise();
     this.ecranUI = 'jeu';
@@ -180,6 +185,7 @@ export class BandejaApp {
 
   pause(oui: boolean): void {
     if (this.ecranUI !== 'jeu' && this.ecranUI !== 'pause') return;
+    if (oui) this.ralenti.arrete();
     // en réseau, la pause est partagée : c'est l'hôte qui fige la partie pour tout le monde
     if (this.lan.actif) {
       this.lan.demandePause(oui);
@@ -187,6 +193,15 @@ export class BandejaApp {
     }
     this.ecranUI = oui ? 'pause' : 'jeu';
     this.entrees.reinitialise();
+  }
+
+  /**
+   * Toucher l'écran pendant le rejeu : seul, ou chez l'hôte, on passe aussi
+   * l'annonce du point ; un invité ne fait que fermer son propre rejeu.
+   */
+  passeRalenti(): void {
+    this.ralenti.arrete();
+    if (!this.lan.actif || this.lan.hote) this.jeu.tPhase = Math.max(this.jeu.tPhase, this.jeu.dureePoint);
   }
 
   ouvreReglages(oui: boolean): void {
@@ -246,6 +261,7 @@ export class BandejaApp {
     const evs = this.jeu.evenements.splice(0);
     joueEvenements(this.jeu, evs, this.effets, this.son, this.K);
     lan.diffuseApres(evs);
+    if (this.ecranUI === 'jeu') this.ralenti.suit(this.jeu, dt, this.K.miroir);
     if (!lan.actif && this.jeu.mode === 'match' && this.jeu.phase === 'fin' && this.ecranUI === 'jeu')
       this.finMatch();
     if (actif) this.effets.maj(dt);

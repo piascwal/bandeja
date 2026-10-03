@@ -181,6 +181,15 @@ En développement, `?reseau=xxx&courtier=ws://localhost:8883` remplace la
 détection du réseau et les serveurs publics par un courtier local (c'est ce
 qu'utilisent les tests de bout en bout).
 
+### Ralenti des points
+
+Un échange d'au moins 2,5 s est rejoué après l'annonce du point : ses 2,4 dernières
+secondes, à 60 % de la vitesse, sous une pastille RALENTI (constantes `RALENTI_*`
+dans `core/constants.ts`). Chaque écran enregistre ce qu'il affiche (`app/ralenti.ts`)
+et rejoue sur une partie à part : aucun message réseau. Le cœur ne fait qu'allonger
+l'annonce du point (`jeu.dureePoint`). Toucher l'écran passe le rejeu ; seul ou chez
+l'hôte, cela passe aussi l'annonce, un invité ne ferme que le sien.
+
 ### Tests de bout en bout
 
 ```bash

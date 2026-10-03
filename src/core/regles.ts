@@ -1,5 +1,5 @@
 import { clamp } from './aleatoire';
-import { LARG, LONG, MIL, SERV } from './constants';
+import { DUREE_POINT, DUREE_POINT_RALENTI, LARG, LONG, MIL, RALENTI_ECHANGE, SERV } from './constants';
 import { placeService } from './service';
 import { autre } from './terrain';
 import type { Equipe, Partie, Surface } from './types';
@@ -76,6 +76,8 @@ export function dansCarre(jeu: Partie): boolean {
 
 export function gagne(jeu: Partie, eq: Equipe, raison: string): void {
   if (jeu.phase !== 'jeu') return;
+  // un échange assez long sera rejoué au ralenti : l'annonce du point dure plus
+  jeu.dureePoint = jeu.mode === 'match' && jeu.tPhase >= RALENTI_ECHANGE ? DUREE_POINT_RALENTI : DUREE_POINT;
   jeu.phase = 'point';
   jeu.tPhase = 0;
   jeu.gagnant = eq;
@@ -92,6 +94,7 @@ export function fauteService(jeu: Partie, raison: string): void {
     jeu.faute = 1;
     jeu.phase = 'point';
     jeu.tPhase = 0.6;
+    jeu.dureePoint = DUREE_POINT;
     jeu.rejoue = true;
     jeu.evenements.push({ type: 'faute', raison });
   } else {
@@ -103,6 +106,7 @@ export function fauteService(jeu: Partie, raison: string): void {
 function let_(jeu: Partie): void {
   jeu.phase = 'point';
   jeu.tPhase = 0.6;
+  jeu.dureePoint = DUREE_POINT;
   jeu.rejoue = true;
   jeu.evenements.push({ type: 'let' });
 }

@@ -6,6 +6,7 @@ import { dessineSalon } from '@render/lan-salon';
 import { dessineReglages } from '@render/reglages';
 import { dessineDemarrage, dessineFin, dessineMenu, dessinePause, dessinePortrait } from '@render/menus';
 import { C } from '@render/palette';
+import { dessineRalenti } from '@render/ralenti-vue';
 import { dessineScene } from '@render/scene';
 import type { BandejaApp } from './app';
 
@@ -31,21 +32,24 @@ export function rendu(app: BandejaApp, t: number): void {
   const sx = secousseAleatoire(effets.secousse);
   const sy = secousseAleatoire(effets.secousse);
   g.setTransform(E, 0, 0, E, sx * E, sy * E);
+  const rejeu = app.ralenti.actif && ecranUI === 'jeu';
   dessineScene(v, {
-    jeu,
+    jeu: rejeu ? app.ralenti.jeu : jeu,
     decor: app.decor,
     sprites: app.sprites,
-    effets,
-    vueJoueurs: app.vueJoueurs,
-    enMatch: !horsMatch,
-    enJeu: ecranUI === 'jeu',
+    effets: rejeu ? app.ralenti.effets : effets,
+    vueJoueurs: rejeu ? app.ralenti.vue : app.vueJoueurs,
+    enMatch: !horsMatch && !rejeu,
+    enJeu: ecranUI === 'jeu' && !rejeu,
   });
   g.setTransform(E, 0, 0, E, 0, 0);
   if (!horsMatch) dessineTableau(v, jeu, ecranUI === 'jeu');
-  if (effets.banniere && !horsMatch) dessineBanniere(v, effets.banniere);
+  if (effets.banniere && !horsMatch && !rejeu) dessineBanniere(v, effets.banniere);
 
   const reglages = app.pref;
-  if (ecranUI === 'jeu') {
+  if (rejeu) {
+    dessineRalenti(v, app.boutons, app.ralenti.progression, t, () => app.passeRalenti());
+  } else if (ecranUI === 'jeu') {
     dessineJauge(v, jeu);
     const e = app.entrees;
     const joy = e.joy;

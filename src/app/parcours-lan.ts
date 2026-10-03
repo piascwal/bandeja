@@ -223,6 +223,7 @@ export class ParcoursLan {
     a.jeu = a.adopte(nouvellePartie({ mode: 'match', niveau, jeux, sieges, local, rng }));
     a.vueJoueurs.reinitialise();
     a.effets.vide();
+    a.ralenti.reinitialise();
     a.entrees.reinitialise();
     this.synchro.reinitialise();
     this.seq = 0;

@@ -186,6 +186,8 @@ export interface Partie {
   rejoue: boolean;
   phase: Phase;
   tPhase: number;
+  /** durée de l'annonce d'un point avant de passer au suivant (plus longue s'il est rejoué au ralenti) */
+  dureePoint: number;
   temps: number;
   tFrappe: number;
   gagnant: Equipe;

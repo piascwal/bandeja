@@ -62,6 +62,7 @@ export function nouvellePartie(o: OptionsPartie): Partie {
     rejoue: false,
     phase: 'service',
     tPhase: 0,
+    dureePoint: DUREE_POINT,
     temps: 0,
     tFrappe: 0,
     gagnant: 0,
@@ -123,5 +124,5 @@ export function pas(
   if (b.trace.length > 9) b.trace.shift();
   if (jeu.phase === 'jeu' && jeu.tFrappe > DUREE_MAX_ECHANGE)
     gagne(jeu, b.sol >= 1 ? b.eqF : b.camp, 'POINT');
-  if (jeu.phase === 'point' && jeu.tPhase > DUREE_POINT) finPoint(jeu);
+  if (jeu.phase === 'point' && jeu.tPhase > jeu.dureePoint) finPoint(jeu);
 }

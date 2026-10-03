@@ -34,6 +34,18 @@ export const DUREE_MAX_ECHANGE = 9;
 /** Durée de l'annonce entre deux points (s). */
 export const DUREE_POINT = 1.9;
 
+/**
+ * Ralenti d'un beau point (durées en secondes de simulation, qui s'écoulent à
+ * VITESSE du temps réel). Un échange d'au moins RALENTI_ECHANGE est rejoué
+ * après RALENTI_DEBUT : les RALENTI_CLIP dernières secondes, à RALENTI_RYTHME.
+ */
+export const RALENTI_ECHANGE = 2.5;
+export const RALENTI_DEBUT = 1;
+export const RALENTI_CLIP = 2.4;
+export const RALENTI_RYTHME = 0.6;
+/** Durée de l'annonce du point quand il est rejoué : le ralenti, puis un court retour au direct. */
+export const DUREE_POINT_RALENTI = RALENTI_DEBUT + RALENTI_CLIP / RALENTI_RYTHME + 0.9;
+
 export const NIVEAUX: readonly Niveau[] = [
   { nom: 'FACILE', vit: 0.8, reac: 0.34, err: 0.9, agress: 0.25, serv: 0.13 },
   { nom: 'NORMAL', vit: 0.92, reac: 0.2, err: 0.6, agress: 0.5, serv: 0.08 },
