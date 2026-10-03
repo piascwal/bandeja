@@ -55,7 +55,7 @@ function trajectoire(type: Coup, p: number, dist: number): { v: number; spin: Ef
  */
 function rebondVif(type: Coup, p: number, hasard: number): number {
   if (type === 'plat') {
-    if (p < 0.5) return 0;
+    if (p < 0.5) return 0.2;
     const k = (p - 0.5) / 0.5;
     return p >= 0.92 && hasard < 0.35 ? 1.25 : k;
   }
@@ -83,7 +83,8 @@ export function executeCoup(
   const eq = s.eq;
   const rng = jeu.rng;
   const vin = Math.hypot(b.vx, b.vy, b.vz);
-  const haut = b.z > HAUT_SMASH;
+  // la pose de smash n'est que pour les coups aériens : FRAPPE sur une balle haute reste un coup normal
+  const haut = b.z > HAUT_SMASH && (type === 'smash' || type === 'bandeja' || type === 'vibora');
   // rebond voulu contre sa propre vitre (du fond ou de côté) : sinon coup direct
   if (mur) {
     if (contreVitre(b, eq, ty, mur, rng)) type = mur === 'fond' ? 'vitre' : 'cote';

@@ -283,7 +283,9 @@ rebond vif (`Balle.vif`) : plus il est chargé, plus la balle bondit après son
 premier rebond, file vers la vitre et en revient en hauteur, jouable à ce
 moment-là ; à fond, elle peut sortir de la piste (par 3 / par 4) ou repartir très
 haut. Le coupé et la bandeja bondissent un peu, pour ne plus mourir au fond du
-court. Les coups très rapides laissent une traînée de feu (rouge, orange, jaune).
+court. La vitre elle-même relance la balle vers le haut (`COUP_VITRE`) : tous les
+renvois de vitre reviennent à hauteur de jeu. FRAPPE reste un coup normal même
+sur une balle haute (seul SMASH déclenche les coups aériens). Les coups très rapides laissent une traînée de feu (rouge, orange, jaune).
 Quand la balle va d'abord rebondir sur une vitre, le joueur n'est pas guidé :
 c'est à lui d'anticiper (se rapprocher du filet, par exemple). Il reste à 0,8 m
 du filet pour que son dessin ne le dépasse pas.

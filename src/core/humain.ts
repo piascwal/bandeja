@@ -98,7 +98,7 @@ export function coupPrevu(jeu: Partie, s: Joueur, bouton: Bouton, charge: number
   const haut = jeu.balle.z > HAUT_SMASH;
   switch (bouton) {
     case 'plat':
-      return haut ? 'bandeja' : charge < 0.5 ? 'coupe' : 'plat';
+      return charge < 0.5 ? 'coupe' : 'plat';
     case 'smash':
       return haut ? coupAerien(s, p) : 'plat';
     default:

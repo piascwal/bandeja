@@ -41,16 +41,19 @@ export function bruit(b: CorpsBalle): number {
 
 const coteDe = (x: number): Equipe => (x < MIL ? 0 : 1);
 
+/** Arcade : la vitre relance la balle vers le haut (m/s), pour qu'elle revienne à hauteur de jeu. */
+const COUP_VITRE = 2.0;
+
 function rebondVitre(b: CorpsBalle, axe: 'x' | 'y'): void {
   const e = b.spin === 'vibora' ? 0.62 : b.spin === 'coupe' ? 0.8 : 0.8;
   if (axe === 'x') b.vx = -b.vx * e;
   else b.vy = -b.vy * e;
   // le coupé revient mollement vers le filet, la víbora « meurt » contre la vitre : la balle redescend aussitôt
-  if (b.spin === 'coupe') b.vz = Math.min(b.vz, 0) * 0.8 - 0.4;
+  if (b.spin === 'coupe') b.vz = Math.max(b.vz * 0.9, 0) + COUP_VITRE * 0.8;
   else if (b.spin === 'vibora') {
     b.vz = Math.min(b.vz, 0) * 0.5 - 1.1;
     if (axe === 'x') b.vy += (b.spinDir || 0) * 1.2;
-  } else b.vz *= 0.85;
+  } else b.vz = Math.max(b.vz * 0.9, 0) + COUP_VITRE;
 }
 
 function passageFilet(b: CorpsBalle, x0: number, y0: number, z0: number, ev?: SurContact): void {
@@ -80,7 +83,7 @@ function rebondSol(b: CorpsBalle, ev?: SurContact): void {
   if (b.vif > 0) {
     // coup fort : la balle bondit haut et garde sa vitesse, elle file vers la vitre et en revient en hauteur
     const k = Math.min(1, b.vif);
-    b.vz += 1.2 + 4.3 * k + (b.vif > 1 ? 11 : 0);
+    b.vz += 1.2 + 3.3 * k + (b.vif > 1 ? 11 : 0);
     const garde = rh + (1 - rh) * 0.7 * k;
     b.vx *= garde / rh;
     b.vy *= garde / rh;

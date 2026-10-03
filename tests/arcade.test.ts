@@ -51,6 +51,11 @@ describe('les boutons', () => {
     jeu.balle.z = 0.8;
     expect(coupPrevu(jeu, s, 'plat', 0.1)).toBe('coupe');
     expect(coupPrevu(jeu, s, 'plat', 0.9)).toBe('plat');
+    // même sur une balle haute, FRAPPE reste un coup normal : le smash est sur SMASH
+    jeu.balle.z = HAUT_SMASH + 0.5;
+    expect(coupPrevu(jeu, s, 'plat', 0.9)).toBe('plat');
+    expect(coupPrevu(jeu, s, 'plat', 0.1)).toBe('coupe');
+    jeu.balle.z = 0.8;
     expect(coupPrevu(jeu, s, 'lobe', 0.1)).toBe('lobe');
     expect(coupPrevu(jeu, s, 'amorti', 0.1)).toBe('amorti');
   });
@@ -148,5 +153,14 @@ describe('le jeu de vitre du padel', () => {
     const hum = jeu.joueurs[0]!;
     for (let i = 0; i < 240; i++) pas(jeu, PAS, () => ({ ...VIDE, dx: -1 }));
     expect(Math.abs(hum.x - 10)).toBeGreaterThanOrEqual(0.79);
+  });
+
+  it('la vitre relance la balle à hauteur de jeu', () => {
+    const jeu = partieTest({ mode: 'match', sieges: [0] }, 5);
+    const b = jeu.balle;
+    Object.assign(b, { x: 19.99, y: 5, z: 0.5, vx: 8, vy: 0, vz: -2, spin: 'plat' });
+    physique(b, 1 / 240);
+    physique(b, 1 / 240);
+    expect(b.vz).toBeGreaterThan(1.5);
   });
 });
