@@ -44,6 +44,12 @@ export interface Joueur {
   /** côté tenu sur le point en cours */
   home: number;
   humain: boolean;
+  /**
+   * Vue en miroir (x = 0 à droite de l'écran, cas de l'équipe 0) : le sens
+   * gauche/droite de sa commande en dépend. Faux pour un humain de l'équipe 1,
+   * dont l'écran est retourné pour qu'il joue lui aussi à droite.
+   */
+  miroir: boolean;
   niv: Niveau;
   err: number;
   x: number;
@@ -137,7 +143,7 @@ export interface Plan extends PointPredit {
 
 /** Ce que le joueur humain demande à chaque pas (entrées déjà traduites). */
 export interface Commande {
-  /** direction à l'écran, chaque composante entre -1 et 1 */
+  /** direction à l'écran du joueur, chaque composante entre -1 et 1 */
   dx: number;
   dy: number;
   appuis: Bouton[];
@@ -169,6 +175,9 @@ export interface Partie {
   jeuxCible: number;
   joueurs: Joueur[];
   balle: Balle;
+  /** tous les joueurs pilotés par un humain (un siège chacun : leur `id`) */
+  humains: Joueur[];
+  /** le joueur de CET écran : celui dont on affiche les aides (null : démo) */
   humain: Joueur | null;
   jeux: [number, number];
   pts: [number, number];

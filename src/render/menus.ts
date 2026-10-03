@@ -18,7 +18,7 @@ export interface ActionsMenu {
   joue: () => void;
   niveauSuivant: () => void;
   jeuxSuivants: () => void;
-  basculeSon: () => void;
+  reglages: () => void;
 }
 
 const BLEU = { couleur: '#1f7fb3', clair: '#6fd0ff', fonce: '#0f4d73' };
@@ -29,7 +29,6 @@ export function dessineMenu(
   zones: ZoneBouton[],
   r: ReglagesMenu,
   a: ActionsMenu,
-  tactile: boolean,
   t: number,
   version: string,
 ): void {
@@ -48,13 +47,12 @@ export function dessineMenu(
   texte(g, 'PADEL ARCADE', cx, ty + 7 * e + 5, C.or, 1, 'c');
 
   const pw = 196;
-  const ph = 91;
+  const ph = 76;
   const py = ty + 7 * e + 16;
   panneau(g, cx - pw / 2, py, pw, ph);
   const lignes: [string, string, () => void][] = [
     ['NIVEAU', NIVEAUX[r.niveau]!.nom, a.niveauSuivant],
     ['MATCH', `${JEUX[r.jeux]} JEUX`, a.jeuxSuivants],
-    ['SON', r.son ? 'OUI' : 'NON', a.basculeSon],
   ];
   lignes.forEach(([k, val, act], i) => {
     const y = py + 5 + i * 15;
@@ -70,17 +68,10 @@ export function dessineMenu(
 
   const vict = r.victoires[r.niveau] ?? 0;
   const mt = r.matchs[r.niveau] ?? 0;
-  const aide = [
-    mt ? `VICTOIRES ${vict} / ${mt}` : 'EN DOUBLE : VOUS EN HAUT A DROITE, AVEC UN CPU',
-    tactile
-      ? 'BOUTONS EN LOSANGE : FRAPPE COUPE LOBE AMORTI'
-      : 'K FRAPPE  J COUPE  L LOBE  I AMORTI  MAJ COURIR',
-    'BALLE HAUTE : BANDEJA AU CENTRE, VIBORA JOYSTICK HAUT/BAS',
-    'JOYSTICK VERS UNE VITRE A L IMPACT : REBOND CONTRE LA VITRE',
-  ];
-  const bas = py + ph + 5;
-  aide.forEach((l, i) => {
-    if (bas + 8 + i * 10 + (i ? 1 : 0) < H) texte(g, l, cx, bas + i * 10, i ? C.grisBleu : C.gris, 1, 'c');
+  const bas = py + ph + 8;
+  if (mt && bas + 8 < H) texte(g, `VICTOIRES ${vict} / ${mt}`, cx, bas, C.gris, 1, 'c');
+  bouton(g, zones, 'REGLAGES', cx - 40, Math.min(H - 20, bas + 14), 80, 13, a.reglages, {
+    couleur: '#232a58',
   });
   texte(g, version, W - 3, H - 9, '#3a4166', 1, 'd', null);
 }

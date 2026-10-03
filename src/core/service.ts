@@ -23,8 +23,8 @@ export function placeService(jeu: Partie): void {
   const d = dir(eq);
   const n = jeu.pts[0] + jeu.pts[1];
   let sg: number; // +1 : le serveur est dans la moitié y > 5
-  if (jeu.humain && eq === jeu.humain.eq) {
-    // votre équipe sert chacun de son côté : vous restez en haut de l'écran
+  if (jeu.humains.some((h) => h.eq === eq)) {
+    // une équipe avec un humain sert chacun de son côté : il garde sa place
     sg = srv.cote > 5 ? 1 : -1;
   } else {
     // on sert d'abord depuis sa droite, puis on alterne à chaque point

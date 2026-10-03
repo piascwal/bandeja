@@ -42,7 +42,7 @@ export function dessineCommandes(v: Vue, jeu: Partie, t: EtatTactile): void {
   const aerien = coupAerien(s) === 'vibora' ? 'VIBORA' : 'BANDEJA';
   if (!t.tactile) {
     if (haut)
-      texte(v.g, `ESPACE : ${aerien}   (JOYSTICK HAUT OU BAS : VIBORA)`, v.W / 2, v.H - 10, C.or, 1, 'c');
+      texte(v.g, `ESPACE : ${aerien} - JOYSTICK HAUT OU BAS : VIBORA`, v.W / 2, v.H - 10, C.or, 1, 'c');
     return;
   }
   dessineJoystick(v, jeu, t);

@@ -4,6 +4,7 @@ import { balleHaute } from '@core/humain';
 import { nouvellePartie, pas } from '@core/partie';
 import type { Partie } from '@core/types';
 import { Entrees, type PointLogique } from '@input/entrees';
+import type { OngletCommandes } from '@render/reglages';
 import { construitDecor, type Decor } from '@render/decor';
 import { Effets } from '@render/effets';
 import { C } from '@render/palette';
@@ -16,7 +17,7 @@ import { estAutonome, PleinEcranAuPremierGeste } from './plein-ecran';
 import { chargePreferences, sauvePreferences, type Preferences } from './preferences';
 import { rendu } from './rendu';
 
-export type EcranUI = 'menu' | 'jeu' | 'pause' | 'fin';
+export type EcranUI = 'menu' | 'reglages' | 'jeu' | 'pause' | 'fin';
 
 /**
  * L'application : canevas et mise à l'échelle, boucle de jeu à pas fixe,
@@ -40,6 +41,8 @@ export class BandejaApp {
   sprites: [SpritesEquipe, SpritesEquipe] | null = null;
   jeu: Partie;
   ecranUI: EcranUI = 'menu';
+  /** onglet de l'aide des commandes dans les réglages */
+  ongletCommandes: OngletCommandes = 'tactile';
   /** boutons de l'image en cours (recalculés à chaque image) */
   boutons: ZoneBouton[] = [];
   private readonly plein = new PleinEcranAuPremierGeste();
@@ -70,7 +73,8 @@ export class BandejaApp {
       pleinEcran: () => this.plein.tente(),
       pause: () => this.pause(true),
       basculePause: () => {
-        if (this.ecranUI === 'jeu' || this.ecranUI === 'pause') this.pause(this.ecranUI === 'jeu');
+        if (this.ecranUI === 'reglages') this.ecranUI = 'menu';
+        else if (this.ecranUI === 'jeu' || this.ecranUI === 'pause') this.pause(this.ecranUI === 'jeu');
       },
       valide: () => {
         if (this.ecranUI === 'menu' || this.ecranUI === 'fin') this.lanceMatch();
@@ -164,6 +168,10 @@ export class BandejaApp {
     if (this.ecranUI !== 'jeu' && this.ecranUI !== 'pause') return;
     this.ecranUI = oui ? 'pause' : 'jeu';
     this.entrees.reinitialise();
+  }
+
+  ouvreReglages(oui: boolean): void {
+    this.ecranUI = oui ? 'reglages' : 'menu';
   }
 
   niveauSuivant(): void {

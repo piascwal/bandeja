@@ -16,8 +16,8 @@ export const BONUS_PORTEE = 1.15;
 
 /** Applique au joueur humain ce qu'il demande pendant ce pas. */
 export function appliqueCommande(jeu: Partie, s: Joueur, cmd: Commande, dt: number): void {
-  // la piste est vue en miroir : x = 0 est à droite de l'écran
-  s.ex = -cmd.dx;
+  // vue en miroir : x = 0 est à droite de l'écran de l'équipe 0
+  s.ex = s.miroir ? -cmd.dx : cmd.dx;
   s.ey = cmd.dy;
   s.sprint = cmd.sprint;
 

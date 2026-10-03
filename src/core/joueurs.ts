@@ -1,7 +1,14 @@
 import { dir, xProf } from './terrain';
 import type { Equipe, Joueur, Niveau, Partie } from './types';
 
-export function nouveauJoueur(id: number, eq: Equipe, poste: 0 | 1, humain: boolean, niv: Niveau): Joueur {
+export function nouveauJoueur(
+  id: number,
+  eq: Equipe,
+  poste: 0 | 1,
+  humain: boolean,
+  niv: Niveau,
+  miroir = true,
+): Joueur {
   // le drive joue à droite : en haut de l'écran (y < 5) pour votre équipe, en bas pour l'autre
   const cote = (eq === 0) === (poste === 0) ? 2.5 : 7.5;
   const face = dir(eq);
@@ -12,6 +19,7 @@ export function nouveauJoueur(id: number, eq: Equipe, poste: 0 | 1, humain: bool
     cote,
     home: cote,
     humain,
+    miroir,
     niv,
     err: humain ? 0.4 : niv.err,
     x: xProf(eq, 2),

@@ -8,10 +8,20 @@ import { nouveauJoueur } from './joueurs';
 import { prevoir } from './prevision';
 import { finPoint, gagne, regle } from './regles';
 import { majService, placeService } from './service';
-import type { Commande, Mode, Partie } from './types';
+import type { Commande, Joueur, Mode, Partie } from './types';
+
+/** Un siège = un joueur de la piste (son `id`) : 0 et 1 pour l'équipe 0, 2 et 3 pour l'équipe 1. */
+export const SIEGES = [0, 1, 2, 3] as const;
 
 export interface OptionsPartie {
   mode: Mode;
+  /**
+   * Sièges tenus par un humain ; les autres sont au CPU. Par défaut : le
+   * siège 0 en match, aucun en démo (le menu).
+   */
+  sieges?: number[];
+  /** le siège de cet écran (par défaut le premier siège humain) */
+  local?: number;
   /** indice dans NIVEAUX (le niveau des adversaires) */
   niveau: number;
   /** indice dans JEUX (jeux à gagner) */
@@ -24,14 +34,17 @@ export const COMMANDE_VIDE: Commande = { dx: 0, dy: 0, appuis: [], sprint: false
 export function nouvellePartie(o: OptionsPartie): Partie {
   const rng = o.rng ?? Math.random;
   const demo = o.mode === 'demo';
+  const sieges = (o.sieges ?? (demo ? [] : [0])).filter((i) => SIEGES.includes(i as 0));
   const niv = demo ? NIVEAUX[1]! : NIVEAUX[o.niveau]!;
   // votre partenaire joue au moins au niveau normal ; le niveau choisi règle les adversaires
   const nivP = demo ? niv : NIVEAUX[Math.max(1, o.niveau)]!;
-  // vous êtes toujours le joueur en haut à droite : rien ne vous cache sous les commandes
-  const a = nouveauJoueur(0, 0, 0, !demo, nivP);
-  const b = nouveauJoueur(1, 0, 1, false, nivP);
-  const c = nouveauJoueur(2, 1, 0, false, niv);
-  const d = nouveauJoueur(3, 1, 1, false, niv);
+  // un humain de l'équipe 1 voit la piste retournée : il joue lui aussi à droite
+  const joueur = (id: number, eq: 0 | 1, poste: 0 | 1) =>
+    nouveauJoueur(id, eq, poste, sieges.includes(id), eq === 0 ? nivP : niv, eq === 0);
+  const a = joueur(0, 0, 0);
+  const b = joueur(1, 0, 1);
+  const c = joueur(2, 1, 0);
+  const d = joueur(3, 1, 1);
   const ordre = rng() < 0.5 ? [a, c, b, d] : [c, a, d, b];
   const jeu: Partie = {
     mode: o.mode,
@@ -39,7 +52,8 @@ export function nouvellePartie(o: OptionsPartie): Partie {
     jeuxCible: JEUX[o.jeux] ?? JEUX[1]!,
     joueurs: [a, b, c, d],
     balle: nouvelleBalle(),
-    humain: demo ? null : a,
+    humains: [a, b, c, d].filter((j) => j.humain),
+    humain: null,
     jeux: [0, 0],
     pts: [0, 0],
     nJeu: 0,
@@ -64,15 +78,22 @@ export function nouvellePartie(o: OptionsPartie): Partie {
     evenements: [],
     rng,
   };
+  const local = o.local ?? sieges[0];
+  jeu.humain = jeu.humains.find((j) => j.id === local) ?? null;
   placeService(jeu);
   return jeu;
 }
 
 /**
- * Avance la simulation d'un pas fixe. lireCommande n'est appelée que s'il y a
- * un joueur humain, une fois par pas.
+ * Avance la simulation d'un pas fixe. lireCommande est appelée une fois par
+ * pas pour chaque joueur humain : c'est à l'appelant de dire qui commande quoi
+ * (les touches de cet écran, ou ce qu'un invité a envoyé par le réseau).
  */
-export function pas(jeu: Partie, dt: number, lireCommande: () => Commande = () => COMMANDE_VIDE): void {
+export function pas(
+  jeu: Partie,
+  dt: number,
+  lireCommande: (s: Joueur) => Commande = () => COMMANDE_VIDE,
+): void {
   if (jeu.phase === 'fin') return;
   dt *= VITESSE;
   jeu.temps += dt;
@@ -87,7 +108,7 @@ export function pas(jeu: Partie, dt: number, lireCommande: () => Commande = () =
     }
   }
   for (const s of jeu.joueurs) {
-    if (s.humain) appliqueCommande(jeu, s, lireCommande(), dt);
+    if (s.humain) appliqueCommande(jeu, s, lireCommande(s), dt);
     else pilotageIA(jeu, s);
     bouge(jeu, s, dt);
     majRegard(jeu, s);
