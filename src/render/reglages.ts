@@ -6,11 +6,9 @@ import type { Vue } from './vue';
 export interface EtatReglages {
   son: boolean;
   aide: boolean;
-  conseils: boolean;
   secoussesReduites: boolean;
   onSon: () => void;
   onAide: () => void;
-  onConseils: () => void;
   onSecousses: () => void;
   onCommandes: () => void;
   onRetour: () => void;
@@ -29,7 +27,6 @@ export function dessineReglages(v: Vue, zones: ZoneBouton[], e: EtatReglages): v
   const lignes: [string, string, () => void][] = [
     ['SON', e.son ? 'OUI' : 'NON', e.onSon],
     ['AIDE AU DEPLACEMENT', e.aide ? 'OUI' : 'NON', e.onAide],
-    ['CONSEILS A L ECRAN', e.conseils ? 'OUI' : 'NON', e.onConseils],
     ['SECOUSSES ECRAN', e.secoussesReduites ? 'REDUITES' : 'NORMALES', e.onSecousses],
   ];
   const pw = 250;

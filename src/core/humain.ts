@@ -61,7 +61,7 @@ export function appliqueCommande(jeu: Partie, s: Joueur, cmd: Commande, dt: numb
   // on peut appuyer en avance : le coup part dès que la balle est à portée,
   // et plus on a appuyé tôt, plus il est puissant
   for (const a of cmd.appuis) {
-    // un lob qui nous a passés : le bouton SMASH est grisé, mais l'appui n'est jamais perdu : c'est un renvoi normal
+    // un lob qui nous a passés : SMASH ne donne alors qu'un renvoi normal : l'appui n'est jamais perdu
     const bouton: Bouton = a === 'smash' && contrainte(jeu.balle, s) ? 'plat' : a;
     if (s.intent) s.intent.type = bouton;
     else {
