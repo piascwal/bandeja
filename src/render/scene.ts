@@ -61,7 +61,7 @@ export function dessineScene(v: Vue, sc: Scene): void {
 
   for (const p of effets.particules) {
     g.globalAlpha = Math.min(1, p.vie * 4);
-    px(g, p.x, p.y, 1, 1, p.c);
+    px(g, p.x, p.y, p.t ?? 1, p.t ?? 1, p.c);
   }
   g.globalAlpha = 1;
   g.drawImage(decor.devant, 0, 0);

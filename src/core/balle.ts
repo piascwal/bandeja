@@ -71,6 +71,28 @@ function passageFilet(b: CorpsBalle, x0: number, y0: number, z0: number, ev?: Su
   }
 }
 
+/**
+ * Le premier rebond d'un super coup : la météore et l'éclair s'écrasent et repartent
+ * dans l'espace ; la comète file vers la vitre du fond, le phénix vers celle de côté
+ * (qu'ils défoncent : voir `mursDuFond` et `mursLateraux`).
+ */
+function superRebond(b: CorpsBalle): void {
+  if (b.super === 1 || b.super === 4) {
+    b.vz = 45;
+    b.vx *= 0.12;
+    b.vy *= 0.12;
+  } else if (b.super === 2) {
+    const k = 48 / Math.max(1, Math.hypot(b.vx, b.vy));
+    b.vx *= k;
+    b.vy *= k;
+    b.vz = 3;
+  } else {
+    b.vy = (b.y < 5 ? -1 : 1) * 40;
+    b.vx *= 0.3;
+    b.vz = 3;
+  }
+}
+
 function rebondSol(b: CorpsBalle, ev?: SurContact): void {
   if (b.z >= 0 || b.roule) return;
   b.z = 0;
@@ -81,7 +103,10 @@ function rebondSol(b: CorpsBalle, ev?: SurContact): void {
   b.vx *= rh;
   b.vy *= rh;
   if (b.spin === 'vibora') b.vy += (b.spinDir || 0) * 1.6;
-  if (b.vif > 0) {
+  if (b.super > 0 && b.vif > 0) {
+    superRebond(b);
+    b.vif = 0;
+  } else if (b.vif > 0) {
     // coup fort : la balle bondit haut et garde sa vitesse, elle file vers la vitre et en revient en hauteur
     const k = Math.min(1, b.vif);
     b.vz += 1.2 + 3.3 * k + (b.vif > 1 ? 11 : 0);
@@ -89,11 +114,6 @@ function rebondSol(b: CorpsBalle, ev?: SurContact): void {
     b.vx *= garde / rh;
     b.vy *= garde / rh;
     b.vif = 0;
-  }
-  // météore et comète repartent comme un boulet après leur rebond
-  if (b.super === 1 || b.super === 2) {
-    b.vx *= 1.4;
-    b.vy *= 1.4;
   }
   if (b.portres) {
     // le smash « por tres » : rebond énorme, la balle s'envole hors de la piste
@@ -111,6 +131,14 @@ function rebondSol(b: CorpsBalle, ev?: SurContact): void {
   }
 }
 
+/** Un super coup traverse la vitre (qui vole en éclats) : la balle est dehors, elle continue sa course. */
+function perceVitre(b: CorpsBalle, cote: Equipe, ev?: SurContact): boolean {
+  ev?.('vitre', cote, 99);
+  b.dehors = true;
+  ev?.('sortie', cote);
+  return true;
+}
+
 /** Murs des bouts (x = 0 et x = 20) : vitre jusqu'à 3 m, grillage jusqu'à 4 m. */
 function mursDuFond(b: CorpsBalle, ev?: SurContact): boolean {
   if (b.x >= 0 && b.x <= LONG) return false;
@@ -120,6 +148,8 @@ function mursDuFond(b: CorpsBalle, ev?: SurContact): boolean {
     ev?.('sortie', cote);
     return true;
   }
+  // la comète défonce la vitre du fond et sort de la piste
+  if (b.super === 2 && b.vif === 0) return perceVitre(b, cote, ev);
   b.x = cote ? 2 * LONG - b.x : -b.x;
   const v = Math.abs(b.vx);
   if (b.z <= HAUT_VITRE) {
@@ -141,6 +171,11 @@ function mursLateraux(b: CorpsBalle, ev?: SurContact): void {
   if (b.z > HAUT_VITRE) {
     b.dehors = true;
     ev?.('sortie', cote);
+    return;
+  }
+  // le phénix défonce la vitre de côté et sort de la piste
+  if (b.super === 3 && b.vif === 0 && (b.x < VITRE_COTE || b.x > LONG - VITRE_COTE)) {
+    perceVitre(b, cote, ev);
     return;
   }
   b.y = b.y < 0 ? -b.y : 2 * LARG - b.y;

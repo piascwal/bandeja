@@ -1,8 +1,6 @@
 import type { Joueur, Partie } from '@core/types';
 import { C } from './palette';
-import { texte } from './police';
 import { px } from './primitives';
-import { HAUT_JOUEUR } from './sprites';
 import type { Vue } from './vue';
 
 /** Un anneau au sol qui grandit pendant la charge d'un coup. */
@@ -22,8 +20,8 @@ function anneauCharge(v: Vue, jeu: Partie, s: Joueur): void {
 
 /**
  * Jauge du super coup pleine : toute l'équipe est entourée de flammes dorées
- * qui montent, d'un anneau qui tourne au sol et d'un SUPER qui clignote
- * au-dessus des têtes : l'adversaire voit qu'un coup énorme se prépare.
+ * qui montent et d'un anneau qui tourne au sol : l'adversaire voit qu'un coup
+ * énorme se prépare.
  */
 function auraSuper(v: Vue, jeu: Partie, s: Joueur): void {
   if (jeu.jaugeSmash[s.eq] < 1) return;
@@ -41,7 +39,6 @@ function auraSuper(v: Vue, jeu: Partie, s: Joueur): void {
     px(g, sx + dx, sy - t * 26, 2, 3, k % 3 === 0 ? '#ffffff' : k % 3 === 1 ? C.or : '#ff7a3c');
   }
   g.globalAlpha = 1;
-  if (Math.floor(jeu.temps * 6) % 2 === 0) texte(g, 'SUPER', sx, sy - HAUT_JOUEUR - 16, C.or, 1, 'c');
 }
 
 /** Les auras d'un joueur, dessinées derrière lui. */

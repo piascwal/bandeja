@@ -9,6 +9,8 @@ interface Particule {
   vie: number;
   c: string;
   frot?: number;
+  /** taille en pixels (1 par défaut) */
+  t?: number;
 }
 
 interface Bulle {
@@ -17,6 +19,14 @@ interface Bulle {
   y: number;
   c: string;
   vie: number;
+}
+
+/** L'écran fissuré par un super coup : le point d'impact, ce qu'il reste de temps, et la graine du dessin. */
+export interface Fissure {
+  x: number;
+  y: number;
+  vie: number;
+  graine: number;
 }
 
 export interface Banniere {
@@ -37,6 +47,7 @@ export class Effets {
   secousse = 0;
   flash = 0;
   banniere: Banniere | null = null;
+  fissure: Fissure | null = null;
   /** excitation de la foule (0 → 1), qui la fait sauter */
   excite = 0;
 
@@ -44,6 +55,7 @@ export class Effets {
     this.particules = [];
     this.bulles = [];
     this.banniere = null;
+    this.fissure = null;
   }
 
   etincelles(x: number, y: number, n: number, c = '#ffe07a', v0 = 90): void {
@@ -51,6 +63,25 @@ export class Effets {
       const a = Math.random() * Math.PI * 2;
       const v = alea(v0 * 0.3, v0);
       this.particules.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, vie: alea(0.15, 0.4), c });
+    }
+  }
+
+  /** Une vitre qui vole en éclats : des éclats clairs, gros, qui retombent doucement. */
+  eclatsVitre(x: number, y: number, n = 120): void {
+    const cs = ['#ffffff', '#dff4ff', '#9fd8ff', '#bfe6ff'];
+    for (let i = 0; i < n; i++) {
+      const a = Math.random() * Math.PI * 2;
+      const v = alea(40, 230);
+      this.particules.push({
+        x,
+        y,
+        vx: Math.cos(a) * v,
+        vy: Math.sin(a) * v - 20,
+        vie: alea(0.5, 1.2),
+        c: cs[i % cs.length]!,
+        frot: 1.6,
+        t: i % 3 === 0 ? 3 : 2,
+      });
     }
   }
 
@@ -75,6 +106,11 @@ export class Effets {
         frot: 2.2,
       });
     }
+  }
+
+  /** L'écran se fissure à partir de (x, y). */
+  fissurer(x: number, y: number): void {
+    this.fissure = { x, y, vie: 1.8, graine: Math.floor(Math.random() * 1e9) };
   }
 
   bulle(txt: string, x: number, y: number, c: string): void {
@@ -109,5 +145,9 @@ export class Effets {
       if (this.banniere.vie <= 0) this.banniere = null;
     }
     this.excite = Math.max(0, this.excite - dt / 3);
+    if (this.fissure) {
+      this.fissure.vie -= dt;
+      if (this.fissure.vie <= 0) this.fissure = null;
+    }
   }
 }

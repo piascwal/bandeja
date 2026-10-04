@@ -50,4 +50,4 @@ export const NOMS_COUPS: Record<Coup, string> = {
 };
 
 /** Couleur de chaque super coup : 1 météore, 2 comète, 3 phénix, 4 fantôme. */
-export const COULEURS_SUPER: readonly string[] = ['', '#ff6a2a', '#5fd0ff', '#ffd35c', '#c9a6ff'];
+export const COULEURS_SUPER: readonly string[] = ['', '#ff6a2a', '#5fd0ff', '#ff9a2a', '#fff23a'];

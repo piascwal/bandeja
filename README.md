@@ -297,6 +297,10 @@ renvoi normal : on ne rate jamais.
 « ECHANGE n » sous le tableau des scores chauffe de couleur (blanc, or, orange,
 rouge) et affiche le bonus de vitesse de la balle.
 
+**Piste plein écran.** Par défaut la piste remplit tout l'écran et les commandes (semi-
+transparentes) se posent par-dessus ; Réglages avancés › _Commandes hors terrain_ réserve
+une bande noire en bas pour que les boutons ne couvrent pas la piste (`Projection.place`).
+
 **Même affichage pour tous**, en solo comme en réseau : l'équipe 0 à droite,
 l'équipe 1 à gauche, joystick et boutons identiques. Les positions de service
 (haut/bas, gauche/droite) sont celles d'un vrai terrain vu de côté.
@@ -338,14 +342,16 @@ voit venir le coup.
 
 **Super coups.** Jauge pleine, SMASH lance un super coup (même sur un lob subi) :
 quasi sans erreur, **imparable** (aucun adversaire ne peut toucher la balle) et qui gagne
-le point à son premier rebond. Quatre variantes, choisies selon la situation : la
-**MÉTÉORE** sur une balle haute (boule de feu), la **COMÈTE** à plat (filante bleue et
-blanche), le **PHÉNIX** depuis le fond sur une balle lente (un lob qui monte très haut et
-retombe comme une pierre, or et magenta, avec des ailes), le **FANTÔME** au filet sur une
-balle basse et lente (un amorti lilas qui clignote et meurt derrière le filet). Chacune a
-son halo, sa traînée, ses étincelles, son nom géant et son son. Le CPU lâche aussi son
-super coup rarement (12 % de ses coups) quand sa jauge est pleine. Les coups ordinaires restent plafonnés à
-0,97 de puissance.
+le point à son premier rebond. Il est toujours rapide (la balle file au plus vite que le
+filet le permet, puis repart comme un boulet après son rebond), avec une longue traînée de
+feu, et finit en cassant quelque chose. Quatre variantes, choisies selon la situation :
+la **MÉTÉORE** sur une balle haute (boule de feu qui s'écrase, cratère, puis repart dans
+l'espace), la **COMÈTE** à mi-court (feu bleu et blanc, défonce la vitre du fond et sort de
+la piste), le **PHÉNIX** depuis le fond (oiseau de feu aux ailes dorées qui défonce la vitre
+de côté), l'**ÉCLAIR** au filet (zigzag électrique : l'écran se fissure, puis la balle repart
+dans l'espace). Vitre brisée = gerbe d'éclats, écran qui tremble et flashe. Le CPU lâche aussi
+son super coup, rarement (12 % de ses coups quand sa jauge est pleine). Les coups ordinaires
+restent plafonnés à 0,97 de puissance.
 
 **Lob subi.** Quand un lob a passé le joueur (la balle a rebondi, ou il est loin
 du filet), SMASH ne donne qu'un renvoi normal, son coup est limité à mi-puissance

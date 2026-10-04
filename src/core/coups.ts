@@ -161,7 +161,7 @@ export function executeCoup(
   if (variante) {
     type = lanceSuper(jeu, s, variante as VarianteSuper);
     b.portres = false;
-    b.vif = 0;
+    b.vif = 1; // le premier rebond déclenche la suite du super coup (voir `superRebond`)
   } else if (type !== 'vitre' && type !== 'cote') {
     const versFond = eq === 0 ? 1 : -1; // sens de x vers la vitre adverse
     let e = s.err * (0.45 + 0.8 * p + vin / 34 + (b.mur ? 0.3 : 0));

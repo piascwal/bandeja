@@ -33,8 +33,24 @@ export class Projection {
     ];
   }
 
-  /** Cale la piste dans un écran logique de W x H pixels (paysage). */
-  place(W: number, H: number): void {
+  /**
+   * Cale la piste dans un écran logique de W x H pixels (paysage). Par défaut
+   * (`plein`) la piste remplit tout l'écran, les commandes se posent par-dessus ;
+   * sinon on garde une bande en bas pour que les boutons ne couvrent pas la piste.
+   */
+  place(W: number, H: number, plein = true): void {
+    if (plein) {
+      const kN = Math.max(12, Math.min((W - 16) / 20, (H - HAUT_TABLEAU - 10) / 5.2));
+      this.kN = kN;
+      this.kF = kN * 0.8;
+      this.kz = kN * 0.62;
+      const murs = 4 * this.kz * 0.8;
+      this.yN = H - 4;
+      // toute la hauteur restante sert à la profondeur de la piste (au moins 3,6 k)
+      this.yF = Math.round(Math.min(this.yN - kN * 3.6, HAUT_TABLEAU + murs + 6));
+      this.cx = Math.round(W / 2);
+      return;
+    }
     const kN = Math.max(12, Math.min((W - 16) / 20, (H - HAUT_TABLEAU - 6) / 6.5));
     this.kN = kN;
     this.kF = kN * 0.8;

@@ -1,30 +1,31 @@
-import { lance } from './balle';
+import { gravite, lance } from './balle';
+import { MIL } from './constants';
 import { equipe } from './joueurs';
-import { autre, xProf } from './terrain';
-import type { Balle, Coup, Joueur, Partie } from './types';
+import { autre, filetH, xProf } from './terrain';
+import type { Balle, Coup, Effet, Joueur, Partie } from './types';
 
 /**
  * Les super coups : jauge pleine, le bouton SMASH déclenche une frappe
  * monstrueuse, qui gagne forcément le point (la balle est imparable : aucun
  * adversaire ne peut la toucher, et le point est compté à son premier rebond).
- * Quatre variantes, choisies selon la situation, pour que le joueur ait envie
- * de toutes les découvrir.
+ * Quatre variantes, choisies selon la situation, et toujours spectaculaires :
+ * la balle traîne le feu, puis sort de la piste en cassant quelque chose.
  */
 export type VarianteSuper = 1 | 2 | 3 | 4;
 
-export const NOMS_SUPER = ['', 'METEORE !', 'COMETE !', 'PHENIX !', 'FANTOME !'] as const;
+export const NOMS_SUPER = ['', 'METEORE !', 'COMETE !', 'PHENIX !', 'ECLAIR !'] as const;
 
 /**
- * Laquelle selon la situation : une balle haute, c'est la MÉTÉORE (un smash de
- * feu) ; une balle basse et lente au filet, le FANTÔME (un amorti qui meurt) ;
- * une balle lente depuis le fond, le PHÉNIX (un lob qui monte très haut et
- * retombe comme une pierre) ; sinon la COMÈTE (un boulet à plat).
+ * Laquelle selon la situation :
+ * - MÉTÉORE, une balle haute : un smash de feu qui s'écrase puis repart dans l'espace ;
+ * - ÉCLAIR, au filet : un tir en zigzag qui fait voler l'écran en éclats ;
+ * - PHÉNIX, depuis le fond : un oiseau de feu qui défonce la vitre de côté ;
+ * - COMÈTE, sinon : un boulet qui défonce la vitre du fond.
  */
 export function varianteSuper(b: Balle, loin: number): VarianteSuper {
-  const vitesse = Math.hypot(b.vx, b.vy, b.vz);
   if (b.z > 1.9) return 1;
-  if (loin < 3.5 && vitesse < 14) return 4;
-  if (loin > 6 && vitesse < 16) return 3;
+  if (loin < 3.5) return 4;
+  if (loin > 6) return 3;
   return 2;
 }
 
@@ -43,33 +44,54 @@ function coinLibre(jeu: Partie, eq: 0 | 1): number {
   return meilleur;
 }
 
+/**
+ * Lance la balle le plus vite possible vers (tx, ty) : d'abord comme un coup ordinaire
+ * (qui doit passer le filet), puis on raccourcit le temps de vol autant que le filet le
+ * permet : la balle arrive au même endroit, bien plus vite et plus à plat.
+ */
+function lanceVite(b: Balle, tx: number, ty: number, v: number, spin: Effet, marge: number): void {
+  lance(b, tx, ty, v, spin, marge);
+  const dx = tx - b.x;
+  const dy = ty - b.y;
+  const T = dx / b.vx;
+  const g = gravite(spin);
+  for (const k of [2, 1.75, 1.5, 1.3, 1.15]) {
+    const T2 = T / k;
+    const vx = dx / T2;
+    const vz = (-b.z + 0.5 * g * T2 * T2) / T2;
+    const tn = (MIL - b.x) / vx;
+    const yn = b.y + (dy / T2) * tn;
+    if (b.z + vz * tn - 0.5 * g * tn * tn >= filetH(yn) + 0.15) {
+      b.vx = vx;
+      b.vy = dy / T2;
+      b.vz = vz;
+      return;
+    }
+  }
+}
+
 /** Lance la balle en super coup ; renvoie le coup (nom affiché). La balle est ensuite imparable. */
 export function lanceSuper(jeu: Partie, s: Joueur, variante: VarianteSuper): Coup {
   const b = jeu.balle;
   const eq = s.eq;
   const ty = coinLibre(jeu, eq);
-  const dist = (tx: number, y: number) => Math.hypot(tx - b.x, y - b.y);
   switch (variante) {
     case 1: {
-      const tx = xProf(autre(eq), 3.2 + jeu.rng() * 1.6);
-      lance(b, tx, ty, 44, 'smash', 0.15);
+      lanceVite(b, xProf(autre(eq), 3.5 + jeu.rng() * 1.5), ty, 48, 'smash', 0.15);
       return 'smash';
     }
     case 2: {
-      const tx = xProf(autre(eq), 1.8);
-      lance(b, tx, ty, 40, 'plat', 0.12);
+      lanceVite(b, xProf(autre(eq), 2.2), ty, 46, 'plat', 0.12);
       return 'plat';
     }
     case 3: {
-      const tx = xProf(autre(eq), 1.6);
-      const y = 3.5 + jeu.rng() * 3;
-      lance(b, tx, y, dist(tx, y) / 2.4, 'lobe', 3.5);
-      return 'lobe';
+      // vers le coin le plus proche d'une vitre de côté
+      lanceVite(b, xProf(autre(eq), 3), ty < 5 ? 1.6 : 8.4, 46, 'plat', 0.12);
+      return 'plat';
     }
     default: {
-      const tx = xProf(autre(eq), 9.3);
-      lance(b, tx, ty, 6.5, 'coupe', 0.05);
-      return 'amorti';
+      lanceVite(b, xProf(autre(eq), 3), ty, 50, 'smash', 0.12);
+      return 'smash';
     }
   }
 }

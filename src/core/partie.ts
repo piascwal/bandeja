@@ -127,7 +127,7 @@ export function pas(
   const contact = regle.bind(null, jeu);
   for (let i = 0; i < 2; i++) physique(b, dt / 2, contact);
   b.trace.push([b.x, b.y, b.z]);
-  if (b.trace.length > 16) b.trace.shift();
+  if (b.trace.length > (b.super ? 40 : 16)) b.trace.shift();
   if (jeu.phase === 'jeu' && jeu.tFrappe > DUREE_MAX_ECHANGE)
     gagne(jeu, b.sol >= 1 ? b.eqF : b.camp, 'POINT');
   if (jeu.phase === 'point' && jeu.tPhase > jeu.dureePoint) finPoint(jeu);

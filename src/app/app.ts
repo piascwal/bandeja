@@ -146,7 +146,7 @@ export class BandejaApp {
     this.g.imageSmoothingEnabled = false;
     // en portrait, on prépare quand même la piste en paysage : elle sera prête au retournement
     const [lw, lh] = this.portrait ? [Math.max(this.W, this.H), Math.min(this.W, this.H)] : [this.W, this.H];
-    this.K.place(lw, lh);
+    this.K.place(lw, lh, !this.pref.bandeCommandes);
     this.decor = construitDecor(this.K, lw, lh);
   }
 
@@ -212,6 +212,13 @@ export class BandejaApp {
 
   ouvreCommandes(oui: boolean): void {
     this.ecranUI = oui ? 'commandes' : 'reglages';
+  }
+
+  /** Bande réservée aux commandes sous la piste, ou piste plein écran : la projection et le décor sont recalculés. */
+  basculeBande(): void {
+    this.pref.bandeCommandes = !this.pref.bandeCommandes;
+    sauvePreferences(this.pref);
+    this.dispose();
   }
 
   basculeSecousses(): void {

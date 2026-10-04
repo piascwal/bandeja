@@ -11,6 +11,37 @@ const HAUT_BULLE = 2.6;
 /** Raisons de point annoncées comme exploits : la foule explose. */
 const exploit = (raison: string) => raison.startsWith('POR') || NOMS_SUPER.some((n) => n && n === raison);
 
+/** La variante du super coup en vol (0 : aucun) : elle décide des effets de ses impacts. */
+let superEnCours = 0;
+
+/** Les effets d'un impact de super coup : cratère, vitre qui explose, écran qui se fissure. */
+function impactSuper(
+  variante: number,
+  ev: Extract<Evenement, { type: 'impact' }>,
+  sx: number,
+  sy: number,
+  fx: Effets,
+  son: MoteurSon,
+): void {
+  const c = COULEURS_SUPER[variante] ?? C.or;
+  if (ev.surface === 'vitre') {
+    // la balle traverse la vitre : elle vole en éclats
+    son.vitre(1);
+    son.smash();
+    fx.eclatsVitre(sx, sy);
+    fx.etincelles(sx, sy, 30, c, 180);
+    fx.secousse = 14;
+    fx.flash = 0.7;
+  } else if (ev.surface === 'sol') {
+    fx.etincelles(sx, sy, 50, c, 170);
+    fx.poussiere(sx, sy, 30, '#ffb36a');
+    fx.secousse = 12;
+    fx.flash = 0.8;
+    // l'éclair fait voler l'écran en éclats : l'écran se fissure
+    if (variante === 4) fx.fissurer(sx, sy);
+  }
+}
+
 /**
  * Joue les effets de bord des évènements émis par la simulation : sons,
  * particules, annonces, vibrations. C'est le seul endroit où le jeu « fait du
@@ -29,6 +60,7 @@ export function joueEvenements(
     switch (ev.type) {
       case 'impact': {
         const [sx, sy] = K.proj(ev.x, ev.y, ev.z);
+        if (superEnCours) impactSuper(superEnCours, ev, sx, sy, fx, son);
         if (ev.surface === 'sol') {
           if (ev.force > 1) {
             son.sol();
@@ -51,6 +83,7 @@ export function joueEvenements(
         const [sx, sy] = K.proj(ev.x, ev.y, HAUT_BULLE);
         const p = ev.puissance;
         const couleurQ = COULEURS_QUALITE[ev.q] ?? C.blanc;
+        superEnCours = ev.sv;
         if (ev.sv > 0) {
           // super coup : explosion de la couleur de sa variante, nom géant, tout l'écran vibre
           const c = COULEURS_SUPER[ev.sv] ?? C.or;
@@ -84,6 +117,7 @@ export function joueEvenements(
         break;
       }
       case 'service': {
+        superEnCours = 0;
         son.frappe(0.4 + ev.jauge * 0.4);
         const [sx, sy] = K.proj(ev.x, ev.y, HAUT_BULLE);
         fx.bulle(ev.service === 'plat' ? 'PLAT' : 'COUPE', sx, sy - 10, C.blanc);

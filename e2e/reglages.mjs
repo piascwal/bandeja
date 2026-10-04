@@ -25,4 +25,19 @@ export default async function (env) {
   await env.capture(p, 'commandes');
   await p.keyboard.press('Escape');
   env.verifie((await p.evaluate(() => window.bandeja.ecranUI)) === 'reglages', 'Échap revient aux réglages');
+
+  // la piste remplit l'écran par défaut ; l'option réserve une bande pour les commandes, hors de la piste
+  env.verifie(!(await p.evaluate(() => window.bandeja.pref.bandeCommandes)), 'piste plein écran par défaut');
+  const plein = await p.evaluate(() => window.bandeja.K.yN);
+  await p.evaluate(() => window.bandeja.basculeBande());
+  const bande = await p.evaluate(() => window.bandeja.K.yN);
+  env.verifie(bande < plein - 4, `avec la bande de commandes, la piste remonte (${plein} → ${bande})`);
+  await p.evaluate(() => window.bandeja.lanceMatch());
+  await attends(500);
+  await env.capture(p, 'piste-avec-bande');
+  await p.evaluate(() => window.bandeja.retourMenu());
+  await p.evaluate(() => window.bandeja.basculeBande());
+  await p.evaluate(() => window.bandeja.lanceMatch());
+  await attends(500);
+  await env.capture(p, 'piste-plein-ecran');
 }

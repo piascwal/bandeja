@@ -73,7 +73,7 @@ export function appliqueInstantane(jeu: Partie, s: Instantane): void {
   });
   // la traînée se reconstitue ici, d'une image à l'autre
   b.trace.push([b.x, b.y, b.z]);
-  if (b.trace.length > LONGUEUR_TRACE) b.trace.shift();
+  if (b.trace.length > (b.super ? 3 * LONGUEUR_TRACE : LONGUEUR_TRACE)) b.trace.shift();
 }
 
 /**

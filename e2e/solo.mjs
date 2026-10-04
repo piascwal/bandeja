@@ -55,30 +55,40 @@ export default async function (env) {
   await attends(150);
   await env.capture(p, 'hud-echange');
 
-  // les quatre super coups (halo et traînée de chaque variante), et l'aura de la jauge pleine
-  await p.evaluate(() => {
-    window.bandeja.jeu.jaugeSmash = [1, 0.6];
-    window.bandeja.jeu.humain.intent = null;
-  });
+  // les quatre super coups, joués pour de bon : en vol (traînée de feu), puis à la sortie (cratère, vitre brisée, écran fissuré)
   for (const v of [1, 2, 3, 4]) {
-    await p.evaluate((variante) => {
+    await p.evaluate(async (variante) => {
+      const { executeCoup } = await import('/src/core/coups.ts');
+      const { xProf } = await import('/src/core/terrain.ts');
       const j = window.bandeja.jeu;
+      const h = j.joueurs[0];
       j.phase = 'jeu';
-      j.echange = 4;
+      j.echange = 3;
+      h.x = variante === 3 ? 2 : variante === 4 ? 8.5 : 6;
+      h.y = 5;
       Object.assign(j.balle, {
-        x: 12,
+        x: h.x + 0.3,
         y: 5,
-        z: 1.4,
-        vx: 12,
-        vy: 1,
+        z: variante === 1 ? 2.5 : 0.9,
+        vx: -3,
+        vy: 0,
         vz: 0,
-        camp: 1,
-        sol: 0,
-        super: variante,
+        camp: 0,
+        sol: 1,
         coup: 'plat',
+        service: false,
+        super: 0,
+        dehors: false,
+        roule: false,
       });
+      executeCoup(j, h, 'plat', 1, xProf(1, 3), 5, null, { super: variante, precision: 1, charge: 1 });
     }, v);
-    await attends(260);
-    await env.capture(p, `super-${v}`);
+    await attends(150);
+    await env.capture(p, `super-${v}-vol`);
+    await attends(420);
+    await env.capture(p, `super-${v}-impact`);
+    await attends(250);
+    await env.capture(p, `super-${v}-fin`);
+    await attends(2200);
   }
 }

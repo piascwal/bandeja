@@ -1,4 +1,5 @@
 import { dessineCommandes } from '@render/commandes';
+import { dessineFissure } from '@render/fissure';
 import { dessineEchange } from '@render/hud-echange';
 import { dessineBanniere, dessineJauge, dessineTableau } from '@render/hud';
 import { dessineAttente } from '@render/lan-etats';
@@ -95,9 +96,11 @@ export function rendu(app: BandejaApp, t: number): void {
     dessineReglages(v, app.boutons, {
       son: app.pref.son,
       aide: app.pref.aide,
+      bandeCommandes: app.pref.bandeCommandes,
       secoussesReduites: app.pref.secoussesReduites,
       onSon: () => app.basculeSon(),
       onAide: () => app.basculeAide(),
+      onBande: () => app.basculeBande(),
       onSecousses: () => app.basculeSecousses(),
       onCommandes: () => app.ouvreCommandes(true),
       onRetour: () => app.ouvreReglages(false),
@@ -144,6 +147,7 @@ export function rendu(app: BandejaApp, t: number): void {
   }
   const attente = ecranUI === 'jeu' || ecranUI === 'pause' ? app.lan.vueAttente() : null;
   if (attente) dessineAttente(v, app.boutons, attente, t);
+  if (effets.fissure) dessineFissure(v, effets.fissure);
   if (effets.flash > 0) {
     g.fillStyle = `rgba(255,255,255,${effets.flash * 0.5})`;
     g.fillRect(0, 0, W, H);
