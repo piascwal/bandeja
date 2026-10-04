@@ -107,9 +107,9 @@ describe('le lob subi', () => {
       eqF: 1,
     });
     expect(contrainte(jeu.balle, s)).toBe(true);
-    // le bouton SMASH ne répond pas
+    // le bouton SMASH est grisé : l'appui n'est pas perdu, c'est un renvoi normal
     pas(jeu, PAS, () => ({ ...VIDE, appuis: ['smash'] }));
-    expect(s.intent).toBeNull();
+    expect(s.intent?.type).toBe('plat');
     // un coup joué dans cette situation est limité et donne l'avantage à l'autre équipe
     executeCoup(jeu, s, 'smash', 1, xProf(1, 5), 5);
     expect(jeu.balle.coup).toBe('bandeja');

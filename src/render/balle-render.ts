@@ -1,5 +1,6 @@
 import { clamp } from '@core/aleatoire';
 import { LARG } from '@core/constants';
+import { accelerationEchange } from '@core/coups';
 import type { Partie } from '@core/types';
 import { C, TRAINEES } from './palette';
 import { px } from './primitives';
@@ -13,7 +14,9 @@ export function dessineBalle(v: Vue, jeu: Partie): void {
   const vit = Math.hypot(b.vx, b.vy, b.vz);
   const special = b.coup ? TRAINEES[b.coup] : undefined;
   // un coup très fort laisse une traînée de feu, même après le rebond : plus il est rapide, plus elle est vive
-  const feu = clamp((vit - 16) / 12, 0, 1);
+  // la vitesse gagnée au fil de l'échange se voit : halo qui grandit et chauffe, traînée plus tôt
+  const facteur = accelerationEchange(jeu.echange);
+  const feu = Math.max(clamp((vit - 16) / 12, 0, 1), clamp((facteur - 1.15) / 0.6, 0, 1));
   // un super coup file à plus de 30 m/s : traînée bleue et blanche, et halo autour de la balle
   const super_ = b.super;
   if ((feu > 0 || super_) && jeu.phase !== 'service' && b.coup !== 'vibora' && b.coup !== 'bandeja') {
@@ -52,6 +55,13 @@ export function dessineBalle(v: Vue, jeu: Partie): void {
   }
   const x = Math.round(sx);
   const y = Math.round(sy);
+  if (facteur >= 1.2 && jeu.phase === 'jeu' && !super_) {
+    const t = clamp((facteur - 1.2) / 0.7, 0, 1);
+    g.globalAlpha = 0.3 + 0.3 * t;
+    const r = 3 + Math.round(3 * t);
+    px(g, x - r, y - r + 1, r * 2, r * 2 - 2, t < 0.35 ? '#ffe27a' : t < 0.7 ? '#ff8a3c' : '#ff3b1f');
+    g.globalAlpha = 1;
+  }
   if (super_ && jeu.phase !== 'service') {
     g.globalAlpha = 0.35 + 0.25 * Math.sin(jeu.temps * 40);
     px(g, x - 4, y - 3, 8, 6, '#7fe9ff');

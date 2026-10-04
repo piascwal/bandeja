@@ -49,6 +49,8 @@ export default async function (env) {
     j.phase = 'jeu';
     j.echange = 14;
     j.jaugeSmash = [0.45, 1];
+    j.humain.intent = { type: 'plat', t: 0 };
+    j.humain.charge = 1;
   });
   await attends(150);
   await env.capture(p, 'hud-echange');

@@ -212,6 +212,11 @@ export class BandejaApp {
     this.ecranUI = oui ? 'commandes' : 'reglages';
   }
 
+  basculeConseils(): void {
+    this.pref.conseils = !this.pref.conseils;
+    sauvePreferences(this.pref);
+  }
+
   basculeSecousses(): void {
     this.pref.secoussesReduites = !this.pref.secoussesReduites;
     sauvePreferences(this.pref);

@@ -39,11 +39,17 @@ export function dessineEchange(v: Vue, jeu: Partie): void {
     px(g, gauche ? x : x + w - Math.round(w * k), y, Math.round(w * k), 4, couleur);
     if (pleine) texte(g, 'PAR 3 !', x + w / 2, y + 7, C.or, 1, 'c');
   }
-  // le compteur d'échange, au centre
+  // le compteur d'échange, au centre : le nombre de coups, puis la vitesse de la balle (×1,0 au service, jusqu'à ×1,9)
   if (jeu.phase !== 'jeu' || jeu.echange < 3) return;
-  const bonus = Math.round((accelerationEchange(jeu.echange) - 1) * 100);
-  const maxi = bonus >= Math.round(ACCEL_MAX * 100);
+  const facteur = accelerationEchange(jeu.echange);
+  const niveau = (facteur - 1) / ACCEL_MAX;
+  const couleur = couleurEchange(jeu.echange);
   const pulse = jeu.echange >= 12 && Math.floor(jeu.temps * 8) % 2 === 0;
-  texte(g, `ECHANGE ${jeu.echange}`, cx, y - 1, pulse ? '#ffffff' : couleurEchange(jeu.echange), 1, 'c');
-  if (bonus > 0) texte(g, `BALLE +${maxi ? 'MAX' : bonus}`, cx, y + 8, couleurEchange(jeu.echange), 1, 'c');
+  texte(g, `ECHANGE ${jeu.echange}`, cx, y - 1, pulse ? '#ffffff' : couleur, 1, 'c');
+  if (niveau <= 0) return;
+  texte(g, `VITESSE X${facteur.toFixed(1)}`, cx, y + 8, couleur, 1, 'c');
+  const w = 66;
+  px(g, cx - w / 2 - 1, y + 17, w + 2, 4, C.contour);
+  px(g, cx - w / 2, y + 18, w, 2, '#0f1328');
+  px(g, cx - w / 2, y + 18, Math.round(w * niveau), 2, couleur);
 }

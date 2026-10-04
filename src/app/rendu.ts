@@ -1,4 +1,5 @@
 import { dessineCommandes } from '@render/commandes';
+import { dessineConseil } from '@render/conseils';
 import { dessineEchange } from '@render/hud-echange';
 import { dessineBanniere, dessineJauge, dessineTableau } from '@render/hud';
 import { dessineAttente } from '@render/lan-etats';
@@ -62,6 +63,7 @@ export function rendu(app: BandejaApp, t: number): void {
     dessineRalenti(v, app.boutons, app.ralenti.progression, t, () => app.passeRalenti());
   } else if (ecranUI === 'jeu') {
     dessineJauge(v, jeu);
+    if (app.pref.conseils) dessineConseil(v, jeu);
     const e = app.entrees;
     const joy = e.joy;
     dessineCommandes(v, jeu, {
@@ -95,9 +97,11 @@ export function rendu(app: BandejaApp, t: number): void {
     dessineReglages(v, app.boutons, {
       son: app.pref.son,
       aide: app.pref.aide,
+      conseils: app.pref.conseils,
       secoussesReduites: app.pref.secoussesReduites,
       onSon: () => app.basculeSon(),
       onAide: () => app.basculeAide(),
+      onConseils: () => app.basculeConseils(),
       onSecousses: () => app.basculeSecousses(),
       onCommandes: () => app.ouvreCommandes(true),
       onRetour: () => app.ouvreReglages(false),

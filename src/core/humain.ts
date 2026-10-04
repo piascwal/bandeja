@@ -11,7 +11,7 @@ export const TYPES_SERV: Partial<Record<Bouton, TypeService>> = { plat: 'plat', 
 /** Plus on appuie tôt avant l'impact, plus le coup est puissant (durée de la charge, s). */
 const DUREE_CHARGE = 0.6;
 /** Un appui reste en attente de la balle ce temps-là : le coup part tout seul dès qu'elle est à portée. */
-const OUBLI_APPUI = 1.2;
+const OUBLI_APPUI = 3;
 /** Portée généreuse pour un humain : on réussit presque toujours à toucher la balle. */
 export const BONUS_PORTEE = 1.3;
 /** Après le relâchement du joystick, sa dernière direction compte encore ce temps-là (s). */
@@ -20,8 +20,6 @@ const MEMOIRE_VISEE = 0.4;
 const SEUIL_VISEE = 0.3;
 /** Jauge pleine : au-delà, et bien placé, c'est un super coup. */
 export const SUPER_CHARGE = 0.98;
-/** À partir de cette charge, le coup attend le meilleur moment (balle proche) au lieu de partir au bord de la portée. */
-const CHARGE_ATTENTE = 0.5;
 /** Distance (m) à la balle à partir de laquelle le coup est jugé « bien placé ». */
 const DISTANCE_IDEALE = 0.6;
 /** Distance de contact de référence pour juger le timing (m). */
@@ -63,11 +61,11 @@ export function appliqueCommande(jeu: Partie, s: Joueur, cmd: Commande, dt: numb
   // on peut appuyer en avance : le coup part dès que la balle est à portée,
   // et plus on a appuyé tôt, plus il est puissant
   for (const a of cmd.appuis) {
-    // un lob qui nous a passés : le bouton SMASH ne répond pas
-    if (a === 'smash' && contrainte(jeu.balle, s)) continue;
-    if (s.intent) s.intent.type = a;
+    // un lob qui nous a passés : le bouton SMASH est grisé, mais l'appui n'est jamais perdu : c'est un renvoi normal
+    const bouton: Bouton = a === 'smash' && contrainte(jeu.balle, s) ? 'plat' : a;
+    if (s.intent) s.intent.type = bouton;
     else {
-      s.intent = { type: a, t: 0 };
+      s.intent = { type: bouton, t: 0 };
       s.charge = 0;
     }
   }
@@ -83,7 +81,9 @@ export function appliqueCommande(jeu: Partie, s: Joueur, cmd: Commande, dt: numb
     const b = jeu.balle;
     const d = Math.hypot(b.x - s.x, b.y - s.y);
     // un coup chargé attend que la balle soit tout près (ou qu'elle s'éloigne) : c'est le bon timing qui le rend précis
-    const attend = s.charge >= CHARGE_ATTENTE && d > DISTANCE_IDEALE && d <= s.dBalle;
+    // (jamais d'attente si la balle va rebondir une deuxième fois : on ne la rate pas)
+    const perdue = b.sol >= 1 && b.z < 0.5 && b.vz < 0;
+    const attend = s.charge >= SUPER_CHARGE && d > DISTANCE_IDEALE && d <= s.dBalle && !perdue;
     s.dBalle = d;
     if (!attend) coupHumain(jeu, s);
   } else s.dBalle = 99;

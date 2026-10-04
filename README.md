@@ -279,6 +279,19 @@ déplacement_, désactivée par défaut), le joueur qui va jouer la balle y est
 conduit tout seul quand le joystick est au repos ; en réseau, c'est le réglage
 de l'hôte qui vaut pour tous.
 
+**Vitesse visible.** Le compteur affiche « ECHANGE n » puis « VITESSE X1.7 » avec une
+jauge (×1,0 au service, jusqu'à ×1,9), et la balle elle-même a un halo qui grandit et
+chauffe (jaune, orange, rouge) avec une traînée qui apparaît plus tôt.
+
+**Conseils à l'écran** (Réglages, activés par défaut) : une ligne au bas de l'écran dit
+ce qui se passe (« APPUIE SUR UN COUP », « COUP ARME : IL PART TOUT SEUL », « SUPER
+PRET ! LAISSE-LA ARRIVER », « LOB SUBI : PAS DE SMASH »). Pas besoin de maintenir le
+bouton : l'appui arme le coup, la jauge se remplit seule et le coup part dès que la
+balle est à portée ; l'appui reste en attente jusqu'à 3 s (un lob lent ne le fait
+plus oublier). Seul le super coup (jauge pleine) attend que la balle soit tout près, et
+il part de toute façon quand elle va rebondir une deuxième fois. Sur un lob subi, le
+bouton SMASH est grisé mais l'appui donne un renvoi normal : on ne rate jamais.
+
 **La balle accélère** de 6 % à chaque coup après le deuxième, jusqu'à +90 %
 (`ACCEL_*` dans `core/constants.ts`), sauf le lob et l'amorti. Un compteur
 « ECHANGE n » sous le tableau des scores chauffe de couleur (blanc, or, orange,
