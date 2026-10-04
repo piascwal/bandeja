@@ -8,6 +8,7 @@ import { dessineCommandesAide } from '@render/commandes-aide';
 import { dessineReglages } from '@render/reglages';
 import { dessineDemarrage, dessineFin, dessineMenu, dessinePause, dessinePortrait } from '@render/menus';
 import { C } from '@render/palette';
+import { dessineMiseAJour, dessineRappelMiseAJour } from '@render/mise-a-jour-vue';
 import { dessineRalenti } from '@render/ralenti-vue';
 import { dessineScene } from '@render/scene';
 import type { BandejaApp } from './app';
@@ -78,6 +79,13 @@ export function rendu(app: BandejaApp, t: number): void {
     };
     dessineMenu(v, app.boutons, reglages, actions, t, __VERSION_APP__);
     if (app.attenteDemarrage) dessineDemarrage(v, t);
+    else if (app.maj.proposee)
+      dessineMiseAJour(v, app.boutons, {
+        version: app.maj.version,
+        onMaj: () => app.maj.accepte(),
+        onPlusTard: () => app.maj.plusTard(),
+      });
+    else if (app.maj.refusee) dessineRappelMiseAJour(v, app.boutons, () => app.maj.rouvre());
   } else if (ecranUI === 'lan-liste') {
     dessineListe(v, app.boutons, app.lan.vueListe(), t);
   } else if (ecranUI === 'lan-salon') {

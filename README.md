@@ -221,6 +221,20 @@ Le décor (foule, gazon, murs, vitre de devant) est calculé une fois par
 taille d'écran, pixel par pixel, en retrouvant pour chaque pixel le point de
 la piste qu'il montre (`decor.ts`, `decor-murs.ts`).
 
+## Mise à jour
+
+Le service worker de la PWA (`registerType: 'prompt'`) télécharge la nouvelle
+version en arrière-plan quand elle existe, **sans l'installer de force** : le menu
+affiche alors « MISE A JOUR DISPONIBLE » (`app/mise-a-jour.ts`,
+`render/mise-a-jour-vue.ts`) avec METTRE A JOUR (installe et recharge) et PLUS
+TARD. Rien n'est bloquant : hors ligne, la recherche échoue en silence et le jeu
+reste jouable avec la version en cache ; après un « plus tard », un petit bouton
+MISE A JOUR reste en haut à gauche du menu, et la proposition revient au
+prochain lancement. La recherche a lieu au lancement, toutes les 30 minutes et au
+retour au premier plan (une app installée peut rester des jours ouverte).
+`version.json`, publié à chaque build et jamais mis en cache, donne le numéro de la
+version proposée. On ne propose qu'au menu, jamais en plein match.
+
 ## Plein écran (webview)
 
 Le jeu se comporte comme une app plein écran, sans barre de navigateur :

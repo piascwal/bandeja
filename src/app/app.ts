@@ -16,6 +16,7 @@ import { joueEvenements } from './evenements';
 import { estAutonome, PleinEcranAuPremierGeste } from './plein-ecran';
 import { chargePreferences, sauvePreferences, type Preferences } from './preferences';
 import { ParcoursLan } from './parcours-lan';
+import { MiseAJour } from './mise-a-jour';
 import { Ralenti } from './ralenti';
 import { rendu } from './rendu';
 
@@ -37,6 +38,8 @@ export class BandejaApp {
   readonly entrees: Entrees;
   /** le multijoueur Wi-Fi : liste des parties, salle d'attente, match en réseau */
   readonly lan = new ParcoursLan(this);
+  /** la mise à jour proposée au joueur (jamais bloquante) */
+  readonly maj = new MiseAJour();
   /** le rejeu au ralenti des beaux points */
   readonly ralenti = new Ralenti();
   /** Taille logique de l'écran (gros pixels du décor) et facteur d'agrandissement. */

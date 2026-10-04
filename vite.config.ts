@@ -46,6 +46,18 @@ export default defineConfig({
   resolve: { alias: ALIAS },
   plugins: [
     {
+      // la version publiée, lisible sans cache : sert à dire laquelle est proposée
+      name: 'bandeja-version',
+      apply: 'build',
+      generateBundle() {
+        this.emitFile({
+          type: 'asset',
+          fileName: 'version.json',
+          source: JSON.stringify({ version: VERSION_APP }),
+        });
+      },
+    },
+    {
       name: 'bandeja-csp',
       apply: 'build',
       transformIndexHtml: (html) =>
@@ -55,7 +67,8 @@ export default defineConfig({
         ),
     },
     VitePWA({
-      registerType: 'autoUpdate',
+      // « prompt » : on propose la mise à jour au joueur au lieu de recharger la page de force (voir app/mise-a-jour.ts)
+      registerType: 'prompt',
       includeAssets: ['icons/*.png', 'sprites/*.png'],
       manifest: {
         id: BASE,
