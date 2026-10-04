@@ -191,6 +191,10 @@ export interface Partie {
   /** le point se rejoue (faute de service, let) */
   rejoue: boolean;
   phase: Phase;
+  /** option : un joueur humain est conduit vers la balle quand son joystick est au repos */
+  aide: boolean;
+  /** coups joués depuis le service : la balle accélère au fil de l'échange */
+  echange: number;
   tPhase: number;
   /** durée de l'annonce d'un point avant de passer au suivant (plus longue s'il est rejoué au ralenti) */
   dureePoint: number;

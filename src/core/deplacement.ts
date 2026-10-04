@@ -23,7 +23,7 @@ function versPoint(s: Joueur, p: Point2, vmax: number): [number, number] {
 
 /** Le point où il doit être pour frapper, s'il est celui qui va jouer la balle. */
 function pointDeFrappe(jeu: Partie, s: Joueur): Point2 | null {
-  if (jeu.phase !== 'jeu' || jeu.balle.camp !== s.eq) return null;
+  if (!jeu.aide || jeu.phase !== 'jeu' || jeu.balle.camp !== s.eq) return null;
   const plan = jeu.plan[s.eq];
   // la balle va rebondir sur une vitre : le joueur anticipe lui-même (se rapprocher du filet...), on ne le guide pas
   return plan && plan.s === s && !plan.vitre ? { x: plan.x - dir(s.eq) * 0.3, y: plan.y } : null;

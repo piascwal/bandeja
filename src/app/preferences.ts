@@ -6,6 +6,8 @@ export interface Preferences {
   /** indice dans JEUX */
   jeux: number;
   son: boolean;
+  /** option avancée : le joueur est conduit vers la balle quand le joystick est au repos (désactivée par défaut) */
+  aide: boolean;
   /** nom affiché aux autres joueurs en réseau : majuscules, chiffres et espaces, 14 caractères au plus */
   nom: string;
   /** par niveau */
@@ -25,6 +27,7 @@ const DEFAUT = (): Preferences => ({
   niveau: 1,
   jeux: 1,
   son: true,
+  aide: false,
   nom: nomAuHasard(),
   victoires: [0, 0, 0],
   matchs: [0, 0, 0],
@@ -45,6 +48,7 @@ export function lisPreferences(brut: string | null): Preferences {
     p.niveau = indice(o.niveau, NIVEAUX.length, p.niveau);
     p.jeux = indice(o.jeux, JEUX.length, p.jeux);
     if (typeof o.son === 'boolean') p.son = o.son;
+    if (typeof o.aide === 'boolean') p.aide = o.aide;
     if (typeof o.nom === 'string' && NOM_SUR.test(o.nom)) p.nom = o.nom;
     p.victoires = compteurs(o.victoires);
     p.matchs = compteurs(o.matchs);

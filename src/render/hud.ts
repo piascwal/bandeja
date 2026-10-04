@@ -9,7 +9,7 @@ import { px } from './primitives';
 import { panneau } from './ui';
 import type { Vue } from './vue';
 
-/** Tableau des scores, avec la même disposition que la piste : votre équipe à droite. */
+/** Tableau des scores, avec la même disposition que la piste, la même pour tous : équipe 0 à droite, équipe 1 à gauche. */
 export function dessineTableau(v: Vue, jeu: Partie, boutonPause: boolean): void {
   const { g, W } = v;
   const cx = Math.round(W / 2);
@@ -20,12 +20,12 @@ export function dessineTableau(v: Vue, jeu: Partie, boutonPause: boolean): void 
   px(g, x, y, lw, 19, C.panneau);
   px(g, x, y, lw, 1, '#2a3160');
   px(g, x, y + 18, lw, 1, '#0f1328');
-  // l'équipe de CET écran est à droite, comme sur la piste
-  const droite = jeu.humain?.eq ?? 0;
-  const gauche = droite === 0 ? 1 : 0;
+  const droite = 0;
+  const gauche = 1;
+  const moi = jeu.humain?.eq;
   const nom = (eq: 0 | 1): string => {
     if (jeu.mode !== 'match') return eq === 0 ? 'BLEUS' : 'ROUGES';
-    if (eq === droite) return 'VOUS';
+    if (eq === moi) return 'VOUS';
     return jeu.humains.some((h) => h.eq === eq) ? 'ADV' : 'CPU';
   };
   const nomG = nom(gauche);

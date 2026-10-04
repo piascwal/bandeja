@@ -33,6 +33,12 @@ export const HAUT_GRILLE_FOND = 4;
 export const VITRE_COTE = 4;
 /** Un échange qui traîne au-delà (s) est arrêté. */
 export const DUREE_MAX_ECHANGE = 9;
+/**
+ * La balle accélère au fil de l'échange : +ACCEL_ECHANGE par coup après le
+ * deuxième, jusqu'à +ACCEL_MAX, sauf pour le lob et l'amorti (qui restent lents).
+ */
+export const ACCEL_ECHANGE = 0.04;
+export const ACCEL_MAX = 0.5;
 /** Durée de l'annonce entre deux points (s). */
 export const DUREE_POINT = 1.9;
 

@@ -218,9 +218,16 @@ export class ParcoursLan {
 
   // ------------------------------------------------------------ le match
 
-  private creeJeu(sieges: number[], local: number, niveau: number, jeux: number, rng?: () => number): void {
+  private creeJeu(
+    sieges: number[],
+    local: number,
+    niveau: number,
+    jeux: number,
+    rng?: () => number,
+    aide = false,
+  ): void {
     const a = this.app;
-    a.jeu = a.adopte(nouvellePartie({ mode: 'match', niveau, jeux, sieges, local, rng }));
+    a.jeu = a.adopte(nouvellePartie({ mode: 'match', niveau, jeux, sieges, local, rng, aide }));
     a.vueJoueurs.reinitialise();
     a.effets.vide();
     a.ralenti.reinitialise();
@@ -228,14 +235,27 @@ export class ParcoursLan {
     this.synchro.reinitialise();
     this.seq = 0;
     a.ecranUI = 'jeu';
-    a.effets.annonce('PRETS ?', `${NOMS_FORMATS[this.etat?.config.format ?? 'coop']}`, C.blanc, 1.5);
+    a.effets.annonce(
+      'PRETS ?',
+      `${NOMS_FORMATS[this.etat?.config.format ?? 'coop']}${a.jeu.humain ? ` - VOUS : A ${a.jeu.humain.eq === 0 ? 'DROITE' : 'GAUCHE'}` : ''}`,
+      C.blanc,
+      1.5,
+    );
   }
 
   private debutHote(): void {
     const h = this.hote;
     if (!h) return;
     const g = Math.floor(Math.random() * 0xffffffff);
-    this.creeJeu(siegesHumains(h.etat), 0, h.etat.config.niveau, h.etat.config.jeux);
+    // c'est l'hôte qui simule : son réglage d'aide au déplacement vaut pour tous les joueurs
+    this.creeJeu(
+      siegesHumains(h.etat),
+      0,
+      h.etat.config.niveau,
+      h.etat.config.jeux,
+      undefined,
+      this.app.pref.aide,
+    );
     h.envoieDebut(g);
   }
 

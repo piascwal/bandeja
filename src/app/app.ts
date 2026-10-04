@@ -110,10 +110,12 @@ export class BandejaApp {
   }
 
   private partie(mode: 'match' | 'demo'): Partie {
-    return this.adopte(nouvellePartie({ mode, niveau: this.pref.niveau, jeux: this.pref.jeux }));
+    return this.adopte(
+      nouvellePartie({ mode, niveau: this.pref.niveau, jeux: this.pref.jeux, aide: this.pref.aide }),
+    );
   }
 
-  /** Cale la vue sur le siège de cet écran : miroir ou non selon son équipe. */
+  /** Cale la vue : la même pour tous les joueurs (équipe 0 à droite, équipe 1 à gauche). */
   adopte(jeu: Partie): Partie {
     const miroir = jeu.humain?.miroir ?? true;
     this.K.miroir = miroir;
@@ -213,6 +215,11 @@ export class BandejaApp {
 
   jeuxSuivants(): void {
     this.pref.jeux = (this.pref.jeux + 1) % JEUX.length;
+    sauvePreferences(this.pref);
+  }
+
+  basculeAide(): void {
+    this.pref.aide = !this.pref.aide;
     sauvePreferences(this.pref);
   }
 

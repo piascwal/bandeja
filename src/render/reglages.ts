@@ -8,8 +8,10 @@ export type OngletCommandes = 'tactile' | 'clavier';
 
 export interface EtatReglages {
   son: boolean;
+  aide: boolean;
   onglet: OngletCommandes;
   onSon: () => void;
+  onAide: () => void;
   onOnglet: (o: OngletCommandes) => void;
   onRetour: () => void;
 }
@@ -52,7 +54,12 @@ export function dessineReglages(v: Vue, zones: ZoneBouton[], e: EtatReglages): v
   voile(g, W, H, 0.88);
   const cx = Math.round(W / 2);
   texte(g, 'REGLAGES', cx, 4, C.blanc, 1, 'c');
-  bouton(g, zones, `SON : ${e.son ? 'OUI' : 'NON'}`, cx - 50, 15, 100, 13, e.onSon, { couleur: '#232a58' });
+  bouton(g, zones, `SON : ${e.son ? 'OUI' : 'NON'}`, cx - 124, 15, 72, 13, e.onSon, { couleur: '#232a58' });
+  // option avancée : désactivée par défaut, elle conduit le joueur vers la balle
+  bouton(g, zones, `AIDE AU DEPLACEMENT : ${e.aide ? 'OUI' : 'NON'}`, cx - 46, 15, 170, 13, e.onAide, {
+    couleur: e.aide ? '#2d3a8c' : '#232a58',
+    texte: e.aide ? C.or : C.blanc,
+  });
 
   texte(g, 'COMMANDES', cx, 35, C.gris, 1, 'c');
   const onglet = (o: OngletCommandes, label: string, x: number) => {

@@ -76,8 +76,10 @@ export function rendu(app: BandejaApp, t: number): void {
   } else if (ecranUI === 'reglages') {
     dessineReglages(v, app.boutons, {
       son: app.pref.son,
+      aide: app.pref.aide,
       onglet: app.ongletCommandes,
       onSon: () => app.basculeSon(),
+      onAide: () => app.basculeAide(),
       onOnglet: (o) => (app.ongletCommandes = o),
       onRetour: () => app.ouvreReglages(false),
     });

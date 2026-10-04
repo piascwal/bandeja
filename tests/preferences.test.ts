@@ -9,10 +9,17 @@ describe('préférences', () => {
       niveau: 2,
       jeux: 3,
       son: false,
+      aide: false,
       nom: expect.any(String),
       victoires: [1, 2, 3],
       matchs: [4, 5, 6],
     });
+  });
+
+  it('l’aide au déplacement est désactivée par défaut et se retient', () => {
+    expect(lisPreferences(null).aide).toBe(false);
+    expect(lisPreferences('{"aide":true}').aide).toBe(true);
+    expect(lisPreferences('{"aide":"oui"}').aide).toBe(false);
   });
 
   it('ignore les valeurs abîmées', () => {
@@ -22,6 +29,7 @@ describe('préférences', () => {
       niveau: 1,
       jeux: 1,
       son: true,
+      aide: false,
       nom: expect.any(String),
       victoires: [0, 0, 0],
       matchs: [0, 0, 0],

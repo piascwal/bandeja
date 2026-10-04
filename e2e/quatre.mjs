@@ -57,17 +57,17 @@ export default async function (env) {
     );
   env.verifie(
     (await b1.page.evaluate(() => [window.bandeja.K.miroir, window.bandeja.jeu.humain.id].join())) ===
-      'false,2',
-    "l'écran de B1 est retourné et il pilote le joueur B1",
+      'true,2',
+    "l'écran de B1 est le même que celui des autres et il pilote le joueur B1",
   );
   env.verifie(
     (await b2.page.evaluate(() => [window.bandeja.K.miroir, window.bandeja.jeu.humain.id].join())) ===
-      'false,3',
-    "l'écran de B2 est retourné et il pilote le joueur B2",
+      'true,3',
+    "l'écran de B2 est le même que celui des autres et il pilote le joueur B2",
   );
   env.verifie(
     (await a2.page.evaluate(() => window.bandeja.K.miroir)) === true,
-    "l'écran de A2 n'est pas retourné",
+    "l'écran de A2 est le même aussi",
   );
   env.verifie(
     (await ps.evaluate(() => window.bandeja.jeu.humain)) === null,
@@ -88,15 +88,15 @@ export default async function (env) {
   // --- les commandes de chacun vont à SON joueur, y compris sur un écran retourné
   await lan.versLEchange(env, hote, [hote, a2, b1, b2]);
   const avant = await positions(h);
-  await pb1.keyboard.down('ArrowRight'); // la droite de SON écran (retourné) : x qui augmente
+  await pb1.keyboard.down('ArrowRight'); // la droite de l'écran, pour tous : x qui diminue (vers le filet pour B1)
   await pb2.keyboard.down('ArrowDown');
   await attends(900);
   await pb1.keyboard.up('ArrowRight');
   await pb2.keyboard.up('ArrowDown');
   const apres = await positions(h);
   env.verifie(
-    apres[2][0] - avant[2][0] > 0.8,
-    `B1 avance vers la droite de son écran (x ${avant[2][0].toFixed(2)} → ${apres[2][0].toFixed(2)})`,
+    avant[2][0] - apres[2][0] > 0.8,
+    `B1 va vers la droite de l'écran (x ${avant[2][0].toFixed(2)} → ${apres[2][0].toFixed(2)})`,
   );
   env.verifie(
     apres[3][1] - avant[3][1] > 0.8,

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { physique } from '@core/balle';
-import { HAUT_SMASH, PAS } from '@core/constants';
-import { executeCoup } from '@core/coups';
+import { ACCEL_MAX, HAUT_SMASH, PAS } from '@core/constants';
+import { accelerationEchange, executeCoup } from '@core/coups';
 import { xProf } from '@core/terrain';
 import { cibleCoup, coupAerien, coupPrevu, directionVisee } from '@core/humain';
 import { pas } from '@core/partie';
@@ -12,8 +12,8 @@ import { partieTest } from './outils';
 const VIDE: Commande = { dx: 0, dy: 0, appuis: [] };
 
 describe('un jeu d’arcade : on touche presque toujours la balle', () => {
-  it('sans toucher au joystick, un simple appui renvoie la balle échange après échange', () => {
-    const jeu = partieTest({ mode: 'match', jeux: 3, sieges: [0], niveau: 1 }, 31);
+  it('avec l’aide au déplacement, un simple appui renvoie la balle échange après échange', () => {
+    const jeu = partieTest({ mode: 'match', jeux: 3, sieges: [0], niveau: 1, aide: true }, 31);
     let coups = 0;
     for (let i = 0; i < 120 * 90 && jeu.phase !== 'fin'; i++) {
       const appuie = jeu.phase === 'jeu' && jeu.balle.camp === 0 && i % 50 === 0;
@@ -26,6 +26,7 @@ describe('un jeu d’arcade : on touche presque toujours la balle', () => {
   it('le joueur est guidé vers la balle quand le joystick est au repos', () => {
     const jeu = partieTest({ mode: 'match', sieges: [0] }, 8);
     const hum = jeu.joueurs[0]!;
+    jeu.aide = true;
     jeu.phase = 'jeu';
     Object.assign(jeu.balle, { x: 4, y: 7, z: 1, vx: -2, vy: 0, vz: 0, camp: 0, sol: 1 });
     jeu.tPred = 100; // le plan posé à la main ne doit pas être recalculé
@@ -139,6 +140,7 @@ describe('le jeu de vitre du padel', () => {
     const jeu = partieTest({ mode: 'match', sieges: [0] }, 8);
     const hum = jeu.joueurs[0]!;
     jeu.phase = 'jeu';
+    jeu.aide = true;
     jeu.tPred = 100;
     Object.assign(jeu.balle, { x: 4, y: 7, z: 1, vx: -2, vy: 0, vz: 0, camp: 0, sol: 1 });
     hum.x = 8;
@@ -162,5 +164,26 @@ describe('le jeu de vitre du padel', () => {
     physique(b, 1 / 240);
     physique(b, 1 / 240);
     expect(b.vz).toBeGreaterThan(1.5);
+  });
+
+  it('sans l’option, le joueur n’est jamais conduit vers la balle', () => {
+    const jeu = partieTest({ mode: 'match', sieges: [0] }, 8);
+    const hum = jeu.joueurs[0]!;
+    expect(jeu.aide).toBe(false);
+    jeu.phase = 'jeu';
+    jeu.tPred = 100;
+    Object.assign(jeu.balle, { x: 4, y: 7, z: 1, vx: -2, vy: 0, vz: 0, camp: 0, sol: 1 });
+    hum.x = 8;
+    hum.y = 2;
+    jeu.plan[0] = { s: hum, x: 4, y: 7, z: 1, t: 1, sol: 1, ok: true, vitre: false, score: 0, sc: 0 };
+    for (let i = 0; i < 120; i++) pas(jeu, PAS, () => VIDE);
+    expect(Math.hypot(hum.x - 8, hum.y - 2)).toBeLessThan(0.01);
+  });
+
+  it('la balle accélère au fil de l’échange, avec un plafond', () => {
+    expect(accelerationEchange(0)).toBe(1);
+    expect(accelerationEchange(2)).toBe(1);
+    expect(accelerationEchange(10)).toBeGreaterThan(accelerationEchange(5));
+    expect(accelerationEchange(500)).toBeCloseTo(1 + ACCEL_MAX);
   });
 });

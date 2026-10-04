@@ -1,6 +1,6 @@
 import { gauss } from './aleatoire';
 import { lance } from './balle';
-import { HAUT_MAX, HAUT_SMASH, MIL, PORTEE } from './constants';
+import { ACCEL_ECHANGE, ACCEL_MAX, HAUT_MAX, HAUT_SMASH, MIL, PORTEE } from './constants';
 import { contreVitre } from './contre-vitre';
 import { autre, xProf } from './terrain';
 import type { Coup, Effet, Joueur, Mur, Partie } from './types';
@@ -46,6 +46,10 @@ function trajectoire(type: Coup, p: number, dist: number): { v: number; spin: Ef
       return { v: 15 + 7 * p, spin: 'vibora', marge: 0.15 };
   }
 }
+
+/** Facteur de vitesse de la balle après `echange` coups depuis le service. */
+export const accelerationEchange = (echange: number): number =>
+  1 + Math.min(ACCEL_MAX, ACCEL_ECHANGE * Math.max(0, echange - 2));
 
 /**
  * Rebond vif d'un coup fort ou coupé (voir `Balle.vif`) : plus on charge, plus
@@ -102,6 +106,7 @@ export function executeCoup(
     tx += gauss(rng) * e * 1.4;
     ty += gauss(rng) * e * 1.15;
     const t = trajectoire(type, p, Math.hypot(tx - b.x, ty - b.y));
+    if (type !== 'lobe' && type !== 'amorti') t.v *= accelerationEchange(jeu.echange);
     // quelques fautes directes dans le filet, surtout en forçant
     const risque = type === 'plat' || type === 'smash' ? 0.01 + 0.05 * p * e : 0.006 * e;
     const marge = rng() < risque ? -0.3 : t.marge;
@@ -130,6 +135,7 @@ export function executeCoup(
   s.intent = null;
   s.charge = 0;
   jeu.tFrappe = 0;
+  jeu.echange++;
   jeu.plan = [null, null];
   jeu.pred = null;
   jeu.tPred = 0;

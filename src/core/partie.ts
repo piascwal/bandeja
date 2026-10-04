@@ -27,6 +27,8 @@ export interface OptionsPartie {
   /** indice dans JEUX (jeux à gagner) */
   jeux: number;
   rng?: Aleatoire;
+  /** aide au déplacement des humains (désactivée par défaut) */
+  aide?: boolean;
 }
 
 export const COMMANDE_VIDE: Commande = { dx: 0, dy: 0, appuis: [] };
@@ -40,7 +42,7 @@ export function nouvellePartie(o: OptionsPartie): Partie {
   const nivP = demo ? niv : NIVEAUX[Math.max(1, o.niveau)]!;
   // un humain de l'équipe 1 voit la piste retournée : il joue lui aussi à droite
   const joueur = (id: number, eq: 0 | 1, poste: 0 | 1) =>
-    nouveauJoueur(id, eq, poste, sieges.includes(id), eq === 0 ? nivP : niv, eq === 0);
+    nouveauJoueur(id, eq, poste, sieges.includes(id), eq === 0 ? nivP : niv);
   const a = joueur(0, 0, 0);
   const b = joueur(1, 0, 1);
   const c = joueur(2, 1, 0);
@@ -61,6 +63,8 @@ export function nouvellePartie(o: OptionsPartie): Partie {
     faute: 0,
     rejoue: false,
     phase: 'service',
+    aide: o.aide ?? false,
+    echange: 0,
     tPhase: 0,
     dureePoint: DUREE_POINT,
     temps: 0,

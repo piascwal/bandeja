@@ -260,9 +260,18 @@ Pour changer l'icône : remplacer `assets/icone-app.jpg` (carrée), puis
 | Pause       | ⏸ en haut à droite              | Échap / P             |
 
 **Arcade, pas simulation.** Il n'y a plus de course : le joueur est plus rapide
-que le CPU et, quand c'est lui qui va jouer la balle, il y est conduit tout
-seul si le joystick est au repos (le joystick ne le décale qu'un peu). La
-portée est généreuse : on touche presque toujours la balle.
+que le CPU et la portée est généreuse. En option (Réglages › _Aide au
+déplacement_, désactivée par défaut), le joueur qui va jouer la balle y est
+conduit tout seul quand le joystick est au repos ; en réseau, c'est le réglage
+de l'hôte qui vaut pour tous.
+
+**La balle accélère** de 4 % à chaque coup après le deuxième, jusqu'à +50 %
+(`ACCEL_*` dans `core/constants.ts`), sauf le lob et l'amorti : les échanges
+finissent par se dénouer.
+
+**Même affichage pour tous**, en solo comme en réseau : l'équipe 0 à droite,
+l'équipe 1 à gauche, joystick et boutons identiques. Les positions de service
+(haut/bas, gauche/droite) sont celles d'un vrai terrain vu de côté.
 
 **Quand part le coup ?** Dès que la balle est à portée après l'appui, tout
 seul : on peut donc appuyer un peu avant. Plus l'appui est précoce, plus le

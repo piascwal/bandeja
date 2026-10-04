@@ -36,16 +36,16 @@ describe('plusieurs humains sur la piste', () => {
     expect(vus.sort()).toEqual([0, 1]);
   });
 
-  it("la direction d'un humain de l'équipe 1 n'est pas en miroir", () => {
+  it('tous les humains ont le même affichage : la direction est la même pour les deux équipes', () => {
     const jeu = partieTest({ mode: 'match', sieges: [0, 2] });
     const a = jeu.joueurs[0]!;
     const c = jeu.joueurs[2]!;
-    expect([a.miroir, c.miroir]).toEqual([true, false]);
+    expect([a.miroir, c.miroir]).toEqual([true, true]);
     const droite: Commande = { ...VIDE, dx: 1 };
     pas(jeu, PAS, () => droite);
-    // les deux poussent vers la droite de LEUR écran : l'un recule, l'autre avance dans x
+    // la droite de l'écran est la même pour tous : x décroissant
     expect(Math.sign(a.ex)).toBe(-1);
-    expect(Math.sign(c.ex)).toBe(1);
+    expect(Math.sign(c.ex)).toBe(-1);
   });
 
   it("le siège local est celui de l'écran, les autres sont des humains distants", () => {
