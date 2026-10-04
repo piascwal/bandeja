@@ -1,7 +1,15 @@
 import { clamp } from '@core/aleatoire';
 import { LARG } from '@core/constants';
 import { frappable } from '@core/coups';
-import { BONUS_PORTEE, cibleCoup, coupPrevu, viseServ } from '@core/humain';
+import {
+  BONUS_PORTEE,
+  cibleCoup,
+  coupPrevu,
+  precisionContact,
+  SUPER_CHARGE,
+  superCoup,
+  viseServ,
+} from '@core/humain';
 import { cibleService } from '@core/service';
 import type { Joueur, Partie } from '@core/types';
 import { dessineBalle, ombre } from './balle-render';
@@ -48,7 +56,10 @@ export function dessineScene(v: Vue, sc: Scene): void {
   // du fond vers l'avant
   const liste = jeu.joueurs.map((s) => ({
     y: s.y,
-    f: () => dessineJoueur(v, jeu, s, sc.sprites[s.eq], sc.vueJoueurs),
+    f: () => {
+      if (sc.enMatch) auraCharge(v, jeu, s);
+      dessineJoueur(v, jeu, s, sc.sprites[s.eq], sc.vueJoueurs);
+    },
   }));
   liste.push({ y: clamp(b.y, 0, LARG) + 0.01, f: () => dessineBalle(v, jeu) });
   liste.sort((a, c) => a.y - c.y);
@@ -69,6 +80,38 @@ export function dessineScene(v: Vue, sc: Scene): void {
     texte(g, bb.txt, bb.x, bb.y, bb.c);
     g.globalAlpha = 1;
   }
+}
+
+/**
+ * Un joueur qui charge un coup s'entoure d'un anneau qui grandit avec la
+ * jauge ; jauge pleine, une aura de flammes dorées et un SUPER clignotant
+ * préviennent tout le monde, adversaires compris : un coup énorme arrive.
+ */
+function auraCharge(v: Vue, jeu: Partie, s: Joueur): void {
+  if (!s.intent || s.charge < 0.4 || (s.intent.type !== 'plat' && s.intent.type !== 'smash')) return;
+  const { g } = v;
+  const [sx, sy] = v.K.proj(s.x, s.y, 0);
+  const pleine = s.charge >= SUPER_CHARGE;
+  const n = 18;
+  for (let k = 0; k < n; k++) {
+    const a = (k / n) * Math.PI * 2 + jeu.temps * (pleine ? 6 : 2);
+    const r = 6 + 6 * s.charge;
+    g.globalAlpha = pleine ? 0.95 : 0.5;
+    px(g, sx + Math.cos(a) * r * 1.4, sy + Math.sin(a) * r * 0.45, 1, 1, pleine ? C.or : C.blanc);
+  }
+  if (pleine) {
+    // flammes qui montent le long du joueur
+    for (let k = 0; k < 10; k++) {
+      const t = (jeu.temps * 3 + k * 0.37) % 1;
+      const dx = Math.sin(k * 7.3) * 7;
+      g.globalAlpha = 1 - t;
+      px(g, sx + dx, sy - t * 22, 2, 3, k % 3 === 0 ? '#ffffff' : k % 3 === 1 ? C.or : '#ff7a3c');
+    }
+    g.globalAlpha = 1;
+    if (Math.floor(jeu.temps * 6) % 2 === 0 && s !== jeu.humain)
+      texte(g, 'SUPER', sx, sy - HAUT_JOUEUR - 16, C.or, 1, 'c');
+  }
+  g.globalAlpha = 1;
 }
 
 /** Le point visé sur le terrain adverse : un losange creux. */
@@ -135,7 +178,10 @@ function aidesJoueur(v: Vue, jeu: Partie, hum: Joueur): void {
   px(g, x0 - 1, y0 - 1, w + 2, 4, C.contour);
   px(g, x0, y0, Math.round(w * hum.charge), 2, hum.charge > 0.8 ? '#ff7a3c' : C.or);
   // le coup qui partira, et ce qu'il faut faire : la balle part toute seule dès qu'elle est à portée
-  texte(g, NOMS_COUPS[coupPrevu(jeu, hum, hum.intent.type, hum.charge)], sx, y0 - 10, C.or, 1, 'c');
+  const sup = superCoup(jeu, hum, hum.intent.type, hum.charge);
+  if (sup && precisionContact(jeu, hum) > 0 && Math.floor(jeu.temps * 8) % 2 === 0)
+    texte(g, 'SUPER !', sx, y0 - 10, '#ffffff', 1, 'c');
+  else texte(g, NOMS_COUPS[coupPrevu(jeu, hum, hum.intent.type, hum.charge)], sx, y0 - 10, C.or, 1, 'c');
 }
 
 /** Flèche rouge vif au-dessus d'un autre joueur humain : bien visible sur la piste. */

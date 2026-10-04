@@ -1,6 +1,6 @@
 import { alea, clamp } from './aleatoire';
 import { HAUT_SMASH, LARG, MIL } from './constants';
-import { executeCoup, frappable, PROF } from './coups';
+import { contrainte, executeCoup, frappable, PROF } from './coups';
 import { equipe } from './joueurs';
 import { autre, dir, fond, xProf } from './terrain';
 import type { Coup, Joueur, Mur, Partie, Point2 } from './types';
@@ -32,7 +32,7 @@ export function choixIA(jeu: Partie, s: Joueur): ChoixCoup {
   let type: Coup;
   let p: number;
   if (b.z > HAUT_SMASH) {
-    if (loin < 5.5 && b.z > 2.3 && rng() < 0.3 + niv.agress * 0.5) {
+    if (loin < 5.5 && b.z > 2.3 && !contrainte(b, s) && rng() < 0.3 + niv.agress * 0.5) {
       type = 'smash';
       p = alea(rng, 0.5, 0.75) + niv.agress * 0.3 * rng();
     } else {

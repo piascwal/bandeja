@@ -3,7 +3,7 @@ import { lance } from './balle';
 import { ACCEL_ECHANGE, ACCEL_MAX, HAUT_MAX, HAUT_SMASH, MIL, PORTEE } from './constants';
 import { contreVitre } from './contre-vitre';
 import { autre, xProf } from './terrain';
-import type { Coup, Effet, Joueur, Mur, Partie } from './types';
+import type { Balle, Coup, Effet, Joueur, Mur, Partie } from './types';
 
 /** Distance visée par rapport à la vitre adverse, selon le coup. */
 export const PROF: Partial<Record<Coup, number>> = {
@@ -15,6 +15,20 @@ export const PROF: Partial<Record<Coup, number>> = {
   vibora: 2.1,
   amorti: 8.4,
 };
+
+/**
+ * Un lob qui a passé le joueur (la balle a rebondi, ou il est loin du filet) le
+ * met en difficulté : pas de smash, un coup au mieux à mi-puissance, et
+ * l'avantage passe à l'équipe qui a lobé.
+ */
+export const contrainte = (b: Balle, s: Joueur): boolean =>
+  b.coup === 'lobe' && b.camp === s.eq && (b.sol >= 1 || Math.abs(s.x - MIL) > 5);
+
+/** Puissance maximale d'un coup qui n'est pas un super coup (1 est réservé au super coup). */
+const P_MAX = 0.97;
+const P_CONTRAINT = 0.6;
+const PRIME_AVANTAGE = 0.2;
+const VITESSE_SUPER = 1.3;
 
 /** Le joueur peut-il frapper la balle maintenant ? (mul agrandit la portée) */
 export function frappable(jeu: Partie, s: Joueur, mul = 1): boolean {
@@ -81,10 +95,21 @@ export function executeCoup(
   ty: number,
   mur?: Mur | null,
   /** réglages d'un coup d'humain : `precision` (0 → 1) selon le timing, `risque` pour un coup forcé */
-  humain?: { precision: number; risque: boolean },
+  humain?: { precision: number; risque: boolean; superCoup?: boolean },
 ): void {
   const b = jeu.balle;
   const eq = s.eq;
+  const sup = humain?.superCoup === true;
+  // lob subi : coup limité, sans smash ; l'avantage passe au lobeur. Avantage reçu : coup plus fort.
+  const subi = contrainte(b, s);
+  const prime = jeu.avantage === eq;
+  jeu.avantage = subi ? autre(eq) : null;
+  if (subi) {
+    p = Math.min(p, P_CONTRAINT);
+    if (type === 'smash') type = 'bandeja';
+  }
+  if (prime) p += PRIME_AVANTAGE;
+  p = sup ? 1 : Math.min(p, P_MAX);
   const rng = jeu.rng;
   const vin = Math.hypot(b.vx, b.vy, b.vz);
   // la pose de smash n'est que pour les coups aériens : FRAPPE sur une balle haute reste un coup normal
@@ -102,18 +127,20 @@ export function executeCoup(
     // arcade : un bon timing rend le coup net, un coup forcé reste risqué
     if (humain) e *= 1.2 - 0.6 * humain.precision + (humain.risque ? 0.35 : 0);
     if (type === 'bandeja' || type === 'lobe') e *= 0.7;
+    if (sup) e *= 0.15; // un super coup est quasi parfait
     if (type === 'amorti') e *= 0.45; // court et lent : l'erreur se joue sur le filet
     tx += gauss(rng) * e * 1.4;
     ty += gauss(rng) * e * 1.15;
     const t = trajectoire(type, p, Math.hypot(tx - b.x, ty - b.y));
     if (type !== 'lobe' && type !== 'amorti') t.v *= accelerationEchange(jeu.echange);
+    if (sup) t.v *= VITESSE_SUPER;
     // quelques fautes directes dans le filet, surtout en forçant
     const risque = type === 'plat' || type === 'smash' ? 0.01 + 0.05 * p * e : 0.006 * e;
-    const marge = rng() < risque ? -0.3 : t.marge;
+    const marge = !sup && rng() < risque ? -0.3 : t.marge;
     lance(b, tx, ty, t.v, t.spin, marge);
     b.spinDir = ty < 5 ? -1 : 1;
     b.portres = type === 'smash' && p >= 0.8 && b.z > 2.2;
-    b.vif = rebondVif(type, p, rng());
+    b.vif = sup ? 1 : rebondVif(type, p, rng());
   } else b.vif = 0;
   b.eqF = eq;
   b.camp = autre(eq);
@@ -122,6 +149,7 @@ export function executeCoup(
   b.filet = false;
   b.mur = false;
   b.coup = type;
+  b.super = sup;
   b.trace.length = 0;
   s.poseCoup = haut ? 'smash2' : 'attente';
   // le joueur se tourne vers là où part la balle (y compris vers sa vitre)

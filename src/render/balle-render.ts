@@ -14,14 +14,24 @@ export function dessineBalle(v: Vue, jeu: Partie): void {
   const special = b.coup ? TRAINEES[b.coup] : undefined;
   // un coup très fort laisse une traînée de feu, même après le rebond : plus il est rapide, plus elle est vive
   const feu = clamp((vit - 16) / 12, 0, 1);
-  if (feu > 0 && jeu.phase !== 'service' && b.coup !== 'vibora' && b.coup !== 'bandeja') {
+  // un super coup file à plus de 30 m/s : traînée bleue et blanche, et halo autour de la balle
+  const super_ = b.super;
+  if ((feu > 0 || super_) && jeu.phase !== 'service' && b.coup !== 'vibora' && b.coup !== 'bandeja') {
     const n = b.trace.length;
     b.trace.forEach(([mx, my, mz], i) => {
       const [tx, ty] = K.proj(mx, my, mz);
       const t = (i + 1) / n;
       g.globalAlpha = 0.35 + 0.6 * t;
       const taille = t > 0.7 && feu > 0.5 ? 3 : 2;
-      px(g, tx - 1, ty - 1, taille, taille, t < 0.35 ? '#ff3b1f' : t < 0.75 ? '#ff8a3c' : '#ffe27a');
+      const [c0, c1, c2] = super_ ? ['#2f6bff', '#7fe9ff', '#ffffff'] : ['#ff3b1f', '#ff8a3c', '#ffe27a'];
+      px(
+        g,
+        tx - 1,
+        ty - 1,
+        taille + (super_ ? 1 : 0),
+        taille + (super_ ? 1 : 0),
+        t < 0.35 ? c0 : t < 0.75 ? c1 : c2,
+      );
       if (feu > 0.6 && i % 3 === 0)
         px(g, tx + Math.round(bruitVisuel(i, jeu.temps)), ty - 2, 1, 1, '#fff2b0');
     });
@@ -42,6 +52,12 @@ export function dessineBalle(v: Vue, jeu: Partie): void {
   }
   const x = Math.round(sx);
   const y = Math.round(sy);
+  if (super_ && jeu.phase !== 'service') {
+    g.globalAlpha = 0.35 + 0.25 * Math.sin(jeu.temps * 40);
+    px(g, x - 4, y - 3, 8, 6, '#7fe9ff');
+    px(g, x - 3, y - 4, 6, 8, '#ffffff');
+    g.globalAlpha = 1;
+  }
   px(g, x - 2, y - 1, 4, 2, C.contour);
   px(g, x - 1, y - 2, 2, 4, C.contour);
   px(g, x - 1, y - 1, 2, 2, C.balle);

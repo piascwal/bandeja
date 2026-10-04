@@ -15,6 +15,7 @@ export function placeService(jeu: Partie): void {
   jeu.pret = false;
   jeu.jauge = null;
   jeu.cpuServ = null;
+  jeu.avantage = null;
   jeu.plan = [null, null];
   jeu.pred = null;
   const srv = jeu.ordre[jeu.nJeu % 4]!;

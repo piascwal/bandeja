@@ -60,6 +60,7 @@ export function appliqueInstantane(jeu: Partie, s: Instantane): void {
     dehors: sb.dehors,
     portres: sb.portres,
     vif: sb.vif,
+    super: sb.super,
     service: sb.service,
     filet: sb.filet,
     mur: sb.mur,

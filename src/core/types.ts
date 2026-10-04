@@ -61,6 +61,8 @@ export interface Joueur {
   ey: number;
   /** dernière direction du joystick tenue (repère de la piste) : retenue un instant après son relâchement */
   visee: Point2;
+  /** distance à la balle au pas précédent (m), pour frapper au meilleur moment */
+  dBalle: number;
   /** temps restant pendant lequel `visee` compte encore (s) */
   tVisee: number;
   cible: Point2;
@@ -101,6 +103,8 @@ export interface CorpsBalle {
   portres: boolean;
   /** rebond vif : le prochain rebond au sol relance la balle (0 : aucun, 1 : vers la vitre en hauteur, au-delà : hors de la piste) */
   vif: number;
+  /** super coup en vol (jauge pleine et bien placé) : rebond qui accélère la balle, traînée et halo particuliers */
+  super: boolean;
 }
 
 export interface Balle extends CorpsBalle {
@@ -193,6 +197,8 @@ export interface Partie {
   phase: Phase;
   /** option : un joueur humain est conduit vers la balle quand son joystick est au repos */
   aide: boolean;
+  /** équipe qui a l'avantage sur son prochain coup (elle vient de lober l'adversaire) */
+  avantage: Equipe | null;
   /** coups joués depuis le service : la balle accélère au fil de l'échange */
   echange: number;
   tPhase: number;

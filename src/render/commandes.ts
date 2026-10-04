@@ -1,4 +1,5 @@
 import { HAUT_SMASH } from '@core/constants';
+import { contrainte } from '@core/coups';
 import { TYPES_SERV } from '@core/humain';
 import type { Bouton, Joueur, Partie } from '@core/types';
 import { RAYON_JOY, zonesBoutons, type Rond } from '@input/disposition';
@@ -46,7 +47,9 @@ export function dessineCommandes(v: Vue, jeu: Partie, t: EtatTactile): void {
     const lib = service ? LIB_SERVICE[k] : LIB_JEU[k];
     const app = t.actifs.has(k);
     const choisi = estChoisi(jeu, s, k);
-    v.g.globalAlpha = service && !lib ? 0.25 : app || choisi ? 0.95 : 0.7;
+    // lob subi : le SMASH ne répond pas
+    const bloque = k === 'smash' && contrainte(jeu.balle, s);
+    v.g.globalAlpha = (service && !lib) || bloque ? 0.25 : app || choisi ? 0.95 : 0.7;
     rond(v, z[k], app, COUL[k][0], COUL[k][1], lib || ' ');
     if (choisi && s.intent) anneau(v.g, z[k].x, z[k].y, z[k].r + 2, C.or, s.charge, 2);
     else if (choisi) anneau(v.g, z[k].x, z[k].y, z[k].r + 2, C.blanc, 1, 1);

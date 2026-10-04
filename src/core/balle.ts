@@ -19,6 +19,7 @@ export function nouvelleBalle(): Balle {
     dehors: false,
     portres: false,
     vif: 0,
+    super: false,
     eqF: 0,
     camp: 1,
     sol: 0,
@@ -85,8 +86,9 @@ function rebondSol(b: CorpsBalle, ev?: SurContact): void {
     const k = Math.min(1, b.vif);
     b.vz += 1.2 + 3.3 * k + (b.vif > 1 ? 11 : 0);
     const garde = rh + (1 - rh) * 0.7 * k;
-    b.vx *= garde / rh;
-    b.vy *= garde / rh;
+    const accel = b.super ? 1.4 : 1; // un super coup repart comme un boulet après son rebond
+    b.vx *= (garde / rh) * accel;
+    b.vy *= (garde / rh) * accel;
     b.vif = 0;
   }
   if (b.portres) {

@@ -48,7 +48,15 @@ export function joueEvenements(
       case 'frappe': {
         const [sx, sy] = K.proj(ev.x, ev.y, HAUT_BULLE);
         const p = ev.puissance;
-        if (ev.coup === 'smash') {
+        if (p >= 0.999) {
+          // super coup : jauge pleine et bien placé
+          son.smash();
+          fx.secousse = 6;
+          fx.flash = 0.35;
+          fx.etincelles(sx, sy - 4, 34);
+          fx.bulle('SUPER !!', sx, sy - 10, C.or);
+          if (ev.humain) vibre(80);
+        } else if (ev.coup === 'smash') {
           son.smash();
           fx.secousse = 2 + 2 * p;
           fx.flash = 0.15 * p;

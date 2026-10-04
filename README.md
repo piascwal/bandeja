@@ -287,6 +287,21 @@ mi-court, une víbora ; au fond, une bandeja. Sur une balle basse, c'est un
 coup à plat appuyé à fond, plus risqué. Un bon timing (balle proche de la
 raquette) rend le coup précis.
 
+**Super coup.** Un coup chargé attend le bon moment : il part quand la balle est
+tout près de la raquette (ou qu'elle s'éloigne) au lieu de partir au bord de la
+portée. Jauge pleine **et** balle bien au contact (à moins de ~0,75 m) avec FRAPPE
+ou SMASH : super coup. Il est quasi sans erreur, le SMASH est alors un vrai smash
+même sur une balle basse, et la balle repart comme un boulet après son rebond
+(vitre en hauteur, ou hors de la piste). Jauge pleine, une aura de flammes dorées
+et un SUPER clignotant préviennent aussi les adversaires ; la balle a une
+traînée bleue et blanche et un halo. Sans jauge pleine ou mal placé, la
+puissance reste plafonnée à 0,97 : seul le super coup atteint 1.
+
+**Lob subi.** Quand un lob a passé le joueur (la balle a rebondi, ou il est loin
+du filet), son bouton SMASH est bloqué (grisé), son coup est limité à mi-puissance
+et l'équipe qui a lobé a l'avantage : son prochain coup est plus fort (+0,2). Un
+lob encore haut au-dessus d'un joueur au filet peut toujours être smashé.
+
 **Jeu de vitre.** Un coup _plat_ chargé (au-delà de la moitié de la jauge) a un
 rebond vif (`Balle.vif`) : plus il est chargé, plus la balle bondit après son
 premier rebond, file vers la vitre et en revient en hauteur, jouable à ce

@@ -23,6 +23,7 @@ export function nouveauJoueur(id: number, eq: Equipe, poste: 0 | 1, humain: bool
     ex: 0,
     ey: 0,
     visee: { x: 0, y: 0 },
+    dBalle: 99,
     tVisee: 0,
     cible: { x: xProf(eq, 3), y: cote },
     posServ: { x: xProf(eq, 3), y: cote },
