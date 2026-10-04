@@ -1,6 +1,7 @@
 import { clamp } from './aleatoire';
 import { DUREE_POINT, DUREE_POINT_RALENTI, LARG, LONG, MIL, RALENTI_ECHANGE, SERV } from './constants';
 import { placeService } from './service';
+import { NOMS_SUPER } from './super-coup';
 import { autre } from './terrain';
 import type { Equipe, Partie, Surface } from './types';
 
@@ -34,6 +35,11 @@ function regleSol(jeu: Partie, cote: Equipe): void {
     return;
   }
   b.sol++;
+  // un super coup est imparable : il gagne le point dès son premier rebond chez l'adversaire
+  if (b.super > 0 && b.sol === 1) {
+    gagne(jeu, b.eqF, NOMS_SUPER[b.super] ?? 'SUPER COUP !');
+    return;
+  }
   if (b.service && b.sol === 1) {
     if (!dansCarre(jeu)) {
       fauteService(jeu, 'FAUTE');

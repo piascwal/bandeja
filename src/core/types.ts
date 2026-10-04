@@ -103,8 +103,8 @@ export interface CorpsBalle {
   portres: boolean;
   /** rebond vif : le prochain rebond au sol relance la balle (0 : aucun, 1 : vers la vitre en hauteur, au-delà : hors de la piste) */
   vif: number;
-  /** super coup en vol (jauge pleine et bien placé) : rebond qui accélère la balle, traînée et halo particuliers */
-  super: boolean;
+  /** super coup en vol (0 aucun, 1 météore, 2 comète, 3 phénix, 4 fantôme) : imparable, il gagne le point à son premier rebond */
+  super: number;
 }
 
 export interface Balle extends CorpsBalle {
@@ -162,7 +162,19 @@ export interface Commande {
  */
 export type Evenement =
   | { type: 'impact'; surface: Exclude<Surface, 'sortie'>; x: number; y: number; z: number; force: number }
-  | { type: 'frappe'; coup: Coup; puissance: number; portres: boolean; humain: boolean; x: number; y: number }
+  | {
+      type: 'frappe';
+      coup: Coup;
+      puissance: number;
+      portres: boolean;
+      humain: boolean;
+      x: number;
+      y: number;
+      /** qualité du coup (1 très médiocre → 5 parfait) */
+      q: number;
+      /** variante du super coup (0 : coup ordinaire) */
+      sv: number;
+    }
   | { type: 'service'; service: TypeService; jauge: number; humain: boolean; x: number; y: number }
   | { type: 'jaugeLancee' }
   | { type: 'point'; gagnant: Equipe; raison: string }

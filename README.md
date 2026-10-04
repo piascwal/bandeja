@@ -297,13 +297,6 @@ renvoi normal : on ne rate jamais.
 « ECHANGE n » sous le tableau des scores chauffe de couleur (blanc, or, orange,
 rouge) et affiche le bonus de vitesse de la balle.
 
-**Jauge de smash.** Chaque équipe a sa jauge (une barre sous son côté du
-tableau), qui se remplit de 5 % à chaque coup à partir du quatrième d'un échange
-et de 12 % quand on joue une balle qui revient de la vitre. Pleine, elle clignote
-(« PAR 3 ! », le bouton SMASH aussi) : le prochain SMASH sur une balle haute est
-garanti par 3 / par 4, où que l'on soit, puis la jauge se vide. Le CPU en profite
-aussi. Avec le lob subi, c'est ce qui permet de finir les points.
-
 **Même affichage pour tous**, en solo comme en réseau : l'équipe 0 à droite,
 l'équipe 1 à gauche, joystick et boutons identiques. Les positions de service
 (haut/bas, gauche/droite) sont celles d'un vrai terrain vu de côté.
@@ -322,15 +315,37 @@ mi-court, une víbora ; au fond, une bandeja. Sur une balle basse, c'est un
 coup à plat appuyé à fond, plus risqué. Un bon timing (balle proche de la
 raquette) rend le coup précis.
 
-**Super coup.** Un coup chargé attend le bon moment : il part quand la balle est
-tout près de la raquette (ou qu'elle s'éloigne) au lieu de partir au bord de la
-portée. Jauge pleine **et** balle bien au contact (à moins de ~0,75 m) avec FRAPPE
-ou SMASH : super coup. Il est quasi sans erreur, le SMASH est alors un vrai smash
-même sur une balle basse, et la balle repart comme un boulet après son rebond
-(vitre en hauteur, ou hors de la piste). Jauge pleine, une aura de flammes dorées
-et un SUPER clignotant préviennent aussi les adversaires ; la balle a une
-traînée bleue et blanche et un halo. Sans jauge pleine ou mal placé, la
-puissance reste plafonnée à 0,97 : seul le super coup atteint 1.
+**Moteur de qualité des coups** (`core/qualite.ts`, `tests/qualite.test.ts`). Un coup
+n'est jamais « réussi ou raté » : sa qualité, de 1 (rouge, très médiocre) à 5 (vert,
+parfait), dépend de la situation : hauteur et vitesse de la balle reçue, ce qui vient
+de se passer (un lob, un amorti, un renvoi de vitre), où l'on est (filet ou fond), le
+timing (balle bien au contact) et la charge. Exemples : un lob lent et haut reçu au
+filet fait un smash parfait ; un smash après un amorti très bas est médiocre ; un
+super lob est bien plus facile après une balle lente revenue de la vitre à mi-hauteur ;
+un amorti ne marche qu'au filet. Le nom du coup s'affiche, de la couleur de sa qualité,
+au moment du coup (et en direct au-dessus du joueur pendant qu'il arme son coup). La
+qualité règle la trajectoire : un coup parfait est rapide et net, un lob raté est
+lent, haut et court alors qu'un lob parfait monte haut, loin et vite, un amorti raté est
+trop long et trop vif.
+
+**Jauge du super coup.** Chaque coup la remplit selon sa qualité (+1 % pour un
+coup très médiocre, jusqu'à +10 % pour un coup parfait, +2,5 % de plus après un renvoi de
+vitre). Deux barres de part et d'autre du tableau des scores (équipe 1 à gauche, équipe
+0 à droite) : dégradé qui scintille, halo dès 75 %, et pleine, un cadre doré qui flashe,
+une étoile et « SUPER ! ». Quand elle se remplit : une petite fanfare (pas de bannière), le bouton SMASH devient doré et animé (« SUPER »),
+et toute l'équipe est entourée de flammes dorées et d'un SUPER clignotant : l'adversaire
+voit venir le coup.
+
+**Super coups.** Jauge pleine, SMASH lance un super coup (même sur un lob subi) :
+quasi sans erreur, **imparable** (aucun adversaire ne peut toucher la balle) et qui gagne
+le point à son premier rebond. Quatre variantes, choisies selon la situation : la
+**MÉTÉORE** sur une balle haute (boule de feu), la **COMÈTE** à plat (filante bleue et
+blanche), le **PHÉNIX** depuis le fond sur une balle lente (un lob qui monte très haut et
+retombe comme une pierre, or et magenta, avec des ailes), le **FANTÔME** au filet sur une
+balle basse et lente (un amorti lilas qui clignote et meurt derrière le filet). Chacune a
+son halo, sa traînée, ses étincelles, son nom géant et son son. Le CPU lâche aussi son
+super coup rarement (12 % de ses coups) quand sa jauge est pleine. Les coups ordinaires restent plafonnés à
+0,97 de puissance.
 
 **Lob subi.** Quand un lob a passé le joueur (la balle a rebondi, ou il est loin
 du filet), SMASH ne donne qu'un renvoi normal, son coup est limité à mi-puissance

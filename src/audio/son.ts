@@ -119,6 +119,26 @@ export class MoteurSon {
     this.ton(90, 0.18, 'sine', 0.45, 45);
   }
 
+  /** Un coup parfait : deux notes qui montent. */
+  parfait(): void {
+    this.ton(660, 0.08, 'triangle', 0.12);
+    this.ton(990, 0.14, 'triangle', 0.12, null, 0.07);
+  }
+
+  /** La jauge du super coup est pleine : une petite fanfare. */
+  superPret(): void {
+    [523, 659, 784, 1047].forEach((f, i) => this.ton(f, 0.16, 'square', 0.06, null, i * 0.08));
+    this.ton(1568, 0.4, 'triangle', 0.1, null, 0.34);
+  }
+
+  /** Le super coup : l'impact, puis une montée qui change avec la variante. */
+  superCoup(variante: number): void {
+    this.smash();
+    this.ton(180 + variante * 70, 0.55, 'sawtooth', 0.14, 1800);
+    this.souffle(0.5, 'highpass', 2500, 1, 0.45, 0.05);
+    if (variante === 3) this.ton(880, 0.6, 'triangle', 0.1, 1760, 0.1);
+  }
+
   sol(): void {
     this.ton(190, 0.05, 'sine', 0.22);
     this.souffle(0.04, 'lowpass', 900, 1, 0.12);

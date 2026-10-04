@@ -49,7 +49,9 @@ export function lisEvenement(o: unknown): Evenement | null {
         typeof e.portres !== 'boolean' ||
         typeof e.humain !== 'boolean' ||
         !nombre(e.x, -100, 100) ||
-        !nombre(e.y, -100, 100)
+        !nombre(e.y, -100, 100) ||
+        !entier(e.q, 1, 5) ||
+        !entier(e.sv, 0, 4)
       )
         return null;
       return {
@@ -60,6 +62,8 @@ export function lisEvenement(o: unknown): Evenement | null {
         humain: e.humain,
         x: e.x,
         y: e.y,
+        q: e.q,
+        sv: e.sv,
       };
     case 'service':
       if (

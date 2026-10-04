@@ -42,9 +42,12 @@ export const NOMS_COUPS: Record<Coup, string> = {
   lobe: 'LOBE',
   coupe: 'COUPE',
   amorti: 'AMORTI',
-  smash: 'PUISSANCE',
+  smash: 'SMASH',
   vibora: 'VIBORA',
   bandeja: 'BANDEJA',
   vitre: 'VITRE DU FOND',
   cote: 'VITRE DE COTE',
 };
+
+/** Couleur de chaque super coup : 1 météore, 2 comète, 3 phénix, 4 fantôme. */
+export const COULEURS_SUPER: readonly string[] = ['', '#ff6a2a', '#5fd0ff', '#ffd35c', '#c9a6ff'];

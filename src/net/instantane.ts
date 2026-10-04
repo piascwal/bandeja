@@ -37,8 +37,8 @@ export interface BalleInstantane {
   roule: boolean;
   dehors: boolean;
   portres: boolean;
-  /** super coup en vol */
-  super: boolean;
+  /** variante du super coup en vol (0 : aucun) */
+  super: number;
   /** rebond vif en attente (0 → 1,25) */
   vif: number;
   service: boolean;
@@ -173,7 +173,7 @@ export function encodeInstantane(s: Instantane): ArrayBuffer {
   w.u8(b.sol)
     .u8(b.coup ? indice(COUPS, b.coup) : 255)
     .u8(b.vif * 100);
-  w.bits(b.super);
+  w.u8(b.super);
   const st = s.stats;
   w.u8(st.gagnants[0]).u8(st.gagnants[1]).u8(st.portres[0]).u8(st.portres[1]);
   w.u8(st.fautes[0]).u8(st.fautes[1]).u8(st.vitres);
@@ -248,7 +248,7 @@ export function decodeInstantane(buf: ArrayBuffer): Instantane | null {
     const sol = r.u8();
     const c = r.u8();
     const vif = Math.min(125, r.u8());
-    const [superCoup] = r.bits();
+    const superCoup = Math.min(4, r.u8());
     if (c !== 255 && c >= COUPS.length) return null;
     const stats = {
       gagnants: [r.u8(), r.u8()] as [number, number],
@@ -286,7 +286,7 @@ export function decodeInstantane(buf: ArrayBuffer): Instantane | null {
         dehors: dehors!,
         portres: portres!,
         vif: vif / 100,
-        super: superCoup === true,
+        super: superCoup,
         service: service!,
         filet: filet!,
         mur: mur!,

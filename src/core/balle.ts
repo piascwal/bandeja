@@ -19,7 +19,7 @@ export function nouvelleBalle(): Balle {
     dehors: false,
     portres: false,
     vif: 0,
-    super: false,
+    super: 0,
     eqF: 0,
     camp: 1,
     sol: 0,
@@ -86,10 +86,14 @@ function rebondSol(b: CorpsBalle, ev?: SurContact): void {
     const k = Math.min(1, b.vif);
     b.vz += 1.2 + 3.3 * k + (b.vif > 1 ? 11 : 0);
     const garde = rh + (1 - rh) * 0.7 * k;
-    const accel = b.super ? 1.4 : 1; // un super coup repart comme un boulet après son rebond
-    b.vx *= (garde / rh) * accel;
-    b.vy *= (garde / rh) * accel;
+    b.vx *= garde / rh;
+    b.vy *= garde / rh;
     b.vif = 0;
+  }
+  // météore et comète repartent comme un boulet après leur rebond
+  if (b.super === 1 || b.super === 2) {
+    b.vx *= 1.4;
+    b.vy *= 1.4;
   }
   if (b.portres) {
     // le smash « por tres » : rebond énorme, la balle s'envole hors de la piste

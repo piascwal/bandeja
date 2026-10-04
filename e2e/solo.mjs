@@ -54,4 +54,31 @@ export default async function (env) {
   });
   await attends(150);
   await env.capture(p, 'hud-echange');
+
+  // les quatre super coups (halo et traînée de chaque variante), et l'aura de la jauge pleine
+  await p.evaluate(() => {
+    window.bandeja.jeu.jaugeSmash = [1, 0.6];
+    window.bandeja.jeu.humain.intent = null;
+  });
+  for (const v of [1, 2, 3, 4]) {
+    await p.evaluate((variante) => {
+      const j = window.bandeja.jeu;
+      j.phase = 'jeu';
+      j.echange = 4;
+      Object.assign(j.balle, {
+        x: 12,
+        y: 5,
+        z: 1.4,
+        vx: 12,
+        vy: 1,
+        vz: 0,
+        camp: 1,
+        sol: 0,
+        super: variante,
+        coup: 'plat',
+      });
+    }, v);
+    await attends(260);
+    await env.capture(p, `super-${v}`);
+  }
 }

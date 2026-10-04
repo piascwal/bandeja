@@ -1,13 +1,15 @@
 import { vibre, type MoteurSon } from '@audio/son';
 import type { Evenement, Partie } from '@core/types';
 import type { Effets } from '@render/effets';
-import { C, EQUIPES, NOMS_COUPS } from '@render/palette';
+import { NOMS_SUPER } from '@core/super-coup';
+import { C, COULEURS_SUPER, EQUIPES, NOMS_COUPS } from '@render/palette';
+import { COULEURS_QUALITE } from '@core/qualite';
 import type { Projection } from '@render/projection';
 
 /** Hauteur (m) des bulles de texte au-dessus du joueur qui frappe. */
 const HAUT_BULLE = 2.6;
 /** Raisons de point annoncées comme exploits : la foule explose. */
-const exploit = (raison: string) => raison.startsWith('POR');
+const exploit = (raison: string) => raison.startsWith('POR') || NOMS_SUPER.some((n) => n && n === raison);
 
 /**
  * Joue les effets de bord des évènements émis par la simulation : sons,
@@ -48,33 +50,36 @@ export function joueEvenements(
       case 'frappe': {
         const [sx, sy] = K.proj(ev.x, ev.y, HAUT_BULLE);
         const p = ev.puissance;
-        if (p >= 0.999) {
-          // super coup : jauge pleine et bien placé
+        const couleurQ = COULEURS_QUALITE[ev.q] ?? C.blanc;
+        if (ev.sv > 0) {
+          // super coup : explosion de la couleur de sa variante, nom géant, tout l'écran vibre
+          const c = COULEURS_SUPER[ev.sv] ?? C.or;
+          son.superCoup(ev.sv);
+          fx.secousse = 8;
+          fx.flash = 0.5;
+          fx.etincelles(sx, sy - 4, 50, c, 150);
+          fx.etincelles(sx, sy - 4, 20, '#ffffff', 100);
+          fx.annonce(NOMS_SUPER[ev.sv] ?? 'SUPER !', 'SUPER COUP', c, 1.3);
+          fx.bulle('SUPER !!', sx, sy - 10, c);
+          if (ev.humain) vibre(90);
+          break;
+        }
+        if (ev.coup === 'smash') {
           son.smash();
-          fx.secousse = 6;
-          fx.flash = 0.35;
-          fx.etincelles(sx, sy - 4, 34);
-          fx.bulle('SUPER !!', sx, sy - 10, C.or);
-          if (ev.humain) vibre(80);
-        } else if (ev.coup === 'smash') {
-          son.smash();
-          fx.secousse = 2 + 2 * p;
+          fx.secousse = (2 + 2 * p) * (0.4 + 0.12 * ev.q);
           fx.flash = 0.15 * p;
-          fx.etincelles(sx, sy - 4, 10 + Math.round(10 * p));
-          fx.bulle(ev.portres ? 'PAR 3 !!' : 'PUISSANCE', sx, sy - 10, C.or);
+          fx.etincelles(sx, sy - 4, 10 + Math.round(10 * p), couleurQ);
           if (ev.humain) vibre(45);
         } else {
           son.frappe(p);
-          if (ev.coup !== 'plat' || p > 0.8) {
-            const dore = ev.coup === 'vibora' || ev.coup === 'bandeja';
-            fx.bulle(
-              ev.coup === 'plat' ? 'PUISSANCE' : NOMS_COUPS[ev.coup],
-              sx,
-              sy - 10,
-              dore ? C.or : C.blanc,
-            );
-          }
           if (ev.humain) vibre(p > 0.8 ? 25 : 12);
+        }
+        // le nom du coup, de la couleur de sa qualité : rouge très médiocre, vert parfait
+        const nom = ev.portres ? 'PAR 3 !!' : NOMS_COUPS[ev.coup];
+        fx.bulle(ev.q === 5 ? `${nom} !` : nom, sx, sy - 10, couleurQ);
+        if (ev.q === 5) {
+          son.parfait();
+          fx.etincelles(sx, sy - 4, 14, COULEURS_QUALITE[5], 80);
         }
         break;
       }

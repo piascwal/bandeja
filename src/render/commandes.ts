@@ -4,7 +4,7 @@ import type { Bouton, Joueur, Partie } from '@core/types';
 import { RAYON_JOY, zonesBoutons, type Rond } from '@input/disposition';
 import { C } from './palette';
 import { micro, texte } from './police';
-import { anneau, disque } from './primitives';
+import { anneau, disque, px } from './primitives';
 import type { Vue } from './vue';
 
 /** Ce que l'affichage doit savoir des doigts posés sur l'écran. */
@@ -42,27 +42,45 @@ export function dessineCommandes(v: Vue, jeu: Partie, t: EtatTactile): void {
   const service = jeu.phase === 'service' && jeu.serveur === s;
   // balle haute à jouer : le SMASH pulse, c'est lui qui choisit smash, víbora ou bandeja
   const haute = jeu.phase === 'jeu' && jeu.balle.camp === s.eq && jeu.balle.z > HAUT_SMASH;
+  const superPret = !service && jeu.jaugeSmash[s.eq] >= 1;
   for (const k of LOSANGE) {
-    const lib = service ? LIB_SERVICE[k] : LIB_JEU[k];
+    const or = k === 'smash' && superPret;
+    const lib = or ? 'SUPER' : service ? LIB_SERVICE[k] : LIB_JEU[k];
     const app = t.actifs.has(k);
     const choisi = estChoisi(jeu, s, k);
-    v.g.globalAlpha = service && !lib ? 0.25 : app || choisi ? 0.95 : 0.7;
-    rond(v, z[k], app, COUL[k][0], COUL[k][1], lib || ' ');
+    v.g.globalAlpha = service && !lib ? 0.25 : or || app || choisi ? 1 : 0.7;
+    // jauge pleine : le bouton SMASH devient doré, c'est lui qui lance le super coup
+    if (or) rond(v, z[k], app, '#fff2b0', '#e0a41c', lib, true);
+    else rond(v, z[k], app, COUL[k][0], COUL[k][1], lib || ' ');
     if (choisi && s.intent) anneau(v.g, z[k].x, z[k].y, z[k].r + 2, C.or, s.charge, 2);
     else if (choisi) anneau(v.g, z[k].x, z[k].y, z[k].r + 2, C.blanc, 1, 1);
     v.g.globalAlpha = 1;
   }
-  if (haute && !service && jeu.jaugeSmash[s.eq] >= 1) {
-    // jauge de smash pleine : le SMASH est garanti par 3 / par 4
-    v.g.globalAlpha = 0.6 + 0.4 * Math.sin(jeu.temps * 14);
-    anneau(v.g, z.smash.x, z.smash.y, z.smash.r + 4, '#ffffff', 1, 2);
-    v.g.globalAlpha = 1;
-  }
-  if (haute && !service) {
+  if (superPret) animeSuper(v, z.smash, jeu.temps);
+  else if (haute && !service) {
     v.g.globalAlpha = 0.4 + 0.4 * Math.sin(jeu.temps * 10);
     anneau(v.g, z.smash.x, z.smash.y, z.smash.r + 3, C.or, 1, 1);
     v.g.globalAlpha = 1;
   }
+}
+
+/** Le bouton SUPER : halo qui bat, ondes qui s'en échappent, étincelles qui tournent autour. */
+function animeSuper(v: Vue, z: Rond, t: number): void {
+  const { g } = v;
+  const pouls = 0.5 + 0.5 * Math.sin(t * 12);
+  g.globalAlpha = 0.5 + 0.5 * pouls;
+  anneau(g, z.x, z.y, z.r + 3 + pouls * 2, '#ffffff', 1, 2);
+  for (let k = 0; k < 2; k++) {
+    const onde = (t * 1.6 + k * 0.5) % 1;
+    g.globalAlpha = 1 - onde;
+    anneau(g, z.x, z.y, z.r + 2 + onde * 14, C.or, 1, 1);
+  }
+  for (let k = 0; k < 8; k++) {
+    const a = t * 4 + (k / 8) * Math.PI * 2;
+    g.globalAlpha = 0.6 + 0.4 * Math.sin(t * 20 + k);
+    px(g, z.x + Math.cos(a) * (z.r + 6), z.y + Math.sin(a) * (z.r + 6), 2, 2, k % 2 ? '#ffffff' : C.or);
+  }
+  g.globalAlpha = 1;
 }
 
 /** Le coup armé (ou le service choisi) est entouré. */

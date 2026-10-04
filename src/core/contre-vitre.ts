@@ -67,7 +67,7 @@ function simule(x: number, y: number, z: number, vx: number, vy: number, vz: num
     dehors: false,
     portres: false,
     vif: 0,
-    super: false,
+    super: 0,
   };
   let res: { ok: boolean; x: number; y: number } | null = null;
   let touche = false;

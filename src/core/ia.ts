@@ -2,6 +2,7 @@ import { alea, clamp } from './aleatoire';
 import { HAUT_SMASH, LARG, MIL } from './constants';
 import { contrainte, executeCoup, frappable, PROF } from './coups';
 import { equipe } from './joueurs';
+import { varianteSuper } from './super-coup';
 import { autre, dir, fond, xProf } from './terrain';
 import type { Coup, Joueur, Mur, Partie, Point2 } from './types';
 
@@ -32,8 +33,7 @@ export function choixIA(jeu: Partie, s: Joueur): ChoixCoup {
   let type: Coup;
   let p: number;
   if (b.z > HAUT_SMASH) {
-    const garanti = jeu.jaugeSmash[eq] >= 1 && !contrainte(b, s);
-    if (garanti || (loin < 5.5 && b.z > 2.3 && !contrainte(b, s) && rng() < 0.3 + niv.agress * 0.5)) {
+    if (loin < 5.5 && b.z > 2.3 && !contrainte(b, s) && rng() < 0.3 + niv.agress * 0.5) {
       type = 'smash';
       p = alea(rng, 0.5, 0.75) + niv.agress * 0.3 * rng();
     } else {
@@ -95,7 +95,9 @@ export function pilotageIA(jeu: Partie, s: Joueur): void {
     const urgence = b.sol === 1 && b.z < 0.35 && b.vz < 0;
     if (frappable(jeu, s) && (b.sol >= plan.sol || urgence)) {
       const c = choixIA(jeu, s);
-      executeCoup(jeu, s, c.type, c.p, c.tx, c.ty, c.mur);
+      // jauge pleine : le CPU lâche parfois son super coup
+      const sv = jeu.jaugeSmash[s.eq] >= 1 && jeu.rng() < 0.12 ? varianteSuper(b, Math.abs(s.x - MIL)) : 0;
+      executeCoup(jeu, s, c.type, c.p, c.tx, c.ty, c.mur, sv ? { super: sv } : undefined);
     }
   } else if (jeu.tFrappe > s.niv.reac * 0.5) s.cible = formation(jeu, s);
 }

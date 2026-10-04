@@ -63,6 +63,8 @@ export class BandejaApp {
    */
   attenteDemarrage = !estAutonome();
   private dernier = 0;
+  /** la jauge du super coup de chaque équipe était pleine à l'image précédente */
+  private jaugePleine: [boolean, boolean] = [false, false];
   private cumul = 0;
 
   constructor(readonly ecran: HTMLCanvasElement) {
@@ -253,6 +255,16 @@ export class BandejaApp {
     sauvePreferences(this.pref);
   }
 
+  /** Quand la jauge du super coup d'une équipe vient d'être pleine : une petite fanfare, sans bannière (la jauge et le bouton doré suffisent). */
+  private surveilleJauges(): void {
+    if (this.jeu.mode !== 'match') return;
+    for (const eq of [0, 1] as const) {
+      const pleine = this.jeu.jaugeSmash[eq] >= 1;
+      if (pleine && !this.jaugePleine[eq]) this.son.superPret();
+      this.jaugePleine[eq] = pleine;
+    }
+  }
+
   // ------------------------------------------------------------ boucle
 
   private boucle(t: number): void {
@@ -279,7 +291,10 @@ export class BandejaApp {
     const evs = this.jeu.evenements.splice(0);
     joueEvenements(this.jeu, evs, this.effets, this.son, this.K);
     lan.diffuseApres(evs);
-    if (this.ecranUI === 'jeu') this.ralenti.suit(this.jeu, dt, this.K.miroir);
+    if (this.ecranUI === 'jeu') {
+      this.ralenti.suit(this.jeu, dt, this.K.miroir);
+      this.surveilleJauges();
+    }
     if (!lan.actif && this.jeu.mode === 'match' && this.jeu.phase === 'fin' && this.ecranUI === 'jeu')
       this.finMatch();
     if (actif) this.effets.maj(dt);
