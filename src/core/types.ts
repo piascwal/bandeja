@@ -199,6 +199,8 @@ export interface Partie {
   aide: boolean;
   /** équipe qui a l'avantage sur son prochain coup (elle vient de lober l'adversaire) */
   avantage: Equipe | null;
+  /** jauge de smash de chaque équipe (0 → 1) : pleine, le prochain smash en hauteur est garanti par 3 / par 4 */
+  jaugeSmash: [number, number];
   /** coups joués depuis le service : la balle accélère au fil de l'échange */
   echange: number;
   tPhase: number;

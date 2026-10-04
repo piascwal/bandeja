@@ -1,9 +1,19 @@
 import { gauss } from './aleatoire';
 import { lance } from './balle';
-import { ACCEL_ECHANGE, ACCEL_MAX, HAUT_MAX, HAUT_SMASH, MIL, PORTEE } from './constants';
+import {
+  ACCEL_ECHANGE,
+  ACCEL_MAX,
+  HAUT_MAX,
+  HAUT_SMASH,
+  MIL,
+  PORTEE,
+  SMASH_ECHANGE_MIN,
+  SMASH_GAIN_COUP,
+  SMASH_GAIN_VITRE,
+} from './constants';
 import { contreVitre } from './contre-vitre';
 import { autre, xProf } from './terrain';
-import type { Balle, Coup, Effet, Joueur, Mur, Partie } from './types';
+import type { Balle, Coup, Effet, Equipe, Joueur, Mur, Partie } from './types';
 
 /** Distance visée par rapport à la vitre adverse, selon le coup. */
 export const PROF: Partial<Record<Coup, number>> = {
@@ -29,6 +39,18 @@ const P_MAX = 0.97;
 const P_CONTRAINT = 0.6;
 const PRIME_AVANTAGE = 0.2;
 const VITESSE_SUPER = 1.3;
+
+/** La jauge de smash de l'équipe qui frappe : vidée par un smash garanti, remplie par les longs échanges et les renvois de vitre. */
+function remplitJauge(jeu: Partie, eq: Equipe, garanti: boolean, subi: boolean, apresVitre: boolean): void {
+  if (garanti) {
+    jeu.jaugeSmash[eq] = 0;
+    return;
+  }
+  if (subi) return;
+  let gain = jeu.echange >= SMASH_ECHANGE_MIN ? SMASH_GAIN_COUP : 0;
+  if (apresVitre) gain += SMASH_GAIN_VITRE;
+  jeu.jaugeSmash[eq] = Math.min(1, jeu.jaugeSmash[eq] + gain);
+}
 
 /** Le joueur peut-il frapper la balle maintenant ? (mul agrandit la portée) */
 export function frappable(jeu: Partie, s: Joueur, mul = 1): boolean {
@@ -100,6 +122,8 @@ export function executeCoup(
   const b = jeu.balle;
   const eq = s.eq;
   const sup = humain?.superCoup === true;
+  // une balle qui revient de la vitre qu'on joue : beau renvoi, qui remplit la jauge de smash
+  const apresVitre = b.mur;
   // lob subi : coup limité, sans smash ; l'avantage passe au lobeur. Avantage reçu : coup plus fort.
   const subi = contrainte(b, s);
   const prime = jeu.avantage === eq;
@@ -109,6 +133,9 @@ export function executeCoup(
     if (type === 'smash') type = 'bandeja';
   }
   if (prime) p += PRIME_AVANTAGE;
+  // jauge de smash pleine : le smash en hauteur est garanti par 3 / par 4
+  const garanti = type === 'smash' && b.z > HAUT_SMASH && jeu.jaugeSmash[eq] >= 1;
+  if (garanti) p = Math.max(p, 0.9);
   p = sup ? 1 : Math.min(p, P_MAX);
   const rng = jeu.rng;
   const vin = Math.hypot(b.vx, b.vy, b.vz);
@@ -139,7 +166,7 @@ export function executeCoup(
     const marge = !sup && rng() < risque ? -0.3 : t.marge;
     lance(b, tx, ty, t.v, t.spin, marge);
     b.spinDir = ty < 5 ? -1 : 1;
-    b.portres = type === 'smash' && p >= 0.8 && b.z > 2.2;
+    b.portres = type === 'smash' && ((p >= 0.8 && b.z > 2.2) || garanti);
     b.vif = sup ? 1 : rebondVif(type, p, rng());
   } else b.vif = 0;
   b.eqF = eq;
@@ -164,6 +191,7 @@ export function executeCoup(
   s.charge = 0;
   jeu.tFrappe = 0;
   jeu.echange++;
+  remplitJauge(jeu, eq, garanti, subi, apresVitre);
   jeu.plan = [null, null];
   jeu.pred = null;
   jeu.tPred = 0;

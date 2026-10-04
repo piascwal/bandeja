@@ -32,7 +32,8 @@ export function choixIA(jeu: Partie, s: Joueur): ChoixCoup {
   let type: Coup;
   let p: number;
   if (b.z > HAUT_SMASH) {
-    if (loin < 5.5 && b.z > 2.3 && !contrainte(b, s) && rng() < 0.3 + niv.agress * 0.5) {
+    const garanti = jeu.jaugeSmash[eq] >= 1 && !contrainte(b, s);
+    if (garanti || (loin < 5.5 && b.z > 2.3 && !contrainte(b, s) && rng() < 0.3 + niv.agress * 0.5)) {
       type = 'smash';
       p = alea(rng, 0.5, 0.75) + niv.agress * 0.3 * rng();
     } else {

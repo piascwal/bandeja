@@ -61,7 +61,7 @@ export function joueEvenements(
           fx.secousse = 2 + 2 * p;
           fx.flash = 0.15 * p;
           fx.etincelles(sx, sy - 4, 10 + Math.round(10 * p));
-          fx.bulle(ev.portres ? 'PUISSANCE !!' : 'PUISSANCE', sx, sy - 10, C.or);
+          fx.bulle(ev.portres ? 'PAR 3 !!' : 'PUISSANCE', sx, sy - 10, C.or);
           if (ev.humain) vibre(45);
         } else {
           son.frappe(p);

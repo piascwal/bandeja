@@ -65,6 +65,7 @@ export function nouvellePartie(o: OptionsPartie): Partie {
     phase: 'service',
     aide: o.aide ?? false,
     echange: 0,
+    jaugeSmash: [0, 0],
     avantage: null,
     tPhase: 0,
     dureePoint: DUREE_POINT,

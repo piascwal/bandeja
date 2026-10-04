@@ -17,6 +17,8 @@ export function appliqueInstantane(jeu: Partie, s: Instantane): void {
   jeu.pret = s.pret;
   jeu.faute = s.faute;
   jeu.rejoue = s.rejoue;
+  jeu.echange = s.echange;
+  jeu.jaugeSmash = [s.smash[0], s.smash[1]];
   jeu.pts = [s.pts[0], s.pts[1]];
   jeu.jeux = [s.jeux[0], s.jeux[1]];
   jeu.nJeu = s.nJeu;

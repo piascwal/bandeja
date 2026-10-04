@@ -1,4 +1,5 @@
 import { dessineCommandes } from '@render/commandes';
+import { dessineEchange } from '@render/hud-echange';
 import { dessineBanniere, dessineJauge, dessineTableau } from '@render/hud';
 import { dessineAttente } from '@render/lan-etats';
 import { dessineListe } from '@render/lan-liste';
@@ -49,7 +50,10 @@ export function rendu(app: BandejaApp, t: number): void {
     enJeu: ecranUI === 'jeu' && !rejeu,
   });
   g.setTransform(E, 0, 0, E, 0, 0);
-  if (!horsMatch) dessineTableau(v, jeu, ecranUI === 'jeu');
+  if (!horsMatch) {
+    dessineTableau(v, jeu, ecranUI === 'jeu');
+    dessineEchange(v, jeu);
+  }
   if (effets.banniere && !horsMatch && !rejeu) dessineBanniere(v, effets.banniere);
 
   const reglages = app.pref;

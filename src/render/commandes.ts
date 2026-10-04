@@ -55,6 +55,12 @@ export function dessineCommandes(v: Vue, jeu: Partie, t: EtatTactile): void {
     else if (choisi) anneau(v.g, z[k].x, z[k].y, z[k].r + 2, C.blanc, 1, 1);
     v.g.globalAlpha = 1;
   }
+  if (haute && !service && jeu.jaugeSmash[s.eq] >= 1) {
+    // jauge de smash pleine : le SMASH est garanti par 3 / par 4
+    v.g.globalAlpha = 0.6 + 0.4 * Math.sin(jeu.temps * 14);
+    anneau(v.g, z.smash.x, z.smash.y, z.smash.r + 4, '#ffffff', 1, 2);
+    v.g.globalAlpha = 1;
+  }
   if (haute && !service) {
     v.g.globalAlpha = 0.4 + 0.4 * Math.sin(jeu.temps * 10);
     anneau(v.g, z.smash.x, z.smash.y, z.smash.r + 3, C.or, 1, 1);

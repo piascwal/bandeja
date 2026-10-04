@@ -37,8 +37,16 @@ export const DUREE_MAX_ECHANGE = 9;
  * La balle accélère au fil de l'échange : +ACCEL_ECHANGE par coup après le
  * deuxième, jusqu'à +ACCEL_MAX, sauf pour le lob et l'amorti (qui restent lents).
  */
-export const ACCEL_ECHANGE = 0.04;
-export const ACCEL_MAX = 0.5;
+export const ACCEL_ECHANGE = 0.06;
+export const ACCEL_MAX = 0.9;
+/**
+ * Jauge de smash de chaque équipe : elle se remplit aux échanges longs et aux
+ * renvois de vitre. Pleine, le prochain smash sur une balle haute est garanti
+ * « par 3 / par 4 » : de quoi finir le point.
+ */
+export const SMASH_ECHANGE_MIN = 4;
+export const SMASH_GAIN_COUP = 0.05;
+export const SMASH_GAIN_VITRE = 0.12;
 /** Durée de l'annonce entre deux points (s). */
 export const DUREE_POINT = 1.9;
 

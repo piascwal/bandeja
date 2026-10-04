@@ -265,9 +265,17 @@ déplacement_, désactivée par défaut), le joueur qui va jouer la balle y est
 conduit tout seul quand le joystick est au repos ; en réseau, c'est le réglage
 de l'hôte qui vaut pour tous.
 
-**La balle accélère** de 4 % à chaque coup après le deuxième, jusqu'à +50 %
-(`ACCEL_*` dans `core/constants.ts`), sauf le lob et l'amorti : les échanges
-finissent par se dénouer.
+**La balle accélère** de 6 % à chaque coup après le deuxième, jusqu'à +90 %
+(`ACCEL_*` dans `core/constants.ts`), sauf le lob et l'amorti. Un compteur
+« ECHANGE n » sous le tableau des scores chauffe de couleur (blanc, or, orange,
+rouge) et affiche le bonus de vitesse de la balle.
+
+**Jauge de smash.** Chaque équipe a sa jauge (une barre sous son côté du
+tableau), qui se remplit de 5 % à chaque coup à partir du quatrième d'un échange
+et de 12 % quand on joue une balle qui revient de la vitre. Pleine, elle clignote
+(« PAR 3 ! », le bouton SMASH aussi) : le prochain SMASH sur une balle haute est
+garanti par 3 / par 4, où que l'on soit, puis la jauge se vide. Le CPU en profite
+aussi. Avec le lob subi, c'est ce qui permet de finir les points.
 
 **Même affichage pour tous**, en solo comme en réseau : l'équipe 0 à droite,
 l'équipe 1 à gauche, joystick et boutons identiques. Les positions de service

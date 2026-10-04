@@ -133,6 +133,8 @@ export function coupPrevu(jeu: Partie, s: Joueur, bouton: Bouton, charge: number
     case 'plat':
       return charge < 0.5 ? 'coupe' : 'plat';
     case 'smash':
+      // jauge de smash pleine : toujours un smash sur une balle haute
+      if (haut && jeu.jaugeSmash[s.eq] >= 1 && !contrainte(jeu.balle, s)) return 'smash';
       return haut ? coupAerien(s, p) : 'plat';
     default:
       return bouton;

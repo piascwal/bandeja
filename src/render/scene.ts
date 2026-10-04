@@ -1,5 +1,5 @@
 import { clamp } from '@core/aleatoire';
-import { LARG } from '@core/constants';
+import { HAUT_SMASH, LARG } from '@core/constants';
 import { frappable } from '@core/coups';
 import {
   BONUS_PORTEE,
@@ -181,7 +181,11 @@ function aidesJoueur(v: Vue, jeu: Partie, hum: Joueur): void {
   const sup = superCoup(jeu, hum, hum.intent.type, hum.charge);
   if (sup && precisionContact(jeu, hum) > 0 && Math.floor(jeu.temps * 8) % 2 === 0)
     texte(g, 'SUPER !', sx, y0 - 10, '#ffffff', 1, 'c');
-  else texte(g, NOMS_COUPS[coupPrevu(jeu, hum, hum.intent.type, hum.charge)], sx, y0 - 10, C.or, 1, 'c');
+  else {
+    const prevu = coupPrevu(jeu, hum, hum.intent.type, hum.charge);
+    const par3 = prevu === 'smash' && jeu.jaugeSmash[hum.eq] >= 1 && jeu.balle.z > HAUT_SMASH;
+    texte(g, par3 ? 'PAR 3 !' : NOMS_COUPS[prevu], sx, y0 - 10, C.or, 1, 'c');
+  }
 }
 
 /** Flèche rouge vif au-dessus d'un autre joueur humain : bien visible sur la piste. */

@@ -43,4 +43,13 @@ export default async function (env) {
   });
   env.verifie(zones.W > 0, 'écran dessiné');
   await env.capture(p, 'jeu-commandes');
+  // le compteur d'échange et les jauges de smash s'affichent sous le tableau
+  await p.evaluate(() => {
+    const j = window.bandeja.jeu;
+    j.phase = 'jeu';
+    j.echange = 14;
+    j.jaugeSmash = [0.45, 1];
+  });
+  await attends(150);
+  await env.capture(p, 'hud-echange');
 }
