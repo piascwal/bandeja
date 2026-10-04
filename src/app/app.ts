@@ -3,7 +3,7 @@ import { JEUX, NIVEAUX, PAS } from '@core/constants';
 import { nouvellePartie, pas } from '@core/partie';
 import type { Partie } from '@core/types';
 import { Entrees, type PointLogique } from '@input/entrees';
-import type { OngletCommandes } from '@render/reglages';
+import type { OngletCommandes } from '@render/commandes-aide';
 import { construitDecor, type Decor } from '@render/decor';
 import { Effets } from '@render/effets';
 import { C } from '@render/palette';
@@ -19,7 +19,7 @@ import { ParcoursLan } from './parcours-lan';
 import { Ralenti } from './ralenti';
 import { rendu } from './rendu';
 
-export type EcranUI = 'menu' | 'reglages' | 'lan-liste' | 'lan-salon' | 'jeu' | 'pause' | 'fin';
+export type EcranUI = 'menu' | 'reglages' | 'commandes' | 'lan-liste' | 'lan-salon' | 'jeu' | 'pause' | 'fin';
 
 /**
  * L'application : canevas et mise à l'échelle, boucle de jeu à pas fixe,
@@ -79,7 +79,8 @@ export class BandejaApp {
       pleinEcran: () => this.plein.tente(),
       pause: () => this.pause(true),
       basculePause: () => {
-        if (this.ecranUI === 'reglages') this.ecranUI = 'menu';
+        if (this.ecranUI === 'commandes') this.ecranUI = 'reglages';
+        else if (this.ecranUI === 'reglages') this.ecranUI = 'menu';
         else if (this.ecranUI === 'lan-liste' || this.ecranUI === 'lan-salon') this.lan.quitte();
         else if (this.ecranUI === 'jeu' || this.ecranUI === 'pause') this.pause(this.ecranUI === 'jeu');
       },
@@ -202,6 +203,15 @@ export class BandejaApp {
   passeRalenti(): void {
     this.ralenti.arrete();
     if (!this.lan.actif || this.lan.hote) this.jeu.tPhase = Math.max(this.jeu.tPhase, this.jeu.dureePoint);
+  }
+
+  ouvreCommandes(oui: boolean): void {
+    this.ecranUI = oui ? 'commandes' : 'reglages';
+  }
+
+  basculeSecousses(): void {
+    this.pref.secoussesReduites = !this.pref.secoussesReduites;
+    sauvePreferences(this.pref);
   }
 
   ouvreReglages(oui: boolean): void {

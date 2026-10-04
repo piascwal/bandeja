@@ -3,6 +3,7 @@ import { dessineBanniere, dessineJauge, dessineTableau } from '@render/hud';
 import { dessineAttente } from '@render/lan-etats';
 import { dessineListe } from '@render/lan-liste';
 import { dessineSalon } from '@render/lan-salon';
+import { dessineCommandesAide } from '@render/commandes-aide';
 import { dessineReglages } from '@render/reglages';
 import { dessineDemarrage, dessineFin, dessineMenu, dessinePause, dessinePortrait } from '@render/menus';
 import { C } from '@render/palette';
@@ -26,11 +27,16 @@ export function rendu(app: BandejaApp, t: number): void {
   }
   if (!app.decor || !app.sprites) return;
   const horsMatch =
-    ecranUI === 'menu' || ecranUI === 'reglages' || ecranUI === 'lan-liste' || ecranUI === 'lan-salon';
+    ecranUI === 'menu' ||
+    ecranUI === 'reglages' ||
+    ecranUI === 'commandes' ||
+    ecranUI === 'lan-liste' ||
+    ecranUI === 'lan-salon';
   g.fillStyle = C.nuit;
   g.fillRect(0, 0, W, H);
-  const sx = secousseAleatoire(effets.secousse);
-  const sy = secousseAleatoire(effets.secousse);
+  const secousse = app.pref.secoussesReduites ? 0 : effets.secousse;
+  const sx = secousseAleatoire(secousse);
+  const sy = secousseAleatoire(secousse);
   g.setTransform(E, 0, 0, E, sx * E, sy * E);
   const rejeu = app.ralenti.actif && ecranUI === 'jeu';
   dessineScene(v, {
@@ -77,11 +83,18 @@ export function rendu(app: BandejaApp, t: number): void {
     dessineReglages(v, app.boutons, {
       son: app.pref.son,
       aide: app.pref.aide,
-      onglet: app.ongletCommandes,
+      secoussesReduites: app.pref.secoussesReduites,
       onSon: () => app.basculeSon(),
       onAide: () => app.basculeAide(),
-      onOnglet: (o) => (app.ongletCommandes = o),
+      onSecousses: () => app.basculeSecousses(),
+      onCommandes: () => app.ouvreCommandes(true),
       onRetour: () => app.ouvreReglages(false),
+    });
+  } else if (ecranUI === 'commandes') {
+    dessineCommandesAide(v, app.boutons, {
+      onglet: app.ongletCommandes,
+      onOnglet: (o) => (app.ongletCommandes = o),
+      onRetour: () => app.ouvreCommandes(false),
     });
   } else if (ecranUI === 'pause') {
     dessinePause(

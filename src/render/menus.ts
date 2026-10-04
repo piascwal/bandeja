@@ -69,7 +69,7 @@ export function dessineMenu(
     couleur: pulse ? '#e63a58' : ROUGE.couleur,
   });
   bouton(g, zones, 'MULTI WIFI', cx + 4, jy, 84, 22, a.multi, BLEU);
-  bouton(g, zones, 'REGLAGES', cx - 60, jy + 28, 120, 13, a.reglages, { couleur: '#232a58' });
+  bouton(g, zones, 'REGLAGES AVANCES', cx - 60, jy + 28, 120, 13, a.reglages, { couleur: '#232a58' });
 
   const vict = r.victoires[r.niveau] ?? 0;
   const mt = r.matchs[r.niveau] ?? 0;
