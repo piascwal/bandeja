@@ -4,6 +4,7 @@ import { ACCEL_MAX, HAUT_SMASH, PAS } from '@core/constants';
 import { accelerationEchange, executeCoup } from '@core/coups';
 import { xProf } from '@core/terrain';
 import { appliqueCommande, cibleCoup, coupAerien, coupPrevu, directionVisee } from '@core/humain';
+import { bouge } from '@core/deplacement';
 import { pas } from '@core/partie';
 import type { Commande } from '@core/types';
 import { zonesBoutons } from '@input/disposition';
@@ -191,7 +192,7 @@ describe('le jeu de vitre du padel', () => {
 });
 
 describe('on ne rate pas une balle armée', () => {
-  it('un appui très en avance (lob lent) reste en attente jusqu’à l’arrivée de la balle', () => {
+  it('un appui trop en avance est oublié : il faut se placer d’abord, puis déclencher au bon moment', () => {
     const jeu = partieTest({ mode: 'match', sieges: [0] }, 12);
     const s = jeu.joueurs[0]!;
     s.x = 2;
@@ -199,14 +200,48 @@ describe('on ne rate pas une balle armée', () => {
     jeu.phase = 'jeu';
     Object.assign(jeu.balle, { x: 8, y: 5, z: 2, vx: 0, vy: 0, vz: 0, camp: 0, sol: 0, coup: 'lobe' });
     appliqueCommande(jeu, s, { ...VIDE, appuis: ['plat'] }, PAS);
-    // 2,5 s plus tard (la balle est encore loin), l'appui n'est pas oublié
-    for (let i = 0; i < 300; i++) appliqueCommande(jeu, s, VIDE, PAS);
+    // un appui récent attend la balle
+    for (let i = 0; i < 60; i++) appliqueCommande(jeu, s, VIDE, PAS);
     expect(s.intent).not.toBeNull();
-    // la balle arrive : le coup part
+    // mais pas plus d'une seconde
+    for (let i = 0; i < 120; i++) appliqueCommande(jeu, s, VIDE, PAS);
+    expect(s.intent).toBeNull();
+    // la balle arrive ensuite : rien ne part tout seul
     Object.assign(jeu.balle, { x: 2.5, y: 5, z: 1 });
     appliqueCommande(jeu, s, VIDE, PAS);
-    expect(jeu.balle.eqF).toBe(0);
+    expect(jeu.balle.camp).toBe(0);
+    // en appuyant au bon moment, le coup part
+    appliqueCommande(jeu, s, { ...VIDE, appuis: ['plat'] }, PAS);
     expect(jeu.balle.camp).toBe(1);
+  });
+
+  it('armer son coup tôt ralentit : on court bien moins vite qu’en se plaçant d’abord', () => {
+    const cours = (arme: boolean) => {
+      const jeu = partieTest({ mode: 'match', sieges: [0] }, 12);
+      const s = jeu.joueurs[0]!;
+      s.x = 3;
+      s.y = 5;
+      jeu.phase = 'jeu';
+      Object.assign(jeu.balle, { x: 9, y: 5, z: 2, vx: 0, vy: 0, vz: 0, camp: 1, sol: 0, coup: 'lobe' });
+      for (let i = 0; i < 120; i++) {
+        appliqueCommande(jeu, s, { dx: 1, dy: 0, appuis: arme && i === 0 ? ['plat'] : [] }, PAS);
+        if (arme && !s.intent) s.intent = { type: 'plat', t: 1 };
+        bouge(jeu, s, PAS);
+      }
+      return s.x;
+    };
+    expect(cours(false) - 3).toBeGreaterThan((cours(true) - 3) * 1.6);
+  });
+
+  it('la raquette ne rattrape pas tout : une balle à plus d’un mètre quinze n’est pas jouée', () => {
+    const jeu = partieTest({ mode: 'match', sieges: [0] }, 12);
+    const s = jeu.joueurs[0]!;
+    s.x = 2;
+    s.y = 5;
+    jeu.phase = 'jeu';
+    Object.assign(jeu.balle, { x: 3.4, y: 5, z: 1, vx: 0, vy: 0, vz: 0, camp: 0, sol: 0, coup: 'plat' });
+    appliqueCommande(jeu, s, { ...VIDE, appuis: ['plat'] }, PAS);
+    expect(jeu.balle.camp).toBe(0);
   });
 
   it('jauge pleine mais balle sur le point de rebondir une deuxième fois : le coup part quand même', () => {
@@ -215,7 +250,7 @@ describe('on ne rate pas une balle armée', () => {
     s.x = 2;
     s.y = 5;
     jeu.phase = 'jeu';
-    Object.assign(jeu.balle, { x: 3.2, y: 5, z: 0.3, vx: -1, vy: 0, vz: -3, camp: 0, sol: 1, coup: 'plat' });
+    Object.assign(jeu.balle, { x: 2.6, y: 5, z: 0.3, vx: -1, vy: 0, vz: -3, camp: 0, sol: 1, coup: 'plat' });
     s.intent = { type: 'plat', t: 0 };
     s.charge = 1;
     appliqueCommande(jeu, s, VIDE, PAS);

@@ -19,7 +19,7 @@ export const SERV = 6.95;
 /** Vitesse de course (m/s). */
 export const VMAX = 4.8;
 /** Arcade : un joueur humain court plus vite que le CPU. */
-export const BONUS_HUMAIN = 1.2;
+export const BONUS_HUMAIN = 1.1;
 /** Portée de la raquette (m). */
 export const PORTEE = 1.15;
 /** Plus haut, même en sautant, on ne touche pas. */
@@ -55,6 +55,14 @@ export const PARADE_RALENTI = 0.12;
  * plan sur la lune, puis bandeau du point ; le ralenti vient après.
  */
 export const FINALE_SUPER_S = 4;
+/**
+ * Super coup demandé alors que la balle est dans notre camp : le joueur court tout
+ * seul vers elle (à ce multiple de sa vitesse) pendant au plus ce délai (s), et la
+ * frappe de plus loin que d'ordinaire (multiple de la portée de la raquette).
+ */
+export const SUPER_COURSE = 2.8;
+export const SUPER_DUREE_S = 1.6;
+export const SUPER_PORTEE = 2.2;
 /** Durée de l'annonce entre deux points (s). */
 export const DUREE_POINT = 1.9;
 

@@ -90,6 +90,7 @@ export class Effets {
   repare(): void {
     this.decals = [];
     this.fissure = null;
+    if (!this.finale.actif) this.finale.reinitialise();
   }
 
   /** Le terrain ou la vitre est abîmé(e) à cet endroit. */

@@ -91,6 +91,37 @@ describe('le super coup', () => {
     expect(jeu.gagnant).toBe(0);
   });
 
+  it('SUPER dès que la balle est dans notre camp : le joueur court seul vers elle et lance le gros coup, même de loin', () => {
+    // le joueur est au fond, la balle près du filet : hors de portée d'un coup normal
+    const { jeu, s } = situation(
+      { x: 9, y: 2, z: 1.2, vx: -2, vy: 0, vz: 0, sol: 0, coup: 'lob' as never },
+      1,
+    );
+    s.y = 8;
+    jeu.jaugeSmash[0] = 1;
+    jeu.balle.coup = 'plat';
+    appliqueCommande(jeu, s, { ...VIDE, appuis: ['smash'] }, PAS);
+    expect(s.auto).toBeGreaterThan(0);
+    for (let i = 0; i < 240 && jeu.balle.super === 0; i++) pas(jeu, PAS, (j) => (j === s ? VIDE : VIDE));
+    expect(jeu.balle.super).toBeGreaterThan(0);
+    expect(jeu.balle.eqF).toBe(0);
+    expect(s.auto).toBe(0);
+  });
+
+  it('sans la jauge pleine, SUPER ne fait pas courir : le joueur reste maître de ses déplacements', () => {
+    const { jeu, s } = situation({ x: 9, y: 2, z: 1.2, vx: -2, vy: 0, vz: 0, sol: 0 }, 1);
+    jeu.jaugeSmash[0] = 0.5;
+    appliqueCommande(jeu, s, { ...VIDE, appuis: ['smash'] }, PAS);
+    expect(s.auto).toBe(0);
+  });
+
+  it('balle dans l’autre camp : SUPER ne déclenche pas la course', () => {
+    const { jeu, s } = situation({ x: 12, y: 5, z: 1.2, vx: 8, camp: 1, sol: 0 }, 1);
+    jeu.jaugeSmash[0] = 1;
+    appliqueCommande(jeu, s, { ...VIDE, appuis: ['smash'] }, PAS);
+    expect(s.auto).toBe(0);
+  });
+
   it('sans jauge pleine, la touche du haut vaut FRAPPE : jamais de super coup ni de coup perdu', () => {
     const { jeu, s } = situation({ z: 2.4, vx: -2, coup: 'lobe', sol: 0 }, 6);
     expect(jeu.jaugeSmash[0]).toBeLessThan(1);

@@ -37,6 +37,8 @@ function impactSuper(
     fx.secousse = 14;
     fx.flash = 0.7;
   } else if (ev.surface === 'sol') {
+    // toujours le sol d'abord : la balle y tape, puis elle part (la scène finale s'ouvre sur ce choc)
+    if (!fx.finale.declenchee) fx.finale.declenche(variante, sx, sy);
     fx.abime('sol', ev.x, ev.y, 0, variante);
     fx.debris(sx, sy);
     fx.etincelles(sx, sy, 50, c, 170);
@@ -136,8 +138,8 @@ export function joueEvenements(
       case 'point': {
         const sous = match ? (ev.gagnant === moi ? 'POINT POUR VOUS' : 'POINT ADVERSE') : null;
         if (superEnCours > 0 && match) {
-          // super coup : la scène finale se joue d'abord, le bandeau vient à sa fin, avant le ralenti
-          fx.finale.declenche(superEnCours, dernierImpact[0], dernierImpact[1]);
+          // super coup : la scène finale (ouverte au choc sur le sol) se joue d'abord, le bandeau vient à sa fin, avant le ralenti
+          if (!fx.finale.declenchee) fx.finale.declenche(superEnCours, dernierImpact[0], dernierImpact[1]);
           fx.differe(ev.raison, sous, EQUIPES[ev.gagnant].maillot);
           superEnCours = 0;
         } else fx.annonce(ev.raison, sous, EQUIPES[ev.gagnant].maillot, 1.6);
@@ -148,13 +150,14 @@ export function joueEvenements(
         break;
       }
       case 'parade': {
-        superEnCours = 0;
         if (ev.ok) {
+          // super coup arrêté : plus de scène finale
+          superEnCours = 0;
           son.parfait();
           fx.flash = 0.5;
           fx.secousse = 6;
           fx.annonce('PARE !', 'SUPER COUP ARRETE', COULEURS_QUALITE[5] ?? C.blanc, 1.2);
-        } else fx.annonce('RATE', null, C.or, 0.8);
+        } else fx.annonce('RATE', null, C.or, 0.8); // le super coup suit sa route : sa scène finale aura lieu
         break;
       }
       case 'faute':

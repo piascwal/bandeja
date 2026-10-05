@@ -77,6 +77,8 @@ export interface Joueur {
   charge: number;
   /** temps de récupération après un coup */
   cd: number;
+  /** super coup demandé : secondes pendant lesquelles le joueur court tout seul vers la balle pour le lancer (0 : aucun) */
+  auto: number;
   /** distance parcourue, pour l'animation des pas */
   pas: number;
   /** sens de l'attaque à l'écran */

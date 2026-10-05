@@ -214,6 +214,7 @@ export function executeCoup(
   s.swing = 1;
   s.haut = haut || variante === 1;
   s.cd = 0.35;
+  s.auto = 0;
   s.intent = null;
   s.charge = 0;
   jeu.tFrappe = 0;

@@ -305,15 +305,21 @@ de l'hôte qui vaut pour tous.
 jauge (×1,0 au service, jusqu'à ×1,9), et la balle elle-même a un halo qui grandit et
 chauffe (jaune, orange, rouge) avec une traînée qui apparaît plus tôt.
 
-**Quand part le coup ?** Ni au relâchement, ni « à l'appui » seulement : l'appui _arme_ le
-coup, et il part tout seul dès que la balle est à portée (donc tout de suite si elle
-l'est déjà). Relâcher le bouton ne change rien, maintenir non plus : la jauge se
-remplit seule pendant 0,6 s après l'appui, donc plus on appuie tôt, plus le coup est
-fort. L'appui reste en attente jusqu'à 3 s (un lob lent ne le fait pas oublier). Seul
-le super coup (jauge pleine) attend que la balle soit tout près, et il part de toute
-façon quand elle va rebondir une deuxième fois. Il n'y a plus de bouton SMASH : le
-bouton du haut n'apparaît que pour le super coup, et la touche I ou Espace vaut FRAPPE tant
-que la jauge n'est pas pleine : l'appui n'est jamais perdu.
+**Quand part le coup ?** Il faut d'abord se placer, puis déclencher au bon moment. L'appui
+_arme_ le coup, qui part tout seul dès que la balle est à portée de raquette (1,15 m : on
+ne rattrape plus tout, un lob au-dessus d'un joueur au filet passe donc souvent). Armer trop
+tôt coûte cher : le joueur **ralentit de moitié** tant que le coup est armé, et l'appui
+est **oublié au bout de 0,7 s** s'il n'a rien touché. Un appui plus tôt donne un coup plus
+fort (la charge monte pendant 0,6 s), mais on court moins vite pour se placer : à chacun
+son compromis. Le CPU n'a pas ces règles. Le bouton du haut n'apparaît que pour le super
+coup, et la touche I ou Espace vaut FRAPPE tant que la jauge n'est pas pleine : l'appui
+n'est jamais perdu.
+
+**SUPER, le coup assuré.** Jauge pleine et balle dans notre camp, un appui sur SUPER envoie
+le joueur **courir tout seul** vers la balle (près de trois fois sa vitesse, 1,6 s au plus)
+et la frapper de plus loin que d'ordinaire : le gros coup n'est jamais raté pour cause
+de placement, même quand la balle est loin. Il faut quand même qu'elle soit encore
+jouable (pas deux rebonds, pas au-dessus de 3 m).
 
 **La balle accélère** de 6 % à chaque coup après le deuxième, jusqu'à +90 %
 (`ACCEL_*` dans `core/constants.ts`), sauf le lob et l'amorti. Un compteur
@@ -395,8 +401,8 @@ imparable. Le CPU tente sa chance au hasard. Le curseur est synchronisé dans l'
 (protocole 8) et l'évènement `parade` annonce le résultat. Les dégâts de la piste
 (cratère, vitre brisée) disparaissent quand le jeu reprend sur un nouveau point.
 
-**Fin spectaculaire.** À la fin du point (après la sortie de la balle) et avant le
-ralenti, chaque écran joue sa propre scène (`finale-super.ts`, `finale-vue.ts`) : coup de
+**Fin spectaculaire.** La balle d'un super coup **tape toujours le sol d'abord** (jamais
+une vitre), et ce choc ouvre la scène : avant le ralenti, chaque écran joue sa propre scène (`finale-super.ts`, `finale-vue.ts`) : coup de
 zoom sur l'impact, terrain cratérisé ou vitre fissurée qui reste abîmé(e) (`decals.ts`),
 filtre de particules sur tout l'écran, puis la balle monte dans le ciel jusqu'à l'espace
 et on la voit retomber doucement sur la lune. Le bandeau du point s'affiche alors ; un

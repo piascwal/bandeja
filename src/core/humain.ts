@@ -1,5 +1,5 @@
 import { alea, clamp } from './aleatoire';
-import { HAUT_SMASH, LARG, MIL } from './constants';
+import { HAUT_SMASH, LARG, MIL, SUPER_DUREE_S, SUPER_PORTEE } from './constants';
 import { executeCoup, frappable, PROF } from './coups';
 import { jaugeVal, servir } from './service';
 import { arreteParade, varianteSuper } from './super-coup';
@@ -9,12 +9,12 @@ import type { Bouton, Commande, Coup, Joueur, Partie, TypeService } from './type
 /** Au padel on sert surtout coupé, parfois à plat : deux services, sur FRAPPE et sur le bouton de gauche. */
 export const TYPES_SERV: Partial<Record<Bouton, TypeService>> = { plat: 'plat', amorti: 'coupe' };
 
-/** Plus on appuie tôt avant l'impact, plus le coup est puissant (durée de la charge, s). */
+/** Plus on appuie tôt avant l'impact, plus le coup est puissant (durée de la charge, s) ; mais armer tôt ralentit (voir `deplacement.ts`). */
 const DUREE_CHARGE = 0.6;
-/** Un appui reste en attente de la balle ce temps-là : le coup part tout seul dès qu'elle est à portée. */
-const OUBLI_APPUI = 3;
-/** Portée généreuse pour un humain : on réussit presque toujours à toucher la balle. */
-export const BONUS_PORTEE = 1.3;
+/** Un appui reste en attente de la balle ce temps-là : il faut se placer d'abord, puis déclencher au bon moment. */
+const OUBLI_APPUI = 0.7;
+/** Portée de la raquette d'un humain : il faut être bien placé, la balle n'est pas rattrapée de partout. */
+export const BONUS_PORTEE = 1;
 /** Après le relâchement du joystick, sa dernière direction compte encore ce temps-là (s). */
 const MEMOIRE_VISEE = 0.4;
 /** Le joystick est « tenu » au-delà de cette inclinaison. */
@@ -59,11 +59,14 @@ export function appliqueCommande(jeu: Partie, s: Joueur, cmd: Commande, dt: numb
   if (jeu.phase !== 'jeu') {
     s.intent = null;
     s.charge = 0;
+    s.auto = 0;
     return;
   }
   // on peut appuyer en avance : le coup part dès que la balle est à portée,
   // et plus on a appuyé tôt, plus il est puissant
   for (const a of cmd.appuis) {
+    // SUPER alors que la balle est dans notre camp : le joueur court tout seul vers elle pour lancer le gros coup
+    if (a === 'smash' && jeu.jaugeSmash[s.eq] >= 1 && jeu.balle.camp === s.eq) s.auto = SUPER_DUREE_S;
     // le bouton du haut n'existe que pour le super coup : sans jauge pleine, son appui (touche I ou Espace) vaut FRAPPE
     const bouton: Bouton = a === 'smash' && jeu.jaugeSmash[s.eq] < 1 ? 'plat' : a;
     if (s.intent) s.intent.type = bouton;
@@ -75,18 +78,19 @@ export function appliqueCommande(jeu: Partie, s: Joueur, cmd: Commande, dt: numb
   if (s.intent) {
     s.intent.t += dt;
     s.charge = Math.min(1, s.charge + dt / DUREE_CHARGE);
-    if (s.intent.t > OUBLI_APPUI) {
+    if (s.intent.t > OUBLI_APPUI && s.auto <= 0) {
       s.intent = null;
       s.charge = 0;
     }
   }
-  if (s.intent && frappable(jeu, s, BONUS_PORTEE)) {
+  if (s.auto > 0) s.auto = Math.max(0, s.auto - dt);
+  if (s.intent && frappable(jeu, s, s.auto > 0 ? SUPER_PORTEE : BONUS_PORTEE)) {
     const b = jeu.balle;
     const d = Math.hypot(b.x - s.x, b.y - s.y);
     // le coup attend que la balle soit tout près (ou qu'elle s'éloigne) : c'est le bon timing qui lui donne sa qualité
     // (jamais d'attente si la balle va rebondir une deuxième fois : on ne la rate pas)
     const perdue = b.sol >= 1 && b.z < 0.5 && b.vz < 0;
-    const attend = d > DISTANCE_IDEALE && d <= s.dBalle && !perdue;
+    const attend = s.auto <= 0 && d > DISTANCE_IDEALE && d <= s.dBalle && !perdue;
     s.dBalle = d;
     if (!attend) coupHumain(jeu, s);
   } else s.dBalle = 99;

@@ -85,11 +85,11 @@ function superRebond(b: CorpsBalle): void {
     const k = 48 / Math.max(1, Math.hypot(b.vx, b.vy));
     b.vx *= k;
     b.vy *= k;
-    b.vz = 3;
+    b.vz = 14; // elle quitte le sol en chandelle avant de défoncer la vitre
   } else {
-    b.vy = (b.y < 5 ? -1 : 1) * 40;
+    b.vy = (b.y < 5 ? -1 : 1) * 36;
     b.vx *= 0.3;
-    b.vz = 3;
+    b.vz = 14;
   }
 }
 

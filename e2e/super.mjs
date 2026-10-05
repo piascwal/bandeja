@@ -67,4 +67,40 @@ export default async function (env) {
     await env.attendsQue(p, () => !window.bandeja.effets.finale.actif, undefined, 4000),
     'la scène finale se termine',
   );
+
+  // un vrai super coup : SUPER alors que la balle est loin dans notre camp, le joueur court la chercher,
+  // la balle tape le sol, et la scène finale s'ouvre sur ce choc (jamais sur une vitre)
+  let reussi = false;
+  for (let essai = 0; essai < 4 && !reussi; essai++) {
+    await p.evaluate(() => {
+      const b = window.bandeja;
+      const j = b.jeu;
+      const eq = j.humain.eq;
+      j.phase = 'jeu';
+      j.parade = null;
+      b.effets.finale.reinitialise();
+      j.jaugeSmash[eq] = 1;
+      j.humain.x = eq === 0 ? 1.5 : 18.5;
+      j.humain.y = 8;
+      Object.assign(j.balle, {
+        x: eq === 0 ? 9 : 11,
+        y: 3,
+        z: 1.1,
+        vx: eq === 0 ? -3 : 3,
+        vy: 0,
+        vz: 0,
+        camp: eq,
+        sol: 0,
+        coup: 'plat',
+        super: 0,
+        dehors: false,
+        roule: false,
+      });
+    });
+    await p.keyboard.press('KeyI');
+    reussi = await env.attendsQue(p, () => window.bandeja.effets.finale.declenchee, undefined, 6000);
+  }
+  env.verifie(reussi, 'un super coup lancé de loin ouvre la scène finale');
+  await attends(250);
+  await env.capture(p, 'super-reel-choc');
 }
