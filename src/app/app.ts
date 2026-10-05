@@ -304,6 +304,8 @@ export class BandejaApp {
     const evs = this.jeu.evenements.splice(0);
     joueEvenements(this.jeu, evs, this.effets, this.son, this.K);
     lan.diffuseApres(evs);
+    // le terrain est réparé quand le jeu reprend sur un nouveau point
+    if (this.jeu.phase === 'service') this.effets.repare();
     if (this.ecranUI === 'jeu') {
       this.ralenti.suit(this.jeu, dt, this.K.miroir);
       this.surveilleJauges();

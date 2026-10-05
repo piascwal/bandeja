@@ -1,6 +1,6 @@
 import type { Aleatoire } from './aleatoire';
 import { nouvelleBalle, physique } from './balle';
-import { DUREE_MAX_ECHANGE, DUREE_POINT, JEUX, NIVEAUX, VITESSE } from './constants';
+import { DUREE_MAX_ECHANGE, PARADE_RALENTI, DUREE_POINT, JEUX, NIVEAUX, VITESSE } from './constants';
 import { bouge, separe } from './deplacement';
 import { appliqueCommande } from './humain';
 import { pilotageIA } from './ia';
@@ -105,6 +105,11 @@ export function pas(
 ): void {
   if (jeu.phase === 'fin') return;
   dt *= VITESSE;
+  const reel = dt;
+  // le super coup a été joué ou le point est fini : plus de parade possible
+  if (jeu.parade && jeu.phase !== 'jeu') jeu.parade = null;
+  // pendant la parade, tout le jeu passe au ralenti
+  if (jeu.parade) dt *= PARADE_RALENTI;
   jeu.temps += dt;
   jeu.tPhase += dt;
   jeu.tFrappe += dt;
@@ -117,10 +122,9 @@ export function pas(
     }
   }
   if (jeu.parade) {
-    // parade d'un super coup : tout est figé, sauf les appuis de ceux qui doivent arrêter le curseur
+    // parade d'un super coup : seuls les appuis de ceux qui doivent arrêter le curseur comptent, il avance en temps réel
     for (const s of jeu.joueurs) if (s.humain) appliqueCommande(jeu, s, lireCommande(s), dt);
-    avanceParade(jeu, dt);
-    return;
+    avanceParade(jeu, reel);
   }
   for (const s of jeu.joueurs) {
     if (s.humain) appliqueCommande(jeu, s, lireCommande(s), dt);

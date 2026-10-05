@@ -353,12 +353,15 @@ dans l'espace). Vitre brisée = gerbe d'éclats, écran qui tremble et flashe. L
 son super coup, rarement (12 % de ses coups quand sa jauge est pleine). Les coups ordinaires
 restent plafonnés à 0,97 de puissance.
 
-**Parade.** Au moment où un super coup part, le jeu se fige et l'adversaire voit un
-curseur comme celui du service, mais avec une zone verte bien plus étroite : il doit
-l'arrêter dans le vert (un appui) pour stopper le super coup, seul moyen d'y échapper.
-Réussi : le super est annulé (renvoi normal, la jauge du défenseur gagne 20 %) ; raté, ou
-trop lent (2,4 s, le CPU tente sa chance) : le super reste imparable. Le curseur est
-synchronisé dans l'instantané (protocole 8) et l'évènement `parade` annonce le résultat.
+**Parade.** Au moment où un super coup part, le jeu passe au ralenti (environ 2 s) pour
+laisser le temps de comprendre. Le camp qui subit voit, à la place de ses boutons d'action,
+la jauge et un gros bouton STOP : il doit arrêter le curseur dans le vert, bien plus
+étroit qu'au service (un appui), pour stopper le super coup, seul moyen d'y échapper. Les
+autres voient une petite jauge sous le tableau des scores. Réussi : le super est annulé
+(renvoi normal, la jauge du défenseur gagne 20 %) ; raté, ou trop lent : le super reste
+imparable. Le CPU tente sa chance au hasard. Le curseur est synchronisé dans l'instantané
+(protocole 8) et l'évènement `parade` annonce le résultat. Les dégâts de la piste
+(cratère, vitre brisée) disparaissent quand le jeu reprend sur un nouveau point.
 
 **Fin spectaculaire.** À la fin du point (après la sortie de la balle) et avant le
 ralenti, chaque écran joue sa propre scène (`finale-super.ts`, `finale-vue.ts`) : coup de

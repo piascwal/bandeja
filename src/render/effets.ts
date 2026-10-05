@@ -86,9 +86,15 @@ export class Effets {
     this.finale.reinitialise();
   }
 
+  /** Les dégâts de la piste (cratères, vitres brisées, écran fissuré) disparaissent. */
+  repare(): void {
+    this.decals = [];
+    this.fissure = null;
+  }
+
   /** Le terrain ou la vitre est abîmé(e) à cet endroit. */
   abime(kind: 'sol' | 'vitre', x: number, y: number, z: number, variante: number): void {
-    this.decals.push({ kind, x, y, z, variante, graine: Math.floor(Math.random() * 1e9), vie: 8 });
+    this.decals.push({ kind, x, y, z, variante, graine: Math.floor(Math.random() * 1e9), vie: 60 });
   }
 
   /** Des morceaux de terrain arrachés par un choc. */

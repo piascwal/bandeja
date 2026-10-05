@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PAS } from '@core/constants';
+import { PARADE_RALENTI, PAS, VITESSE } from '@core/constants';
 import { executeCoup } from '@core/coups';
 import { appliqueCommande } from '@core/humain';
 import { pas } from '@core/partie';
@@ -185,14 +185,16 @@ describe('la parade d’un super coup', () => {
     return { jeu, s };
   }
 
-  it('le jeu est figé pendant la parade : ni la balle ni les joueurs ne bougent', () => {
+  it('le jeu passe au ralenti pendant la parade : la balle avance, mais très lentement', () => {
     const { jeu } = lance(true);
-    const avant = { x: jeu.balle.x, y: jeu.balle.y, z: jeu.balle.z, jx: jeu.joueurs[1]!.x };
+    const v = Math.hypot(jeu.balle.vx, jeu.balle.vy, jeu.balle.vz);
+    const avant = { x: jeu.balle.x, y: jeu.balle.y, z: jeu.balle.z };
     for (let i = 0; i < 60; i++) pas(jeu, PAS);
     expect(jeu.parade).not.toBeNull();
-    expect(jeu.balle.x).toBe(avant.x);
-    expect(jeu.balle.z).toBe(avant.z);
-    expect(jeu.joueurs[1]!.x).toBe(avant.jx);
+    const d = Math.hypot(jeu.balle.x - avant.x, jeu.balle.y - avant.y, jeu.balle.z - avant.z);
+    expect(d).toBeGreaterThan(0);
+    // au plus la distance parcourue à vitesse normale, réduite par le ralenti (marge pour la gravité)
+    expect(d).toBeLessThan(v * 60 * PAS * VITESSE * PARADE_RALENTI * 1.5);
   });
 
   it('un humain du camp qui subit arrête le curseur : dans le vert, le super coup est arrêté', () => {

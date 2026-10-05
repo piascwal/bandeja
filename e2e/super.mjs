@@ -13,10 +13,19 @@ export default async function (env) {
   // le curseur de parade, côté du joueur
   await p.evaluate(() => {
     const b = window.bandeja;
-    b.jeu.parade = { eq: b.jeu.humain.eq, t: 0.1, ecoule: 0, tCpu: 99 };
+    b.jeu.phase = 'jeu';
+    b.jeu.parade = { eq: b.jeu.humain.eq, t: 0.1, ecoule: 0, tCpu: null };
+  });
+  await attends(100);
+  await env.capture(p, 'super-parade');
+  // vu par l'autre camp : une petite jauge sous le tableau
+  await p.evaluate(() => {
+    const b = window.bandeja;
+    b.jeu.phase = 'jeu';
+    b.jeu.parade = { eq: 1 - b.jeu.humain.eq, t: 0.1, ecoule: 0, tCpu: null };
   });
   await attends(150);
-  await env.capture(p, 'super-parade');
+  await env.capture(p, 'super-parade-spectateur');
   await p.evaluate(() => {
     window.bandeja.jeu.parade = null;
   });

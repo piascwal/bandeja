@@ -47,7 +47,9 @@ export const ACCEL_MAX = 0.9;
 export const PERIODE_PARADE = 0.6;
 export const ZONE_PARADE = { min: 0.43, max: 0.57 } as const;
 /** Au bout de ce délai (s), faute d'avoir arrêté le curseur, la parade est ratée. */
-export const PARADE_DUREE_MAX = 2.4;
+export const PARADE_DUREE_MAX = 1.6;
+/** Pendant la parade (environ 2 s réelles) le jeu passe au ralenti : cette fraction de sa vitesse. */
+export const PARADE_RALENTI = 0.12;
 /**
  * Fin spectaculaire d'un super coup (secondes de simulation) : choc, ascension,
  * plan sur la lune, puis bandeau du point ; le ralenti vient après.
