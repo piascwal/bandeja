@@ -35,11 +35,12 @@ export function dessineChoix(v: Vue, zones: ZoneBouton[], e: VueChoix): void {
   const cx = Math.round(W / 2);
   texte(g, 'MULTIJOUEUR', cx, 6, C.blanc, 2, 'c');
   dessinePseudo(v, zones, e.pseudo, 28, e.onPseudo);
-  const pw = Math.min(W - 24, 280);
+  // deux boutons de même taille, à la largeur d'un bouton
+  const bw = 130;
+  const bh = 22;
   const py = 52;
-  panneau(g, cx - pw / 2, py, pw, 60);
-  bouton(g, zones, 'EN LIGNE', cx - pw / 2 + 8, py + 8, pw - 16, 20, e.onLigne, { ...BLEU, e: 2 });
-  texte(g, 'PAR INTERNET, AVEC UN CODE DE SALON', cx, py + 32, C.grisBleu, 1, 'c');
-  bouton(g, zones, 'RESEAU LOCAL', cx - pw / 2 + 8, py + 41, pw - 16, 14, e.onLocal, VERT);
+  panneau(g, cx - bw / 2 - 10, py, bw + 20, bh * 2 + 24);
+  bouton(g, zones, 'EN LIGNE', cx - bw / 2, py + 8, bw, bh, e.onLigne, { ...BLEU, e: 1 });
+  bouton(g, zones, 'RESEAU LOCAL', cx - bw / 2, py + 16 + bh, bw, bh, e.onLocal, { ...VERT, e: 1 });
   bouton(g, zones, '< RETOUR', cx - 45, H - 17, 90, 14, e.onRetour, { couleur: '#232a58' });
 }
