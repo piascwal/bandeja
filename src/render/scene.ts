@@ -6,6 +6,7 @@ import { COULEURS_QUALITE, qualite, situationDe } from '@core/qualite';
 import { cibleService } from '@core/service';
 import type { Joueur, Partie } from '@core/types';
 import { auraJoueur } from './aura';
+import { dessineDecals } from './decals';
 import { dessineBalle, ombre } from './balle-render';
 import type { Decor } from './decor';
 import type { Effets } from './effets';
@@ -39,6 +40,7 @@ export function dessineScene(v: Vue, sc: Scene): void {
   g.drawImage(decor.foule[bond]!, 0, 0);
   g.drawImage(decor.terrain, 0, 0);
   g.drawImage(decor.murs, 0, 0);
+  dessineDecals(v, effets.decals);
   const b = jeu.balle;
   const hum = jeu.humain;
 

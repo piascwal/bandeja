@@ -353,6 +353,20 @@ dans l'espace). Vitre brisée = gerbe d'éclats, écran qui tremble et flashe. L
 son super coup, rarement (12 % de ses coups quand sa jauge est pleine). Les coups ordinaires
 restent plafonnés à 0,97 de puissance.
 
+**Parade.** Au moment où un super coup part, le jeu se fige et l'adversaire voit un
+curseur comme celui du service, mais avec une zone verte bien plus étroite : il doit
+l'arrêter dans le vert (un appui) pour stopper le super coup, seul moyen d'y échapper.
+Réussi : le super est annulé (renvoi normal, la jauge du défenseur gagne 20 %) ; raté, ou
+trop lent (2,4 s, le CPU tente sa chance) : le super reste imparable. Le curseur est
+synchronisé dans l'instantané (protocole 8) et l'évènement `parade` annonce le résultat.
+
+**Fin spectaculaire.** À la fin du point (après la sortie de la balle) et avant le
+ralenti, chaque écran joue sa propre scène (`finale-super.ts`, `finale-vue.ts`) : coup de
+zoom sur l'impact, terrain cratérisé ou vitre fissurée qui reste abîmé(e) (`decals.ts`),
+filtre de particules sur tout l'écran, puis la balle monte dans le ciel jusqu'à l'espace
+et on la voit retomber doucement sur la lune. Le bandeau du point s'affiche alors ; un
+appui passe la scène. Le ralenti d'un super coup est toujours rejoué, après la scène.
+
 **Lob subi.** Quand un lob a passé le joueur (la balle a rebondi, ou il est loin
 du filet), SMASH ne donne qu'un renvoi normal, son coup est limité à mi-puissance
 et l'équipe qui a lobé a l'avantage : son prochain coup est plus fort (+0,2). Un

@@ -13,6 +13,8 @@ const exploit = (raison: string) => raison.startsWith('POR') || NOMS_SUPER.some(
 
 /** La variante du super coup en vol (0 : aucun) : elle décide des effets de ses impacts. */
 let superEnCours = 0;
+/** Le dernier impact à l'écran : c'est là que la fin spectaculaire du super coup se joue. */
+let dernierImpact: [number, number] = [0, 0];
 
 /** Les effets d'un impact de super coup : cratère, vitre qui explose, écran qui se fissure. */
 function impactSuper(
@@ -24,7 +26,9 @@ function impactSuper(
   son: MoteurSon,
 ): void {
   const c = COULEURS_SUPER[variante] ?? C.or;
+  dernierImpact = [sx, sy];
   if (ev.surface === 'vitre') {
+    fx.abime('vitre', ev.x, ev.y, ev.z, variante);
     // la balle traverse la vitre : elle vole en éclats
     son.vitre(1);
     son.smash();
@@ -33,6 +37,8 @@ function impactSuper(
     fx.secousse = 14;
     fx.flash = 0.7;
   } else if (ev.surface === 'sol') {
+    fx.abime('sol', ev.x, ev.y, 0, variante);
+    fx.debris(sx, sy);
     fx.etincelles(sx, sy, 50, c, 170);
     fx.poussiere(sx, sy, 30, '#ffb36a');
     fx.secousse = 12;
@@ -129,11 +135,26 @@ export function joueEvenements(
         break;
       case 'point': {
         const sous = match ? (ev.gagnant === moi ? 'POINT POUR VOUS' : 'POINT ADVERSE') : null;
-        fx.annonce(ev.raison, sous, EQUIPES[ev.gagnant].maillot, 1.6);
+        if (superEnCours > 0 && match) {
+          // super coup : la scène finale se joue d'abord, le bandeau vient à sa fin, avant le ralenti
+          fx.finale.declenche(superEnCours, dernierImpact[0], dernierImpact[1]);
+          fx.differe(ev.raison, sous, EQUIPES[ev.gagnant].maillot);
+          superEnCours = 0;
+        } else fx.annonce(ev.raison, sous, EQUIPES[ev.gagnant].maillot, 1.6);
         son.point(match ? ev.gagnant === moi : true);
         son.ovation(exploit(ev.raison) ? 1 : 0.45);
         fx.excite = exploit(ev.raison) ? 1 : 0.5;
         if (match && ev.gagnant === moi) vibre(30);
+        break;
+      }
+      case 'parade': {
+        superEnCours = 0;
+        if (ev.ok) {
+          son.parfait();
+          fx.flash = 0.5;
+          fx.secousse = 6;
+          fx.annonce('PARE !', 'SUPER COUP ARRETE', COULEURS_QUALITE[5] ?? C.blanc, 1.2);
+        } else fx.annonce('RATE', null, C.or, 0.8);
         break;
       }
       case 'faute':

@@ -1,4 +1,11 @@
-import { RALENTI_CLIP, RALENTI_DEBUT, RALENTI_ECHANGE, RALENTI_RYTHME, VITESSE } from '@core/constants';
+import {
+  FINALE_SUPER_S,
+  RALENTI_CLIP,
+  RALENTI_DEBUT,
+  RALENTI_ECHANGE,
+  RALENTI_RYTHME,
+  VITESSE,
+} from '@core/constants';
 import { nouvellePartie } from '@core/partie';
 import type { Partie } from '@core/types';
 import { Effets } from '@render/effets';
@@ -69,9 +76,16 @@ export class Ralenti {
 
   private pendantPoint(jeu: Partie): void {
     if (this.finEchange === null) this.finEchange = jeu.temps;
-    if (this.actif || this.dejaRejoue || jeu.temps - this.finEchange < RALENTI_DEBUT) return;
+    // un super coup est toujours rejoué, une fois sa scène finale terminée
+    const superCoup = jeu.balle.super > 0;
+    if (
+      this.actif ||
+      this.dejaRejoue ||
+      jeu.temps - this.finEchange < (superCoup ? FINALE_SUPER_S : RALENTI_DEBUT)
+    )
+      return;
     this.dejaRejoue = true;
-    if (this.finEchange - this.debutEchange < RALENTI_ECHANGE) return;
+    if (!superCoup && this.finEchange - this.debutEchange < RALENTI_ECHANGE) return;
     const debut = this.finEchange - RALENTI_CLIP;
     this.clip = this.cadres.filter((c) => c.t >= debut && c.t <= this.finEchange! + 0.5);
     if (this.clip.length < 8) return;

@@ -1,5 +1,6 @@
 import { C, EQUIPES } from './palette';
 import type { Equipe } from '@core/types';
+import { BANDEAU_S, FinaleSuper } from './finale-super';
 
 interface Particule {
   x: number;
@@ -29,6 +30,26 @@ export interface Fissure {
   graine: number;
 }
 
+/** Un dégât laissé sur le terrain ou sur une vitre par un super coup. */
+export interface Decal {
+  kind: 'sol' | 'vitre';
+  /** position sur la piste (m) */
+  x: number;
+  y: number;
+  z: number;
+  variante: number;
+  graine: number;
+  vie: number;
+}
+
+/** Le bandeau d'un point gagné par un super coup, gardé en attente jusqu'à la fin de la scène. */
+interface BandeauEnAttente {
+  txt: string;
+  sous: string | null;
+  c: string;
+  attente: number;
+}
+
 export interface Banniere {
   txt: string;
   sous: string | null;
@@ -48,6 +69,10 @@ export class Effets {
   flash = 0;
   banniere: Banniere | null = null;
   fissure: Fissure | null = null;
+  /** la fin spectaculaire d'un super coup */
+  readonly finale = new FinaleSuper();
+  decals: Decal[] = [];
+  private bandeau: BandeauEnAttente | null = null;
   /** excitation de la foule (0 → 1), qui la fait sauter */
   excite = 0;
 
@@ -56,6 +81,38 @@ export class Effets {
     this.bulles = [];
     this.banniere = null;
     this.fissure = null;
+    this.decals = [];
+    this.bandeau = null;
+    this.finale.reinitialise();
+  }
+
+  /** Le terrain ou la vitre est abîmé(e) à cet endroit. */
+  abime(kind: 'sol' | 'vitre', x: number, y: number, z: number, variante: number): void {
+    this.decals.push({ kind, x, y, z, variante, graine: Math.floor(Math.random() * 1e9), vie: 8 });
+  }
+
+  /** Des morceaux de terrain arrachés par un choc. */
+  debris(x: number, y: number, n = 70): void {
+    const cs = ['#2a2118', '#6b5a48', '#a89878', '#d9c9a8'];
+    for (let i = 0; i < n; i++) {
+      const a = -Math.PI / 2 + (Math.random() - 0.5) * 2.4;
+      const v = alea(60, 240);
+      this.particules.push({
+        x,
+        y,
+        vx: Math.cos(a) * v,
+        vy: Math.sin(a) * v,
+        vie: alea(0.5, 1.1),
+        c: cs[i % cs.length]!,
+        frot: 1.2,
+        t: i % 3 === 0 ? 3 : 2,
+      });
+    }
+  }
+
+  /** Le bandeau du point d'un super coup attend la fin de la scène pour s'afficher. */
+  differe(txt: string, sous: string | null, c: string): void {
+    this.bandeau = { txt, sous, c, attente: 0 };
   }
 
   etincelles(x: number, y: number, n: number, c = '#ffe07a', v0 = 90): void {
@@ -145,6 +202,17 @@ export class Effets {
       if (this.banniere.vie <= 0) this.banniere = null;
     }
     this.excite = Math.max(0, this.excite - dt / 3);
+    this.finale.maj(dt);
+    for (const d of this.decals) d.vie -= dt;
+    this.decals = this.decals.filter((d) => d.vie > 0);
+    if (this.bandeau) {
+      this.bandeau.attente += dt;
+      const f = this.finale;
+      if ((f.declenchee && (!f.actif || f.t >= BANDEAU_S)) || this.bandeau.attente > 4.5) {
+        this.annonce(this.bandeau.txt, this.bandeau.sous, this.bandeau.c, 1.4);
+        this.bandeau = null;
+      }
+    }
     if (this.fissure) {
       this.fissure.vie -= dt;
       if (this.fissure.vie <= 0) this.fissure = null;

@@ -8,6 +8,7 @@ import { nouveauJoueur } from './joueurs';
 import { prevoir } from './prevision';
 import { finPoint, gagne, regle } from './regles';
 import { majService, placeService } from './service';
+import { avanceParade } from './super-coup';
 import type { Commande, Joueur, Mode, Partie } from './types';
 
 /** Un siège = un joueur de la piste (son `id`) : 0 et 1 pour l'équipe 0, 2 et 3 pour l'équipe 1. */
@@ -66,6 +67,7 @@ export function nouvellePartie(o: OptionsPartie): Partie {
     aide: o.aide ?? false,
     echange: 0,
     jaugeSmash: [0, 0],
+    parade: null,
     avantage: null,
     tPhase: 0,
     dureePoint: DUREE_POINT,
@@ -113,6 +115,12 @@ export function pas(
       prevoir(jeu);
       jeu.tPred = 0.1;
     }
+  }
+  if (jeu.parade) {
+    // parade d'un super coup : tout est figé, sauf les appuis de ceux qui doivent arrêter le curseur
+    for (const s of jeu.joueurs) if (s.humain) appliqueCommande(jeu, s, lireCommande(s), dt);
+    avanceParade(jeu, dt);
+    return;
   }
   for (const s of jeu.joueurs) {
     if (s.humain) appliqueCommande(jeu, s, lireCommande(s), dt);

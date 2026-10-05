@@ -67,6 +67,8 @@ export interface Instantane {
   echange: number;
   /** jauges de smash des deux équipes (0 → 1) */
   smash: [number, number];
+  /** parade d'un super coup en cours : le camp qui la tente et la phase du curseur (s) */
+  parade: { eq: Equipe; t: number } | null;
   pts: [number, number];
   jeux: [number, number];
   nJeu: number;
@@ -77,7 +79,7 @@ export interface Instantane {
 }
 
 /** Taille fixe : 7 (en-tête) + 10 (score) + 5 (jauge) + 4 x 27 (joueurs) + 31 (balle) + 7 (stats). */
-export const TAILLE_INSTANTANE = 171;
+export const TAILLE_INSTANTANE = 174;
 const TOURNE_MAX = 0.5;
 const POS_MAX = 100;
 const VIT_MAX = 200;
@@ -96,6 +98,7 @@ export function instantaneDe(jeu: Partie, seq: number): Instantane {
     rejoue: jeu.rejoue,
     echange: Math.min(255, jeu.echange),
     smash: [jeu.jaugeSmash[0], jeu.jaugeSmash[1]],
+    parade: jeu.parade ? { eq: jeu.parade.eq, t: jeu.parade.t } : null,
     pts: [jeu.pts[0], jeu.pts[1]],
     jeux: [jeu.jeux[0], jeu.jeux[1]],
     nJeu: jeu.nJeu,
@@ -154,6 +157,7 @@ export function encodeInstantane(s: Instantane): ArrayBuffer {
   w.u8(s.echange)
     .u8(s.smash[0] * 100)
     .u8(s.smash[1] * 100);
+  w.u8(s.parade ? 1 + s.parade.eq : 0).u16(Math.round((s.parade?.t ?? 0) * 100) % 65535);
   w.u8(s.gagnant).u8(s.serveur).u8(s.faute).u8(s.pts[0]).u8(s.pts[1]).u8(s.jeux[0]).u8(s.jeux[1]).u8(s.nJeu);
   w.u8(s.jauge ? indice(SERVICES, s.jauge.type) : 0).f32(s.jauge ? s.jauge.t : 0);
   for (const j of s.joueurs) {
@@ -198,6 +202,8 @@ export function decodeInstantane(buf: ArrayBuffer): Instantane | null {
     const [pret, rejoue, avecJauge] = r.bits() as [boolean, boolean, boolean];
     const echange = r.u8();
     const smash: [number, number] = [Math.min(100, r.u8()) / 100, Math.min(100, r.u8()) / 100];
+    const codeParade = r.enumere(3);
+    const tParade = r.u16() / 100;
     const gagnant = equipe(r.enumere(2));
     const serveur = r.enumere(4);
     const faute = r.enumere(2);
@@ -268,6 +274,7 @@ export function decodeInstantane(buf: ArrayBuffer): Instantane | null {
       rejoue,
       echange,
       smash,
+      parade: codeParade > 0 ? { eq: equipe(codeParade - 1), t: tParade } : null,
       pts,
       jeux,
       nJeu,

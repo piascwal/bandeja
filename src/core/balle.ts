@@ -135,6 +135,8 @@ function rebondSol(b: CorpsBalle, ev?: SurContact): void {
 function perceVitre(b: CorpsBalle, cote: Equipe, ev?: SurContact): boolean {
   ev?.('vitre', cote, 99);
   b.dehors = true;
+  // la balle part comme une fusée : elle file vers le ciel
+  b.vz = Math.max(b.vz, 30);
   ev?.('sortie', cote);
   return true;
 }

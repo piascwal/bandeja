@@ -1,8 +1,8 @@
 import { gravite, lance } from './balle';
-import { MIL } from './constants';
+import { MIL, PARADE_DUREE_MAX, PERIODE_PARADE, ZONE_PARADE } from './constants';
 import { equipe } from './joueurs';
 import { autre, filetH, xProf } from './terrain';
-import type { Balle, Coup, Effet, Joueur, Partie } from './types';
+import type { Balle, Coup, Effet, Equipe, Joueur, Partie } from './types';
 
 /**
  * Les super coups : jauge pleine, le bouton SMASH déclenche une frappe
@@ -94,4 +94,61 @@ export function lanceSuper(jeu: Partie, s: Joueur, variante: VarianteSuper): Cou
       return 'smash';
     }
   }
+}
+
+/** Position du curseur de parade (0 → 1 → 0...) à la phase t. */
+export const curseurParade = (t: number): number => 1 - Math.abs(((t / PERIODE_PARADE) % 2) - 1);
+
+/** Le curseur est-il dans la zone verte ? */
+export const dansZoneParade = (valeur: number): boolean =>
+  valeur >= ZONE_PARADE.min && valeur <= ZONE_PARADE.max;
+
+/**
+ * Un super coup vient de partir : le jeu se fige et le camp adverse doit arrêter le
+ * curseur dans le vert. S'il n'a aucun humain, le CPU l'arrête tout seul, au hasard.
+ */
+export function ouvreParade(jeu: Partie, defenseur: Equipe): void {
+  const humains = jeu.humains.some((h) => h.eq === defenseur);
+  jeu.parade = {
+    eq: defenseur,
+    t: jeu.rng() * PERIODE_PARADE * 2,
+    ecoule: 0,
+    tCpu: humains ? null : 0.5 + jeu.rng() * 1.2,
+  };
+}
+
+/** Fin de la parade : réussie, le super coup est arrêté (la balle revient comme un gros coup ordinaire) ; ratée, il file. */
+function resoudParade(jeu: Partie, ok: boolean): void {
+  const p = jeu.parade;
+  if (!p) return;
+  jeu.parade = null;
+  jeu.evenements.push({ type: 'parade', ok });
+  if (!ok) return;
+  const b = jeu.balle;
+  b.super = 0;
+  b.vif = 0;
+  // un gros coup, mais jouable : on ramène sa vitesse à celle d'un smash ordinaire
+  const v = Math.hypot(b.vx, b.vy, b.vz);
+  const k = Math.min(1, 24 / Math.max(1, v));
+  b.vx *= k;
+  b.vy *= k;
+  b.vz *= k;
+  // parer un super coup remplit un peu la jauge de celui qui le subit
+  jeu.jaugeSmash[p.eq] = Math.min(1, jeu.jaugeSmash[p.eq] + 0.2);
+}
+
+/** Un humain du camp qui subit arrête le curseur : réussi s'il est dans le vert. */
+export function arreteParade(jeu: Partie): void {
+  const p = jeu.parade;
+  if (p) resoudParade(jeu, dansZoneParade(curseurParade(p.t)));
+}
+
+/** Fait avancer le curseur ; le CPU l'arrête (au hasard, plus souvent à haut niveau), faute de quoi il finit par expirer. */
+export function avanceParade(jeu: Partie, dt: number): void {
+  const p = jeu.parade;
+  if (!p) return;
+  p.t += dt;
+  p.ecoule += dt;
+  if (p.tCpu !== null && p.ecoule >= p.tCpu) resoudParade(jeu, jeu.rng() < 0.15 + 0.3 * jeu.niv.agress);
+  else if (p.ecoule >= PARADE_DUREE_MAX) resoudParade(jeu, false);
 }

@@ -74,7 +74,8 @@ export class BandejaApp {
       dims: () => ({ W: this.W, H: this.H }),
       versLogique: (e) => this.versLogique(e),
       portrait: () => this.portrait,
-      enJeu: () => this.ecranUI === 'jeu' && !this.ralenti.actif,
+      enJeu: () => this.ecranUI === 'jeu' && !this.ralenti.actif && !this.effets.finale.actif,
+      parade: () => this.jeu.parade !== null && this.jeu.parade.eq === this.jeu.humain?.eq,
       geste: () => {
         this.son.init();
         if (!this.attenteDemarrage || this.ecranUI !== 'menu') return false;
@@ -90,7 +91,7 @@ export class BandejaApp {
         else if (this.ecranUI === 'jeu' || this.ecranUI === 'pause') this.pause(this.ecranUI === 'jeu');
       },
       valide: () => {
-        if (this.ralenti.actif) this.passeRalenti();
+        if (this.ralenti.actif || this.effets.finale.actif) this.passeRalenti();
         else if (this.ecranUI === 'menu' || (this.ecranUI === 'fin' && !this.lan.actif)) this.lanceMatch();
         else if (this.ecranUI === 'pause') this.pause(false);
       },
@@ -206,6 +207,11 @@ export class BandejaApp {
    * l'annonce du point ; un invité ne fait que fermer son propre rejeu.
    */
   passeRalenti(): void {
+    if (this.effets.finale.actif) {
+      // d'abord la scène du super coup ; le bandeau tombe aussitôt
+      this.effets.finale.arrete();
+      return;
+    }
     this.ralenti.arrete();
     if (!this.lan.actif || this.lan.hote) this.jeu.tPhase = Math.max(this.jeu.tPhase, this.jeu.dureePoint);
   }

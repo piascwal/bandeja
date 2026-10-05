@@ -6,7 +6,7 @@ import type { Banniere } from './effets';
 import { C, EQUIPES } from './palette';
 import { largeurTexte, texte } from './police';
 import { px } from './primitives';
-import { panneau } from './ui';
+import { dessineCurseur } from './curseur';
 import type { Vue } from './vue';
 
 /** Tableau des scores, avec la même disposition que la piste, la même pour tous : équipe 0 à droite, équipe 1 à gauche. */
@@ -70,17 +70,20 @@ const SEGMENTS: [number, number, string][] = [
 export function dessineJauge(v: Vue, jeu: Partie): void {
   const hum = jeu.humain;
   if (!hum || jeu.phase !== 'service' || jeu.serveur !== hum || !jeu.pret || !jeu.jauge) return;
-  const { g } = v;
-  const cx = Math.round(v.W / 2);
-  const y0 = v.H - 24;
-  const w = 110;
-  panneau(g, cx - w / 2 - 6, y0 - 7, w + 12, 20);
-  const x0 = cx - w / 2;
-  px(g, x0 - 1, y0 - 1, w + 2, 8, C.contour);
-  for (const [a, b, c] of SEGMENTS) px(g, x0 + Math.round(a * w), y0, Math.round((b - a) * w), 6, c);
-  const cxv = x0 + Math.round(jaugeVal(jeu.jauge.t) * w);
-  px(g, cxv - 1, y0 - 3, 3, 12, C.contour);
-  px(g, cxv, y0 - 2, 1, 10, C.blanc);
+  const jt = jeu.jauge.t;
+  const w = 150;
+  dessineCurseur(v.g, {
+    x: Math.round(v.W / 2 - w / 2),
+    y: v.H - 30,
+    w,
+    h: 11,
+    valeur: jaugeVal(jt),
+    ancienne: (dt) => jaugeVal(jt - dt),
+    segments: SEGMENTS.map(([a, b, c]) => ({ a, b, c })),
+    zone: [JAUGE_PARFAITE.min, JAUGE_PARFAITE.max],
+    temps: jeu.temps,
+    titre: 'SERVICE',
+  });
 }
 
 /** L'annonce qui traverse l'écran au-dessus de la piste (point, jeu, faute...). */

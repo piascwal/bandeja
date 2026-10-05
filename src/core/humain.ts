@@ -2,7 +2,7 @@ import { alea, clamp } from './aleatoire';
 import { HAUT_SMASH, LARG, MIL } from './constants';
 import { contrainte, executeCoup, frappable, PROF } from './coups';
 import { jaugeVal, servir } from './service';
-import { varianteSuper } from './super-coup';
+import { arreteParade, varianteSuper } from './super-coup';
 import { autre, dir, xProf } from './terrain';
 import type { Bouton, Commande, Coup, Joueur, Partie, TypeService } from './types';
 
@@ -33,6 +33,12 @@ export function appliqueCommande(jeu: Partie, s: Joueur, cmd: Commande, dt: numb
     s.visee = { x: s.ex, y: s.ey };
     s.tVisee = MEMOIRE_VISEE;
   } else s.tVisee = Math.max(0, s.tVisee - dt);
+
+  // un super coup vient de partir : le jeu est figé, le camp qui le subit arrête le curseur d'un appui
+  if (jeu.parade) {
+    if (s.eq === jeu.parade.eq && cmd.appuis.length > 0) arreteParade(jeu);
+    return;
+  }
 
   if (jeu.phase === 'service') {
     s.cible = s.posServ;

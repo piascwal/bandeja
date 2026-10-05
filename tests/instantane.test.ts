@@ -83,8 +83,8 @@ describe('instantané binaire', () => {
     expect(modifie((v) => v.setUint8(0, VERSION_PROTOCOLE + 1))).toBeNull(); // version
     expect(modifie((v) => v.setFloat32(3, NaN, true))).toBeNull(); // temps
     expect(modifie((v) => v.setUint8(7, 99))).toBeNull(); // phase inconnue
-    expect(modifie((v) => v.setFloat32(7 + 2 + 3 + 8 + 5, 1e9, true))).toBeNull(); // x du premier joueur
-    expect(modifie((v) => v.setFloat32(7 + 2 + 3 + 8 + 5, Infinity, true))).toBeNull();
+    expect(modifie((v) => v.setFloat32(7 + 2 + 3 + 3 + 8 + 5, 1e9, true))).toBeNull(); // x du premier joueur
+    expect(modifie((v) => v.setFloat32(7 + 2 + 3 + 3 + 8 + 5, Infinity, true))).toBeNull();
     expect(modifie(() => {})).not.toBeNull();
   });
 

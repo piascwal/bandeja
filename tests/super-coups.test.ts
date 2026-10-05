@@ -4,7 +4,7 @@ import { executeCoup } from '@core/coups';
 import { appliqueCommande } from '@core/humain';
 import { pas } from '@core/partie';
 import { GAIN_JAUGE } from '@core/qualite';
-import { NOMS_SUPER, varianteSuper } from '@core/super-coup';
+import { curseurParade, dansZoneParade, NOMS_SUPER, varianteSuper } from '@core/super-coup';
 import { xProf } from '@core/terrain';
 import type { Balle, Commande } from '@core/types';
 import { partieTest } from './outils';
@@ -82,6 +82,8 @@ describe('le super coup', () => {
       appliqueCommande(jeu, s, VIDE, PAS);
     }
     expect(jeu.balle.super).toBe(1); // une balle haute : la météore
+    expect(jeu.parade).not.toBeNull(); // le jeu est figé : l'adversaire doit arrêter le curseur
+    jeu.parade = null; // parade ratée
     expect(jeu.jaugeSmash[0]).toBe(0);
     // les adversaires ne peuvent pas la toucher : le point tombe au premier rebond
     for (let i = 0; i < 240 * 3 && jeu.phase === 'jeu'; i++) pas(jeu, PAS);
@@ -110,6 +112,7 @@ describe('le super coup', () => {
     ] as [number, Partial<Balle>, number][]) {
       const { jeu, s } = situation(balle, x);
       executeCoup(jeu, s, 'plat', 1, xProf(1, 3), 5, null, { super: variante, precision: 1, charge: 1 });
+      jeu.parade = null; // la parade ratée : le super coup file
       expect(jeu.balle.super, `variante ${variante}`).toBe(variante);
       for (let i = 0; i < 240 * 5 && jeu.phase === 'jeu'; i++) pas(jeu, PAS);
       expect(jeu.gagnant, `variante ${variante}`).toBe(0);
@@ -123,6 +126,7 @@ describe('la fin spectaculaire des super coups', () => {
   function fin(variante: number, balle: Partial<Balle>, x: number) {
     const { jeu, s } = situation(balle, x);
     executeCoup(jeu, s, 'plat', 1, xProf(1, 3), 5, null, { super: variante, precision: 1, charge: 1 });
+    jeu.parade = null; // la parade ratée : le super coup file
     const sortie = { zMax: 0, dehors: false, vitreBrisee: false, vitesseMax: 0 };
     for (let i = 0; i < 240 * 4; i++) {
       pas(jeu, PAS);
@@ -165,5 +169,83 @@ describe('la fin spectaculaire des super coups', () => {
       [4, { z: 0.5, vx: -3 }, 8.5],
     ] as [number, Partial<Balle>, number][])
       expect(fin(v, balle, x).vitesseMax, `variante ${v}`).toBeGreaterThan(35);
+  });
+});
+
+describe('la parade d’un super coup', () => {
+  /** Un super coup de l'équipe 0 vient de partir contre l'équipe 1 (CPU) ou contre des humains. */
+  function lance(humainsAdverses = false) {
+    const { jeu, s } = situation({ z: 2.5 }, 6);
+    if (humainsAdverses) {
+      const adv = jeu.joueurs[2]!;
+      adv.humain = true;
+      jeu.humains.push(adv);
+    }
+    executeCoup(jeu, s, 'plat', 1, xProf(1, 3), 5, null, { super: 1, precision: 1, charge: 1 });
+    return { jeu, s };
+  }
+
+  it('le jeu est figé pendant la parade : ni la balle ni les joueurs ne bougent', () => {
+    const { jeu } = lance(true);
+    const avant = { x: jeu.balle.x, y: jeu.balle.y, z: jeu.balle.z, jx: jeu.joueurs[1]!.x };
+    for (let i = 0; i < 60; i++) pas(jeu, PAS);
+    expect(jeu.parade).not.toBeNull();
+    expect(jeu.balle.x).toBe(avant.x);
+    expect(jeu.balle.z).toBe(avant.z);
+    expect(jeu.joueurs[1]!.x).toBe(avant.jx);
+  });
+
+  it('un humain du camp qui subit arrête le curseur : dans le vert, le super coup est arrêté', () => {
+    const { jeu } = lance(true);
+    // on avance jusqu'à ce que le curseur soit dans la zone verte
+    for (let i = 0; i < 600 && !dansZoneParade(curseurParade(jeu.parade!.t)); i++) pas(jeu, PAS);
+    const adv = jeu.joueurs[2]!;
+    appliqueCommande(jeu, adv, { ...VIDE, appuis: ['plat'] }, PAS);
+    expect(jeu.parade).toBeNull();
+    expect(jeu.balle.super).toBe(0);
+    expect(jeu.evenements.some((e) => e.type === 'parade' && e.ok)).toBe(true);
+    // la balle reste dangereuse mais jouable, et celui qui a paré gagne de la jauge
+    expect(Math.hypot(jeu.balle.vx, jeu.balle.vy, jeu.balle.vz)).toBeLessThanOrEqual(24.01);
+    expect(jeu.jaugeSmash[1]).toBeGreaterThanOrEqual(0.2);
+  });
+
+  it('hors de la zone verte, la parade est ratée et le super coup file', () => {
+    const { jeu } = lance(true);
+    for (let i = 0; i < 600 && dansZoneParade(curseurParade(jeu.parade!.t)); i++) pas(jeu, PAS);
+    // le curseur est maintenant hors du vert
+    for (
+      let i = 0;
+      i < 600 && (dansZoneParade(curseurParade(jeu.parade!.t)) || curseurParade(jeu.parade!.t) < 0.8);
+      i++
+    )
+      pas(jeu, PAS);
+    appliqueCommande(jeu, jeu.joueurs[2]!, { ...VIDE, appuis: ['plat'] }, PAS);
+    expect(jeu.parade).toBeNull();
+    expect(jeu.balle.super).toBe(1);
+    expect(jeu.evenements.some((e) => e.type === 'parade' && !e.ok)).toBe(true);
+  });
+
+  it('sans réponse, la parade expire et le super coup file', () => {
+    const { jeu } = lance(true);
+    for (let i = 0; i < 240 * 3 && jeu.parade; i++) pas(jeu, PAS);
+    expect(jeu.parade).toBeNull();
+    expect(jeu.balle.super).toBe(1);
+  });
+
+  it('un camp de CPU arrête parfois le super coup, pas toujours', () => {
+    let arretes = 0;
+    for (let g = 0; g < 40; g++) {
+      const { jeu, s } = situation({ z: 2.5 }, 6);
+      s.humain = true;
+      jeu.rng = (() => {
+        let x = g + 1;
+        return () => (x = (x * 16807) % 2147483647) / 2147483647;
+      })();
+      executeCoup(jeu, s, 'plat', 1, xProf(1, 3), 5, null, { super: 1, precision: 1, charge: 1 });
+      for (let i = 0; i < 240 * 3 && jeu.parade; i++) pas(jeu, PAS);
+      if (jeu.balle.super === 0) arretes++;
+    }
+    expect(arretes).toBeGreaterThan(2);
+    expect(arretes).toBeLessThan(25);
   });
 });

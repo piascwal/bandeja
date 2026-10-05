@@ -1,4 +1,6 @@
 import { dessineCommandes } from '@render/commandes';
+import { dessineFinale } from '@render/finale-vue';
+import { dessineParade } from '@render/parade-vue';
 import { dessineFissure } from '@render/fissure';
 import { dessineEchange } from '@render/hud-echange';
 import { dessineBanniere, dessineJauge, dessineTableau } from '@render/hud';
@@ -42,6 +44,14 @@ export function rendu(app: BandejaApp, t: number): void {
   const sy = secousseAleatoire(secousse);
   g.setTransform(E, 0, 0, E, sx * E, sy * E);
   const rejeu = app.ralenti.actif && ecranUI === 'jeu';
+  // le coup de caméra de la fin d'un super coup : zoom sur l'impact
+  const zoom = rejeu ? 1 : effets.finale.zoom;
+  if (zoom !== 1) {
+    const { x, y } = effets.finale;
+    g.translate(x, y);
+    g.scale(zoom, zoom);
+    g.translate(-x, -y);
+  }
   dessineScene(v, {
     jeu: rejeu ? app.ralenti.jeu : jeu,
     decor: app.decor,
@@ -52,7 +62,7 @@ export function rendu(app: BandejaApp, t: number): void {
     enJeu: ecranUI === 'jeu' && !rejeu,
   });
   g.setTransform(E, 0, 0, E, 0, 0);
-  if (!horsMatch) {
+  if (!horsMatch && !effets.finale.actif) {
     dessineTableau(v, jeu, ecranUI === 'jeu');
     dessineEchange(v, jeu);
   }
@@ -63,6 +73,7 @@ export function rendu(app: BandejaApp, t: number): void {
     dessineRalenti(v, app.boutons, app.ralenti.progression, t, () => app.passeRalenti());
   } else if (ecranUI === 'jeu') {
     dessineJauge(v, jeu);
+    dessineParade(v, jeu, t);
     const e = app.entrees;
     const joy = e.joy;
     dessineCommandes(v, jeu, {
@@ -147,6 +158,7 @@ export function rendu(app: BandejaApp, t: number): void {
   }
   const attente = ecranUI === 'jeu' || ecranUI === 'pause' ? app.lan.vueAttente() : null;
   if (attente) dessineAttente(v, app.boutons, attente, t);
+  if (!rejeu && ecranUI === 'jeu') dessineFinale(v, effets.finale, app.boutons, () => app.passeRalenti());
   if (effets.fissure) dessineFissure(v, effets.fissure);
   if (effets.flash > 0) {
     g.fillStyle = `rgba(255,255,255,${effets.flash * 0.5})`;

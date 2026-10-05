@@ -177,6 +177,7 @@ export type Evenement =
     }
   | { type: 'service'; service: TypeService; jauge: number; humain: boolean; x: number; y: number }
   | { type: 'jaugeLancee' }
+  | { type: 'parade'; ok: boolean }
   | { type: 'point'; gagnant: Equipe; raison: string }
   | { type: 'faute'; raison: string }
   | { type: 'let' }
@@ -185,6 +186,15 @@ export type Evenement =
   | { type: 'finMatch'; gagnant: Equipe };
 
 export type Mode = 'match' | 'demo';
+
+/** Le curseur de parade : à qui il s'adresse, où il en est, et quand le CPU l'arrête (null si un humain le fait). */
+export interface Parade {
+  eq: Equipe;
+  /** phase du curseur (s) */
+  t: number;
+  ecoule: number;
+  tCpu: number | null;
+}
 
 export interface Partie {
   mode: Mode;
@@ -213,6 +223,8 @@ export interface Partie {
   avantage: Equipe | null;
   /** jauge de smash de chaque équipe (0 → 1) : pleine, le prochain smash en hauteur est garanti par 3 / par 4 */
   jaugeSmash: [number, number];
+  /** parade d'un super coup en cours : le jeu est figé, le camp qui subit doit arrêter le curseur */
+  parade: Parade | null;
   /** coups joués depuis le service : la balle accélère au fil de l'échange */
   echange: number;
   tPhase: number;

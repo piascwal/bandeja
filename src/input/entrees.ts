@@ -16,6 +16,8 @@ export interface HotesEntrees {
   portrait(): boolean;
   /** un match se joue (ni menu, ni pause, ni fin) */
   enJeu(): boolean;
+  /** la parade d'un super coup attend un appui de cet écran : n'importe quel toucher l'arrête */
+  parade(): boolean;
   /**
    * Un geste de l'utilisateur (audio, plein écran). Renvoie true s'il est
    * consommé par l'écran de démarrage : il ne doit alors rien déclencher d'autre.
@@ -118,6 +120,10 @@ export class Entrees {
     const zp = zonePause(W);
     if (p.x >= zp.x - 4 && p.y <= zp.y + zp.h + 4 && p.y >= 0) {
       this.h.pause();
+      return;
+    }
+    if (this.h.parade()) {
+      this.appuis.push('plat');
       return;
     }
     if (p.x < W * PART_JOYSTICK) {

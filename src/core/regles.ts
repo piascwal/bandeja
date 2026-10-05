@@ -1,5 +1,14 @@
 import { clamp } from './aleatoire';
-import { DUREE_POINT, DUREE_POINT_RALENTI, LARG, LONG, MIL, RALENTI_ECHANGE, SERV } from './constants';
+import {
+  DUREE_POINT,
+  DUREE_POINT_RALENTI,
+  DUREE_POINT_SUPER,
+  LARG,
+  LONG,
+  MIL,
+  RALENTI_ECHANGE,
+  SERV,
+} from './constants';
 import { placeService } from './service';
 import { NOMS_SUPER } from './super-coup';
 import { autre } from './terrain';
@@ -86,7 +95,12 @@ export function dansCarre(jeu: Partie): boolean {
 export function gagne(jeu: Partie, eq: Equipe, raison: string): void {
   if (jeu.phase !== 'jeu') return;
   // un échange assez long sera rejoué au ralenti : l'annonce du point dure plus
-  jeu.dureePoint = jeu.mode === 'match' && jeu.tPhase >= RALENTI_ECHANGE ? DUREE_POINT_RALENTI : DUREE_POINT;
+  jeu.dureePoint =
+    jeu.mode === 'match' && jeu.balle.super > 0
+      ? DUREE_POINT_SUPER
+      : jeu.mode === 'match' && jeu.tPhase >= RALENTI_ECHANGE
+        ? DUREE_POINT_RALENTI
+        : DUREE_POINT;
   jeu.phase = 'point';
   jeu.tPhase = 0;
   jeu.gagnant = eq;

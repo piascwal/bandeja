@@ -3,7 +3,7 @@ import { lance } from './balle';
 import { ACCEL_ECHANGE, ACCEL_MAX, HAUT_MAX, HAUT_SMASH, MIL, PORTEE } from './constants';
 import { contreVitre } from './contre-vitre';
 import { GAIN_JAUGE, GAIN_VITRE, niveauDe, qualite, situationDe } from './qualite';
-import { lanceSuper, type VarianteSuper } from './super-coup';
+import { lanceSuper, ouvreParade, type VarianteSuper } from './super-coup';
 import { autre, xProf } from './terrain';
 import type { Balle, Coup, Effet, Equipe, Joueur, Mur, Partie } from './types';
 
@@ -219,6 +219,7 @@ export function executeCoup(
   jeu.tFrappe = 0;
   jeu.echange++;
   remplitJauge(jeu, eq, niveau, apresVitre, variante);
+  if (variante) ouvreParade(jeu, autre(eq));
   jeu.plan = [null, null];
   jeu.pred = null;
   jeu.tPred = 0;

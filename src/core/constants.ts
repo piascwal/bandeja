@@ -39,6 +39,20 @@ export const DUREE_MAX_ECHANGE = 9;
  */
 export const ACCEL_ECHANGE = 0.06;
 export const ACCEL_MAX = 0.9;
+/**
+ * Parade d'un super coup : le jeu se fige, un curseur balaie une jauge et le camp
+ * qui subit doit l'arrêter dans la zone verte (plus étroite et plus rapide qu'au
+ * service). C'est le seul moyen d'arrêter un super coup.
+ */
+export const PERIODE_PARADE = 0.6;
+export const ZONE_PARADE = { min: 0.43, max: 0.57 } as const;
+/** Au bout de ce délai (s), faute d'avoir arrêté le curseur, la parade est ratée. */
+export const PARADE_DUREE_MAX = 2.4;
+/**
+ * Fin spectaculaire d'un super coup (secondes de simulation) : choc, ascension,
+ * plan sur la lune, puis bandeau du point ; le ralenti vient après.
+ */
+export const FINALE_SUPER_S = 4;
 /** Durée de l'annonce entre deux points (s). */
 export const DUREE_POINT = 1.9;
 
@@ -53,6 +67,8 @@ export const RALENTI_CLIP = 2.4;
 export const RALENTI_RYTHME = 0.6;
 /** Durée de l'annonce du point quand il est rejoué : le ralenti, puis un court retour au direct. */
 export const DUREE_POINT_RALENTI = RALENTI_DEBUT + RALENTI_CLIP / RALENTI_RYTHME + 0.9;
+/** Un point gagné par un super coup : la fin spectaculaire d'abord, puis le ralenti. */
+export const DUREE_POINT_SUPER = FINALE_SUPER_S + RALENTI_CLIP / RALENTI_RYTHME + 0.9;
 
 export const NIVEAUX: readonly Niveau[] = [
   { nom: 'FACILE', vit: 0.8, reac: 0.34, err: 0.9, agress: 0.25, serv: 0.13 },

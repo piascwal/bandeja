@@ -84,6 +84,8 @@ export function lisEvenement(o: unknown): Evenement | null {
       };
     case 'jaugeLancee':
       return { type: 'jaugeLancee' };
+    case 'parade':
+      return typeof e.ok === 'boolean' ? { type: 'parade', ok: e.ok } : null;
     case 'point':
       if (!equipe(e.gagnant) || typeof e.raison !== 'string' || !RAISON.test(e.raison)) return null;
       return { type: 'point', gagnant: e.gagnant, raison: e.raison };
