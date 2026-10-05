@@ -10,6 +10,23 @@ export default async function (env) {
   await p.evaluate(() => window.bandeja.lanceMatch());
   env.verifie(await env.attendsQue(p, () => window.bandeja.ecranUI === 'jeu'), 'le match démarre');
 
+  // les commandes : pas de bouton du haut sans jauge pleine, le bouton SUPER dès qu'elle l'est
+  await p.evaluate(() => {
+    window.bandeja.jeu.phase = 'jeu';
+  });
+  await attends(200);
+  await env.capture(p, 'commandes-sans-super');
+  await p.evaluate(() => {
+    const b = window.bandeja;
+    b.jeu.jaugeSmash[b.jeu.humain.eq] = 1;
+  });
+  await attends(200);
+  await env.capture(p, 'commandes-super');
+  await p.evaluate(() => {
+    const b = window.bandeja;
+    b.jeu.jaugeSmash[b.jeu.humain.eq] = 0;
+  });
+
   // le curseur de parade, côté du joueur
   await p.evaluate(() => {
     const b = window.bandeja;

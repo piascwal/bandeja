@@ -91,6 +91,20 @@ describe('le super coup', () => {
     expect(jeu.gagnant).toBe(0);
   });
 
+  it('sans jauge pleine, la touche du haut vaut FRAPPE : jamais de super coup ni de coup perdu', () => {
+    const { jeu, s } = situation({ z: 2.4, vx: -2, coup: 'lobe', sol: 0 }, 6);
+    expect(jeu.jaugeSmash[0]).toBeLessThan(1);
+    appliqueCommande(jeu, s, { ...VIDE, appuis: ['smash'] }, PAS);
+    for (let i = 0; i < 4 && jeu.balle.coup === 'lobe'; i++) {
+      jeu.balle.x -= 0.05;
+      appliqueCommande(jeu, s, VIDE, PAS);
+    }
+    expect(jeu.balle.super).toBe(0);
+    expect(jeu.parade).toBeNull();
+    // balle haute : FRAPPE a donné le coup aérien
+    expect(['smash', 'vibora', 'bandeja']).toContain(jeu.balle.coup);
+  });
+
   it('la variante dépend de la situation : météore, éclair, phénix ou comète', () => {
     const v = (balle: Partial<Balle>, x: number) => {
       const { jeu } = situation(balle, x);

@@ -286,14 +286,14 @@ Pour changer l'icône : remplacer `assets/icone-app.jpg` (carrée), puis
 
 ## Commandes du jeu
 
-|             | Tactile                         | Clavier               |
-| ----------- | ------------------------------- | --------------------- |
-| Se déplacer | joystick (moitié gauche)        | flèches / ZQSD / WASD |
-| Frappe      | bouton rouge, en bas du losange | K                     |
-| Amorti      | bouton turquoise, à gauche      | J                     |
-| Lobe        | bouton bleu, à droite           | L                     |
-| Smash       | bouton orange, en haut          | I ou Espace           |
-| Pause       | ⏸ en haut à droite              | Échap / P             |
+|             | Tactile                                      | Clavier                    |
+| ----------- | -------------------------------------------- | -------------------------- |
+| Se déplacer | joystick (moitié gauche)                     | flèches / ZQSD / WASD      |
+| Frappe      | bouton rouge, en bas du losange              | K                          |
+| Amorti      | bouton turquoise, à gauche                   | J                          |
+| Lobe        | bouton bleu, à droite                        | L                          |
+| Super coup  | bouton doré, en haut, seulement jauge pleine | I ou Espace (jauge pleine) |
+| Pause       | ⏸ en haut à droite                           | Échap / P                  |
 
 **Arcade, pas simulation.** Il n'y a plus de course : le joueur est plus rapide
 que le CPU et la portée est généreuse. En option (Réglages › _Aide au
@@ -311,8 +311,9 @@ l'est déjà). Relâcher le bouton ne change rien, maintenir non plus : la jauge
 remplit seule pendant 0,6 s après l'appui, donc plus on appuie tôt, plus le coup est
 fort. L'appui reste en attente jusqu'à 3 s (un lob lent ne le fait pas oublier). Seul
 le super coup (jauge pleine) attend que la balle soit tout près, et il part de toute
-façon quand elle va rebondir une deuxième fois. Sur un lob subi, SMASH donne un
-renvoi normal : on ne rate jamais.
+façon quand elle va rebondir une deuxième fois. Il n'y a plus de bouton SMASH : le
+bouton du haut n'apparaît que pour le super coup, et la touche I ou Espace vaut FRAPPE tant
+que la jauge n'est pas pleine : l'appui n'est jamais perdu.
 
 **La balle accélère** de 6 % à chaque coup après le deuxième, jusqu'à +90 %
 (`ACCEL_*` dans `core/constants.ts`), sauf le lob et l'amorti. Un compteur
@@ -334,11 +335,10 @@ qui partira s'affiche au-dessus de la jauge, et un losange marque sur le
 terrain adverse où la balle ira. Armer un coup ralentit à peine la course.
 
 **Les coups.** FRAPPE peu chargé est un coup _coupé_ (lent, qui revient de la
-vitre), chargé un coup _plat_ (qui ricoche de la vitre vers le filet). SMASH
-choisit seul selon la balle, la place et la charge : balle haute, au filet et
+vitre), chargé un coup _plat_ (qui ricoche de la vitre vers le filet). Sur une
+balle haute, FRAPPE choisit seul selon la place et la charge : au filet et
 bien armé, un smash (par 3 / par 4 si c'est très fort et très haut) ; à
-mi-court, une víbora ; au fond, une bandeja. Sur une balle basse, c'est un
-coup à plat appuyé à fond, plus risqué. Un bon timing (balle proche de la
+mi-court, une víbora ; au fond, une bandeja. Un bon timing (balle proche de la
 raquette) rend le coup précis.
 
 **Moteur de qualité des coups** (`core/qualite.ts`, `tests/qualite.test.ts`). Un coup
@@ -358,7 +358,7 @@ Ce que la couleur dit, et ne dit pas : elle juge **le choix du coup** pour la si
 (c'est l'essentiel) puis **l'exécution** (timing et charge, qui ne pèsent que 20 % et 15 %).
 Une balle rapide ne rend pas un bon coup rouge : elle le rend un peu moins beau. Les
 adversaires comptent : un lob prend à revers ceux du filet, un amorti surprend ceux du
-fond. Sur une balle haute (joueur en position d'attaque), FRAPPE comme SMASH donnent le
+fond. Sur une balle haute (joueur en position d'attaque), FRAPPE donne le
 coup aérien (smash, víbora ou bandeja, selon la place et la charge) ; seul un LOB ou un
 AMORTI y reste un coup de finesse, jugé comme tel. La couleur ne dit rien du résultat
 (un smash vert peut finir en faute, un coup orange peut gagner le point) : elle dit
@@ -368,11 +368,11 @@ AMORTI y reste un coup de finesse, jugé comme tel. La couleur ne dit rien du r�
 coup très médiocre, jusqu'à +10 % pour un coup parfait, +2,5 % de plus après un renvoi de
 vitre). Deux barres de part et d'autre du tableau des scores (équipe 1 à gauche, équipe
 0 à droite) : dégradé qui scintille, halo dès 75 %, et pleine, un cadre doré qui flashe,
-une étoile et « SUPER ! ». Quand elle se remplit : une petite fanfare (pas de bannière), le bouton SMASH devient doré et animé (« SUPER »),
+une étoile et « SUPER ! ». Quand elle se remplit : une petite fanfare (pas de bannière), le bouton SUPER apparaît en haut du losange, doré et animé,
 et toute l'équipe est entourée de flammes dorées et d'un SUPER clignotant : l'adversaire
 voit venir le coup.
 
-**Super coups.** Jauge pleine, SMASH lance un super coup (même sur un lob subi) :
+**Super coups.** Jauge pleine, le bouton SUPER lance un super coup (même sur un lob subi) :
 quasi sans erreur, **imparable** (aucun adversaire ne peut toucher la balle) et qui gagne
 le point à son premier rebond. Il est toujours rapide (la balle file au plus vite que le
 filet le permet, puis repart comme un boulet après son rebond), avec une longue traînée de
@@ -403,7 +403,7 @@ et on la voit retomber doucement sur la lune. Le bandeau du point s'affiche alor
 appui passe la scène. Le ralenti d'un super coup est toujours rejoué, après la scène.
 
 **Lob subi.** Quand un lob a passé le joueur (la balle a rebondi, ou il est loin
-du filet), SMASH ne donne qu'un renvoi normal, son coup est limité à mi-puissance
+du filet), le renvoi est normal, son coup est limité à mi-puissance
 et l'équipe qui a lobé a l'avantage : son prochain coup est plus fort (+0,2). Un
 lob encore haut au-dessus d'un joueur au filet peut toujours être smashé.
 
@@ -414,7 +414,7 @@ moment-là ; à fond, elle peut sortir de la piste (par 3 / par 4) ou repartir t
 haut. Le coupé et la bandeja bondissent un peu, pour ne plus mourir au fond du
 court. La vitre elle-même relance la balle vers le haut (`COUP_VITRE`) : tous les
 renvois de vitre reviennent à hauteur de jeu. FRAPPE reste un coup normal même
-sur une balle haute (seul SMASH déclenche les coups aériens). Les coups très rapides laissent une traînée de feu (rouge, orange, jaune).
+sur une balle haute (FRAPPE y donne le coup aérien). Les coups très rapides laissent une traînée de feu (rouge, orange, jaune).
 Quand la balle va d'abord rebondir sur une vitre, le joueur n'est pas guidé :
 c'est à lui d'anticiper (se rapprocher du filet, par exemple). Il reste à 0,8 m
 du filet pour que son dessin ne le dépasse pas.

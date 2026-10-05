@@ -1,6 +1,6 @@
 import { alea, clamp } from './aleatoire';
 import { HAUT_SMASH, LARG, MIL } from './constants';
-import { contrainte, executeCoup, frappable, PROF } from './coups';
+import { executeCoup, frappable, PROF } from './coups';
 import { jaugeVal, servir } from './service';
 import { arreteParade, varianteSuper } from './super-coup';
 import { autre, dir, xProf } from './terrain';
@@ -64,8 +64,8 @@ export function appliqueCommande(jeu: Partie, s: Joueur, cmd: Commande, dt: numb
   // on peut appuyer en avance : le coup part dès que la balle est à portée,
   // et plus on a appuyé tôt, plus il est puissant
   for (const a of cmd.appuis) {
-    // un lob qui nous a passés : SMASH ne donne alors qu'un renvoi normal : l'appui n'est jamais perdu
-    const bouton: Bouton = a === 'smash' && contrainte(jeu.balle, s) && jeu.jaugeSmash[s.eq] < 1 ? 'plat' : a;
+    // le bouton du haut n'existe que pour le super coup : sans jauge pleine, son appui (touche I ou Espace) vaut FRAPPE
+    const bouton: Bouton = a === 'smash' && jeu.jaugeSmash[s.eq] < 1 ? 'plat' : a;
     if (s.intent) s.intent.type = bouton;
     else {
       s.intent = { type: bouton, t: 0 };
@@ -159,15 +159,11 @@ function coupHumain(jeu: Partie, s: Joueur): void {
   const variante =
     bouton === 'smash' && jeu.jaugeSmash[s.eq] >= 1 ? varianteSuper(b, Math.abs(s.x - MIL)) : 0;
   const type = coupPrevu(jeu, s, bouton, s.charge);
-  // SMASH sur une balle basse : un coup à plat appuyé à fond, plus risqué, jugé comme le smash qu'il voulait être
-  const forcé = bouton === 'smash' && b.z <= HAUT_SMASH;
-  const base = 0.25 + 0.75 * s.charge;
-  const p = forcé ? Math.max(0.85, base) : base;
+  const p = 0.25 + 0.75 * s.charge;
   const { tx, ty } = cibleCoup(s, type);
   executeCoup(jeu, s, type, p, tx + alea(jeu.rng, -0.2, 0.2), ty, null, {
     precision: precisionContact(jeu, s),
-    risque: forcé,
-    intention: forcé ? 'smash' : type,
+    intention: type,
     charge: s.charge,
     super: variante,
   });

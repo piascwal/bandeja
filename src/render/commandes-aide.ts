@@ -20,10 +20,10 @@ interface Ligne {
 }
 
 const COUPS: Ligne[] = [
-  { pastille: '#ff5470', touche: 'FRAPPE', action: 'COUP DE BASE - COUPE SI PEU CHARGE' },
+  { pastille: '#ff5470', touche: 'FRAPPE', action: 'COUP DE BASE - AERIEN SUR BALLE HAUTE' },
   { pastille: '#2fd0c6', touche: 'AMORTI', action: 'BALLE COURTE JUSTE DERRIERE LE FILET' },
   { pastille: '#3fb4e8', touche: 'LOBE', action: 'BALLE HAUTE PAR-DESSUS LES ADVERSAIRES' },
-  { pastille: '#ffa24a', touche: 'SMASH', action: 'BALLE HAUTE : SMASH, VIBORA OU BANDEJA' },
+  { pastille: '#ffa24a', touche: 'SUPER', action: 'APPARAIT EN HAUT QUAND LA JAUGE EST PLEINE' },
 ];
 
 const TACTILE: Ligne[] = [{ touche: 'JOYSTICK', action: 'MOITIE GAUCHE : SE DEPLACER ET VISER' }, ...COUPS];
@@ -33,7 +33,7 @@ const CLAVIER: Ligne[] = [
   { pastille: '#ff5470', touche: 'K', action: 'FRAPPE' },
   { pastille: '#2fd0c6', touche: 'J', action: 'AMORTI' },
   { pastille: '#3fb4e8', touche: 'L', action: 'LOBE' },
-  { pastille: '#ffa24a', touche: 'I', action: 'SMASH (OU ESPACE)' },
+  { pastille: '#ffa24a', touche: 'I', action: 'SUPER COUP, JAUGE PLEINE (OU ESPACE)' },
   { touche: 'ECHAP', action: 'PAUSE' },
 ];
 
@@ -41,9 +41,9 @@ const ASTUCES = [
   'L APPUI ARME LE COUP : IL PART TOUT SEUL A PORTEE',
   'LE NOM DU COUP : ROUGE MEDIOCRE, VERT PARFAIT',
   'BEAUX COUPS : LA JAUGE SUPER SE REMPLIT',
-  'JAUGE PLEINE : SMASH DORE = SUPER COUP IMPARABLE',
+  'JAUGE PLEINE : BOUTON SUPER = COUP IMPARABLE',
   'JOYSTICK : COTE ET PROFONDEUR (LOSANGE = CIBLE)',
-  'SMASH BAS APRES UN AMORTI : COUP MEDIOCRE',
+  'FRAPPE SUR BALLE HAUTE : COUP AERIEN AUTOMATIQUE',
 ];
 
 /** Les commandes, dans leur propre écran (tactile ou clavier, au choix par onglet). */

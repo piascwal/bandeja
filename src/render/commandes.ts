@@ -1,4 +1,3 @@
-import { HAUT_SMASH } from '@core/constants';
 import { TYPES_SERV } from '@core/humain';
 import type { Bouton, Joueur, Partie } from '@core/types';
 import { RAYON_JOY, zonesBoutons, type Rond } from '@input/disposition';
@@ -40,16 +39,16 @@ export function dessineCommandes(v: Vue, jeu: Partie, t: EtatTactile): void {
   dessineJoystick(v, jeu, t);
   const z = zonesBoutons(v.W, v.H);
   const service = jeu.phase === 'service' && jeu.serveur === s;
-  // balle haute à jouer : le SMASH pulse, c'est lui qui choisit smash, víbora ou bandeja
-  const haute = jeu.phase === 'jeu' && jeu.balle.camp === s.eq && jeu.balle.z > HAUT_SMASH;
   const superPret = !service && jeu.jaugeSmash[s.eq] >= 1;
   for (const k of LOSANGE) {
-    const or = k === 'smash' && superPret;
+    // le bouton du haut n'existe que pour le super coup : absent tant que la jauge n'est pas pleine
+    if (k === 'smash' && !superPret) continue;
+    const or = k === 'smash';
     const lib = or ? 'SUPER' : service ? LIB_SERVICE[k] : LIB_JEU[k];
     const app = t.actifs.has(k);
     const choisi = estChoisi(jeu, s, k);
     v.g.globalAlpha = service && !lib ? 0.25 : or || app || choisi ? 1 : 0.7;
-    // jauge pleine : le bouton SMASH devient doré, c'est lui qui lance le super coup
+    // jauge pleine : le bouton SUPER apparaît, doré et animé, c'est lui qui lance le super coup
     if (or) rond(v, z[k], app, '#fff2b0', '#e0a41c', lib, true);
     else rond(v, z[k], app, COUL[k][0], COUL[k][1], lib || ' ');
     if (choisi && s.intent) anneau(v.g, z[k].x, z[k].y, z[k].r + 2, C.or, s.charge, 2);
@@ -57,11 +56,6 @@ export function dessineCommandes(v: Vue, jeu: Partie, t: EtatTactile): void {
     v.g.globalAlpha = 1;
   }
   if (superPret) animeSuper(v, z.smash, jeu.temps);
-  else if (haute && !service) {
-    v.g.globalAlpha = 0.4 + 0.4 * Math.sin(jeu.temps * 10);
-    anneau(v.g, z.smash.x, z.smash.y, z.smash.r + 3, C.or, 1, 1);
-    v.g.globalAlpha = 1;
-  }
 }
 
 /** Le bouton SUPER : halo qui bat, ondes qui s'en échappent, étincelles qui tournent autour. */
