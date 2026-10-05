@@ -73,6 +73,47 @@ export default async function (env) {
   await env.capture(h, 'match-hote');
   await env.capture(i, 'match-invite');
 
+  // --- les règles de jeu valent aussi en ligne : l'invité lance SUPER de loin, son joueur court chez l'hôte
+  let superReussi = false;
+  for (let essai = 0; essai < 4 && !superReussi; essai++) {
+    await h.evaluate(() => {
+      const j = window.bandeja.jeu;
+      const inv = j.joueurs[1];
+      j.phase = 'jeu';
+      j.parade = null;
+      j.jaugeSmash[inv.eq] = 1;
+      inv.x = inv.eq === 0 ? 1.5 : 18.5;
+      inv.y = 8;
+      Object.assign(j.balle, {
+        x: inv.eq === 0 ? 9 : 11,
+        y: 3,
+        z: 1.1,
+        vx: inv.eq === 0 ? -3 : 3,
+        vy: 0,
+        vz: 0,
+        camp: inv.eq,
+        sol: 0,
+        coup: 'plat',
+        super: 0,
+        dehors: false,
+        roule: false,
+      });
+    });
+    await i.evaluate(() => window.bandeja.effets.finale.reinitialise());
+    await i.keyboard.press('KeyI');
+    superReussi = await env.attendsQue(i, () => window.bandeja.effets.finale.declenchee, undefined, 6000);
+  }
+  env.verifie(
+    superReussi,
+    "le super coup de l'invité part chez l'hôte et sa scène finale s'ouvre chez l'invité",
+  );
+  env.verifie(
+    await h.evaluate(() => window.bandeja.effets.finale.declenchee),
+    "la scène finale s'ouvre aussi chez l'hôte",
+  );
+  await attends(300);
+  await env.capture(i, 'super-invite');
+
   // --- le pseudo, par le champ de saisie
   await intrus.page.evaluate(() => {
     window.bandeja.ecranUI = 'reglages';
