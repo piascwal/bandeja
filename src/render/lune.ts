@@ -127,15 +127,26 @@ export function lune(v: Vue, f: FinaleSuper): void {
     g.ellipse(bx, by + 2, age * 190, age * 190 * 0.38, 0, 0, Math.PI * 2);
     g.stroke();
   }
-  // les débris, jetés très haut puis retombant lentement (pesanteur faible)
-  for (let i = 0; i < 30; i++) {
-    const vx = (h(i) - 0.5) * 150;
-    const vy = 50 + h(i + 40) * 130;
+  // les débris, jetés très haut puis retombant lentement (pesanteur faible) : quelques gros, beaucoup de petits
+  for (let i = 0; i < 110; i++) {
+    const gros = i < 24;
+    const vx = (h(i) - 0.5) * (gros ? 150 : 260);
+    const vy = (gros ? 50 : 20) + h(i + 40) * (gros ? 130 : 170);
     const tt = age;
     const y = by - (vy * tt - 0.5 * 110 * tt * tt);
-    if (y > by + 4 || tt > 1.3) continue;
-    g.globalAlpha = fondu * clamp01(1.3 - tt) * 0.9;
-    px(g, bx + vx * tt, y, i % 3 === 0 ? 2 : 1, i % 3 === 0 ? 2 : 1, i % 2 ? '#d8d8e6' : '#8a8a9c');
+    if (y > by + 4 || tt > 1.4) continue;
+    g.globalAlpha = fondu * clamp01(1.4 - tt) * 0.9;
+    const c = i % 7 === 0 ? couleur : i % 2 ? '#d8d8e6' : '#8a8a9c';
+    px(g, bx + vx * tt, y, gros && i % 3 === 0 ? 2 : 1, gros && i % 3 === 0 ? 2 : 1, c);
+  }
+  // les étincelles de l'impact, vives et brèves, dans la couleur de la balle
+  if (age < 0.45) {
+    for (let i = 0; i < 40; i++) {
+      const ang = h(i + 200) * Math.PI;
+      const v = 70 + h(i + 240) * 150;
+      g.globalAlpha = fondu * (1 - age / 0.45);
+      px(g, bx - Math.cos(ang) * v * age, by - Math.sin(ang) * v * age * 0.7, 1, 1, i % 2 ? '#ffffff' : C.or);
+    }
   }
   // la poussière qui monte du cratère
   for (let i = 0; i < 5; i++) {
