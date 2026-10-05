@@ -8,6 +8,9 @@ export interface EtatReglages {
   aide: boolean;
   bandeCommandes: boolean;
   secoussesReduites: boolean;
+  /** le pseudo montré aux autres joueurs en réseau */
+  nom: string;
+  onNom: () => void;
   onSon: () => void;
   onAide: () => void;
   onBande: () => void;
@@ -27,6 +30,7 @@ export function dessineReglages(v: Vue, zones: ZoneBouton[], e: EtatReglages): v
   const cx = Math.round(W / 2);
   texte(g, 'REGLAGES AVANCES', cx, 4, C.blanc, 1, 'c');
   const lignes: [string, string, () => void][] = [
+    ['PSEUDO', e.nom, e.onNom],
     ['SON', e.son ? 'OUI' : 'NON', e.onSon],
     ['AIDE AU DEPLACEMENT', e.aide ? 'OUI' : 'NON', e.onAide],
     ['COMMANDES HORS TERRAIN', e.bandeCommandes ? 'OUI' : 'NON', e.onBande],

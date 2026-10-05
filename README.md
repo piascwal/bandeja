@@ -135,9 +135,31 @@ Le regard des joueurs et la pose de course ne sont pas dans la simulation : ils
 dépendent de l'écran (`render/regard.ts`). Un humain de l'équipe 1 voit la
 piste retournée (`Projection.miroir`) et joue lui aussi à droite.
 
-### Multijoueur Wi-Fi
+### Multijoueur : en ligne ou sur le Wi-Fi
 
-Menu → **MULTI WIFI**. L'appareil qui fait **CREER UNE PARTIE** devient le
+Menu → **MULTI**, puis **EN LIGNE** (Internet) ou **RESEAU LOCAL** (même Wi-Fi). Le
+**pseudo** se change dans cet écran et dans les réglages avancés (un champ de saisie se
+pose sur le jeu, qui fait apparaître le clavier du téléphone) ; il est gardé et nettoyé
+(majuscules, chiffres, espaces, 14 caractères).
+
+**En ligne.** **CREER UN SALON** donne un code (`KT2A-NVK6`) affiché dans la salle
+d'attente avec un bouton **LIEN** (feuille de partage du téléphone, ou presse-papiers) ;
+les amis font **REJOINDRE AVEC UN CODE**, ou ouvrent le lien (`#salon=CODE` : un
+bouton REJOINDRE leur est proposé). Aucun serveur à vous : le code dérive la clé qui
+chiffre la mise en relation sur des serveurs MQTT publics, puis les appareils se
+connectent en pair à pair (voir lan-kit 0.2.0). La salle d'attente, le match, la pause
+et la reconnexion sont ceux du Wi-Fi ; la veille tolère un silence plus long (12 s).
+Chaque joueur voit l'adresse IP des autres ; sur environ 15 à 20 % des réseaux (4G à NAT
+strict, Wi-Fi d'entreprise) la connexion est impossible tant qu'un relais TURN n'est pas
+branché (voir `docs/TURN.md` de lan-kit). Le code est dans `app/parcours-ligne.ts`,
+`app/saisie.ts`, `net/canal.ts`, `render/lan-choix.ts` et `render/ligne-accueil.ts`.
+
+**Pings.** L'hôte mesure la latence de chaque joueur (ping/pong de lan-kit) et la renvoie
+à tous chaque seconde (message `pings`, protocole 9) : elle s'affiche sur chaque carte de
+la salle d'attente et, en match, en haut à gauche de l'écran (vert sous 60 ms, orange sous
+150 ms, rouge au-delà).
+
+**Sur le Wi-Fi.** L'appareil qui fait **CREER UNE PARTIE** devient le
 serveur ; les autres appareils du même Wi-Fi voient la partie dans leur liste,
 sans saisir d'adresse. Chacun arrive d'abord en spectateur et prend un siège
 (**PRENDRE**) ; les sièges libres sont tenus par le CPU.
@@ -163,8 +185,8 @@ une flèche rouge repère les autres humains. Le code est dans `app/parcours-lan
 testées), `net/ctrl.ts` (messages), `render/lan-liste.ts` et `render/lan-salon.ts`.
 
 **Limites connues.** Les Wi-Fi « invités » qui isolent les appareils, ou un
-réseau qui bloque STUN, empêchent la liaison ; le jeu par Internet est
-volontairement impossible (voir lan-kit). Les spectateurs avec réactions ne sont
+réseau qui bloque STUN, empêchent la liaison sur le Wi-Fi ; le jeu en ligne passe par
+un code de salon. Les spectateurs avec réactions ne sont
 pas encore là.
 
 **Coupure et reprise.** Si un invité perd la connexion en plein match, l'hôte

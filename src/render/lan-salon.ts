@@ -1,3 +1,4 @@
+import { qualitePing, texteLatence } from '@piascwal/lan-kit';
 import { C, EQUIPES } from './palette';
 import { texte } from './police';
 import { bouton, panneau, voile, type ZoneBouton } from './ui';
@@ -10,6 +11,8 @@ export interface SiegeVue {
   hote: boolean;
   /** code de vérification de sa liaison (le même chez lui et chez l'hôte), s'il y en a un à montrer */
   code: string | null;
+  /** sa latence vue par l'hôte (ms), si elle est connue */
+  ping: number | null;
 }
 
 export interface VueSalon {
@@ -26,6 +29,8 @@ export interface VueSalon {
   monSiege: number;
   peutLancer: boolean;
   latenceMs: number | null;
+  /** le salon en ligne : son code, à donner aux amis, et le partage du lien */
+  ligne: { code: string; copie: boolean; onPartage: () => void } | null;
   message: string | null;
   onSiege: (s: number) => void;
   onRegarde: () => void;
@@ -49,7 +54,11 @@ export function dessineSalon(v: Vue, zones: ZoneBouton[], e: VueSalon): void {
   voile(g, W, H, 0.88);
   const cx = Math.round(W / 2);
   texte(g, 'SALLE D ATTENTE', cx, 3, C.blanc, 1, 'c');
-  if (e.latenceMs !== null) texte(g, `${Math.round(e.latenceMs)} MS`, 4, 3, C.grisBleu, 1, 'g', null);
+  if (e.latenceMs !== null) texte(g, texteLatence(e.latenceMs), 4, 3, C.grisBleu, 1, 'g', null);
+  if (e.ligne) {
+    texte(g, `CODE ${e.ligne.code}`, W - 52, 3, C.or, 1, 'd', null);
+    bouton(g, zones, e.ligne.copie ? 'OK !' : 'LIEN', W - 48, 1, 44, 11, e.ligne.onPartage, VERT);
+  }
 
   const cw = Math.min(84, Math.floor((W - 28) / 4));
   const xs = [cx - 6 - 2 * cw - 2, cx - 6 - cw, cx + 6, cx + 6 + cw + 2];
@@ -159,6 +168,14 @@ function carte(
       'c',
       null,
     );
+    if (!s.hote) {
+      const q = qualitePing(s.ping);
+      const couleur =
+        q === 'bon' ? '#5fe0a0' : q === 'moyen' ? C.or : q === 'mauvais' ? '#ff7a90' : C.grisBleu;
+      // en haut à droite de la carte (à gauche du X de l'hôte, qui peut exclure ce joueur)
+      const droite = x + w - (e.jeSuisHote ? 16 : 4);
+      texte(g, texteLatence(s.ping), droite, y + 7, couleur, 1, 'd', null);
+    }
     if (e.jeSuisHote && !s.hote) bouton(g, zones, 'X', x + w - 13, y + 5, 11, 10, () => e.onExclut(i), ROUGE);
     return;
   }

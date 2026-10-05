@@ -9,7 +9,7 @@ import { valideAction, valideEtat, type ActionSalon, type EtatSalon } from './sa
  * sont à craindre ; tout est tout de même validé à la réception.
  *
  * Invité → hôte : `bonjour` (se présente), `action` (siège), `pause`, `quitte`.
- * Hôte → invité : `etat` (le salon), `debut` (le match commence), `evt`, `refus`.
+ * Hôte → invité : `etat` (le salon), `debut` (le match commence), `evt`, `pings` (la latence de chaque siège vue par l'hôte, en ms).
  * Dans les deux sens : `ping` / `pong` (latence et coupure, voir lan-kit).
  */
 export type MsgCtrl =
@@ -20,6 +20,7 @@ export type MsgCtrl =
   | { t: 'etat'; e: EtatSalon }
   | { t: 'debut'; siege: number; niveau: number; jeux: number; sieges: number[]; graine: number }
   | { t: 'evt'; m: MessageEvenement }
+  | { t: 'pings'; p: (number | null)[] }
   | { t: 'ping'; k: number }
   | { t: 'pong'; k: number };
 
@@ -85,6 +86,12 @@ export function lisCtrl(o: unknown): MsgCtrl | null {
     case 'evt': {
       const e = lisMessageEvenement(m.m);
       return e ? { t: 'evt', m: e } : null;
+    }
+    case 'pings': {
+      const p = m.p;
+      if (!Array.isArray(p) || p.length !== 4) return null;
+      if (!p.every((x) => x === null || entier(x, 0, 10_000))) return null;
+      return { t: 'pings', p: [...(p as (number | null)[])] };
     }
     case 'ping':
     case 'pong':

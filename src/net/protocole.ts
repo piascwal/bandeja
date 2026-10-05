@@ -8,7 +8,7 @@ import type { Bouton, Coup, Effet, Phase, PoseCoup, TypeService } from '@core/ty
  * octet de version en tête de l'instantané protège en plus d'un décodage de
  * travers.
  */
-export const VERSION_PROTOCOLE = 8;
+export const VERSION_PROTOCOLE = 9;
 
 /** Identité de Bandeja sur le réseau local (voir lan-kit). */
 export const APP: AppLan = { id: 'bandeja', version: VERSION_PROTOCOLE };

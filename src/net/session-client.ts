@@ -1,20 +1,21 @@
 import {
   Annuaire,
-  Liaison,
-  Veille,
   attente,
   idAleatoire,
-  salonsDuReseau,
   type Annonce,
+  type Liaison,
   type Signal,
+  type Veille,
 } from '@piascwal/lan-kit';
 import type { Commande } from '@core/types';
 import { valideAnnonceBandeja, type AnnonceBandeja } from './annonce';
 import { bonjour, lisCtrl, type MsgCtrl } from './ctrl';
-import { plageStricte, reglagesDev } from './dev';
+import { CANAL_LOCAL, creeLiaison, creeVeille, ouvreReseau, type Canal, type Reseau } from './canal';
+import { reglagesDev } from './dev';
 import { EmetteurEntrees } from './entrees';
 import type { MessageEvenement } from './evenements';
 import { decodeInstantane, type Instantane } from './instantane';
+import { PINGS_VIDES, type Pings } from './pings';
 import { APP } from './protocole';
 import type { ActionSalon, EtatSalon } from './salon';
 
@@ -22,6 +23,15 @@ export type PartieAnnoncee = Annonce<AnnonceBandeja>;
 
 /** Pourquoi la session s'est terminée. */
 export type RaisonFin = 'quitte' | 'perdu' | 'complet' | 'version' | 'spectateurs' | 'injoignable';
+
+export const MESSAGES_FIN: Record<RaisonFin, string> = {
+  quitte: 'L HOTE A QUITTE LA PARTIE',
+  perdu: 'CONNEXION PERDUE',
+  complet: 'PARTIE COMPLETE',
+  version: 'VERSION DIFFERENTE : METTEZ A JOUR',
+  spectateurs: 'PLUS DE PLACE POUR REGARDER',
+  injoignable: 'PARTIE INTROUVABLE',
+};
 
 /** Une annonce qu'on n'a plus revue depuis ce délai a disparu (l'hôte se ré-annonce toutes les 30 s). */
 const PEREMPTION_MS = 75_000;
@@ -57,6 +67,8 @@ export class SessionClient {
   /** l'état du salon, tel que l'hôte l'a envoyé en dernier */
   etat: EtatSalon | null = null;
   siege = -1;
+  /** la latence de chaque siège, mesurée par l'hôte (ms) */
+  pings: Pings = PINGS_VIDES();
   onListe: () => void = () => {};
   onEtat: (e: EtatSalon) => void = () => {};
   onDebut: (d: DebutMatch) => void = () => {};
@@ -74,7 +86,7 @@ export class SessionClient {
 
   private constructor(
     private readonly annuaire: Annuaire<AnnonceBandeja>,
-    private readonly ips: string[],
+    private readonly reseau: Reseau,
     private readonly nom: string,
     identite?: Identite,
   ) {
@@ -92,17 +104,17 @@ export class SessionClient {
     return this.hote;
   }
 
-  static async cree(nom: string, identite?: Identite): Promise<SessionClient> {
+  static async cree(nom: string, identite?: Identite, canal: Canal = CANAL_LOCAL): Promise<SessionClient> {
     const dev = reglagesDev();
-    const { salons, ipsPubliques } = await salonsDuReseau(APP, dev.reseau);
+    const reseau = await ouvreReseau(canal);
     const annuaire = new Annuaire<AnnonceBandeja>({
       app: APP,
-      salons,
+      salons: reseau.salons,
       valideContenu: valideAnnonceBandeja,
       courtiers: dev.courtiers ?? undefined,
     });
     await annuaire.ouvre();
-    const s = new SessionClient(annuaire, ipsPubliques, nom, identite);
+    const s = new SessionClient(annuaire, reseau, nom, identite);
     annuaire.onAnnonce = (a) => {
       s.annonces.set(a.id, { a, vu: performance.now() });
       s.onListe();
@@ -136,7 +148,7 @@ export class SessionClient {
   /** Se connecte à une partie. Rejette avec la raison si l'hôte refuse ou ne répond pas. */
   async rejoint(a: PartieAnnoncee): Promise<void> {
     this.hote = a.id;
-    const l = new Liaison(plageStricte(), this.ips);
+    const l = creeLiaison(this.reseau);
     this.liaison = l;
     try {
       const sdp = await l.creeOffre();
@@ -166,7 +178,7 @@ export class SessionClient {
       }
     };
     l.onFerme = () => this.finir('perdu');
-    this.veille = new Veille(l, () => l.ferme());
+    this.veille = creeVeille(l, this.reseau, () => l.ferme());
     this.code = await l.codeVerification();
     l.envoieCtrl(bonjour(this.nom, this.appareil, this.jeton));
   }
@@ -192,6 +204,9 @@ export class SessionClient {
         break;
       case 'evt':
         this.onEvenement(msg.m);
+        break;
+      case 'pings':
+        this.pings = msg.p;
         break;
       case 'quitte':
         this.finir('quitte');

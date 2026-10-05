@@ -1,21 +1,16 @@
-import {
-  Annuaire,
-  Liaison,
-  Limiteur,
-  Veille,
-  idAleatoire,
-  salonsDuReseau,
-  type Signal,
-} from '@piascwal/lan-kit';
+import { Annuaire, Limiteur, idAleatoire, type Signal } from '@piascwal/lan-kit';
 import { COMMANDE_VIDE } from '@core/partie';
 import type { Commande } from '@core/types';
 import { basculePause, finAbsence, marqueAbsent, Minuteries, revient } from './absences';
 import { valideAnnonceBandeja, type AnnonceBandeja } from './annonce';
 import { lisCtrl, type MsgCtrl } from './ctrl';
-import { delaiReconnexion, plageStricte, reglagesDev } from './dev';
+import { CANAL_LOCAL, creeLiaison, creeVeille, ouvreReseau, type Canal, type Reseau } from './canal';
+import { delaiReconnexion, reglagesDev } from './dev';
+import type { Membre } from './membre';
 import { EntreeDistante } from './entrees';
 import type { MessageEvenement } from './evenements';
 import { encodeInstantane, type Instantane } from './instantane';
+import { calculePings, PINGS_VIDES, type Pings } from './pings';
 import { APP, SPECTATEURS_MAX, VERSION_PROTOCOLE } from './protocole';
 import {
   appliqueAction,
@@ -39,21 +34,6 @@ const JEU_RAFALE = 480;
 /** Un pair qui ouvre la liaison sans jamais se présenter ne bloque rien : on le coupe. */
 const PRESENTATION_MAX_MS = 10_000;
 
-/** Un appareil branché sur l'hôte. */
-interface Membre {
-  l: Liaison;
-  veille: Veille | null;
-  /** connu une fois son « bonjour » reçu */
-  appareil: string | null;
-  /** secret de son arrivée : seul il rend son siège à un joueur qui revient */
-  jeton: string;
-  /** code de vérification de sa liaison (le même s'affiche chez lui) */
-  code: string | null;
-  entree: EntreeDistante;
-  limiteCtrl: Limiteur;
-  limiteJeu: Limiteur;
-}
-
 /**
  * Session de l'hôte : il est le serveur. Il annonce la partie sur le Wi-Fi,
  * accepte les appareils (liaison WebRTC locale), arbitre le salon, simule le
@@ -73,6 +53,9 @@ export class SessionHote {
   /** un joueur est revenu après une coupure : l'app lui renvoie le match en cours */
   onRevenu: (nom: string) => void = () => {};
 
+  /** la latence de chaque siège vue par l'hôte (ms), renvoyée à tous chaque seconde : null si inconnue ou si c'est un CPU */
+  pings: Pings = PINGS_VIDES();
+  private tPings = 0;
   private membres: Membre[] = [];
   /** le siège de chaque joueur absent, et ce qui prouve son identité s'il revient */
   private readonly gardes = new Map<number, { appareil: string; jeton: string }>();
@@ -82,7 +65,8 @@ export class SessionHote {
 
   private constructor(
     private readonly annuaire: Annuaire<AnnonceBandeja>,
-    private readonly ips: string[],
+    private readonly reseau: Reseau,
+    readonly canal: Canal,
     readonly appareil: string,
     nom: string,
     config: ConfigSalon,
@@ -90,18 +74,18 @@ export class SessionHote {
     this.etat = nouveauSalon({ nom, appareil }, config);
   }
 
-  static async cree(nom: string, config: ConfigSalon): Promise<SessionHote> {
+  static async cree(nom: string, config: ConfigSalon, canal: Canal = CANAL_LOCAL): Promise<SessionHote> {
     const dev = reglagesDev();
-    const { salons, ipsPubliques } = await salonsDuReseau(APP, dev.reseau);
+    const reseau = await ouvreReseau(canal);
     const annuaire = new Annuaire<AnnonceBandeja>({
       app: APP,
-      salons,
+      salons: reseau.salons,
       valideContenu: valideAnnonceBandeja,
       courtiers: dev.courtiers ?? undefined,
       testament: true,
     });
     await annuaire.ouvre();
-    const s = new SessionHote(annuaire, ipsPubliques, idAleatoire(8), nom, config);
+    const s = new SessionHote(annuaire, reseau, canal, idAleatoire(8), nom, config);
     annuaire.onSignal = (de, salon, sig) => void s.surSignal(de, salon, sig);
     s.annonce();
     return s;
@@ -181,9 +165,24 @@ export class SessionHote {
 
   /** À appeler à chaque image : fait avancer l'attente d'un joueur absent et le compte à rebours de reprise. */
   avance(dt: number): void {
+    this.tPings += dt;
+    if (this.tPings >= 1) {
+      this.tPings = 0;
+      this.majPings();
+    }
     const r = this.minuteries.avance(this.etat, dt);
     if (r === 'seconde') this.diffuse(false);
     else if (r === 'fini') this.liberePlacesAbsentes();
+  }
+
+  /** Mesure la latence de chaque siège et la renvoie à tous. */
+  private majPings(): void {
+    this.pings = calculePings(
+      this.etat,
+      this.presents.map((m) => ({ appareil: m.appareil, latenceMs: m.veille?.latenceMs ?? null })),
+    );
+    const msg: MsgCtrl = { t: 'pings', p: this.pings };
+    for (const m of this.presents) m.l.envoieCtrl(msg);
   }
 
   /** L'hôte n'attend plus les joueurs absents : leurs sièges se libèrent, le CPU les remplace. */
@@ -242,7 +241,7 @@ export class SessionHote {
       await this.annuaire.signale(de, salon, { type: 'refus', raison: 'complet' });
       return;
     }
-    const l = new Liaison(plageStricte(), this.ips);
+    const l = creeLiaison(this.reseau);
     const m: Membre = {
       l,
       veille: null,
@@ -269,7 +268,7 @@ export class SessionHote {
       if (m.limiteJeu.accepte() && m.entree.recoit(d, performance.now() / 1000)) m.veille?.recuJeu();
     };
     l.onFerme = () => this.lache(m);
-    m.veille = new Veille(l, () => l.ferme());
+    m.veille = creeVeille(l, this.reseau, () => l.ferme());
     setTimeout(() => {
       if (m.appareil === null) this.retire(m);
     }, PRESENTATION_MAX_MS);

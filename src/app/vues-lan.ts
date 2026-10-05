@@ -1,4 +1,7 @@
 import { JEUX, NIVEAUX } from '@core/constants';
+import type { LignePing } from '@render/hud-ping';
+import type { AttenteLan } from '@render/lan-etats';
+import type { Canal } from '../net/canal';
 import type { LignePartie, VueListe } from '@render/lan-liste';
 import type { VueSalon } from '@render/lan-salon';
 import { FORMATS, NOMS_FORMATS, estFormat, peutLancer, siegeOuvert } from '../net/formats';
@@ -26,6 +29,14 @@ export interface ContexteVues {
   cree: () => void;
   actualise: () => void;
   quitte: () => void;
+  /** cet appareil essaie de revenir dans le match qu'il a perdu */
+  reconnexion: boolean;
+  /** l'écran est celui du match */
+  enJeu: boolean;
+  canal: Canal;
+  /** le lien d'invitation vient d'être partagé */
+  copie: boolean;
+  partage: (code: string) => void;
 }
 
 export function construitVueListe(c: ContexteVues): VueListe {
@@ -55,12 +66,22 @@ export function construitVueSalon(c: ContexteVues): VueSalon | null {
   const { hote: h, client: cl } = c;
   const moi = h?.appareil ?? cl?.appareil ?? '';
   const f = e.config.format;
+  const pings = h?.pings ?? cl?.pings ?? [];
+  const salonEnLigne = c.canal.type === 'ligne' && c.canal.code ? c.canal.code : null;
   // le code de vérification : l'hôte voit celui de chaque joueur, un invité le sien
   const code = (appareil: string): string | null =>
     h ? h.codeDe(appareil) : appareil === moi ? (cl?.code ?? null) : null;
   return {
     sieges: e.sieges.map((s, i) =>
-      s ? { nom: s.nom, moi: s.appareil === moi, hote: i === 0, code: code(s.appareil) } : null,
+      s
+        ? {
+            nom: s.nom,
+            moi: s.appareil === moi,
+            hote: i === 0,
+            code: code(s.appareil),
+            ping: pings[i] ?? null,
+          }
+        : null,
     ),
     ouverts: [0, 1, 2, 3].map((i) => siegeOuvert(f, i)),
     spectateurs: e.spectateurs.length,
@@ -71,6 +92,9 @@ export function construitVueSalon(c: ContexteVues): VueSalon | null {
     monSiege: e.sieges.findIndex((s) => s?.appareil === moi),
     peutLancer: peutLancer(f, occupes(e)),
     latenceMs: h?.latenceMs ?? cl?.latenceMs ?? null,
+    ligne: salonEnLigne
+      ? { code: salonEnLigne, copie: c.copie, onPartage: () => c.partage(salonEnLigne) }
+      : null,
     message: c.message,
     onSiege: (s) => cl?.agit({ a: 'siege', s }),
     onRegarde: () => cl?.agit({ a: 'regarde' }),
@@ -81,4 +105,30 @@ export function construitVueSalon(c: ContexteVues): VueSalon | null {
     onLance: () => h?.agit({ a: 'lance' }),
     onQuitte: c.quitte,
   };
+}
+
+export function construitVueAttente(c: ContexteVues): AttenteLan | null {
+  if (c.reconnexion) return { type: 'reconnexion', onQuitte: c.quitte };
+  const e = c.etat;
+  if (!e || e.phase !== 'jeu' || !c.enJeu) return null;
+  if (e.absents.length > 0)
+    return {
+      type: 'absents',
+      noms: e.absents.map((s) => e.sieges[s]?.nom ?? ''),
+      reste: Math.ceil(e.reconnexion),
+      jeSuisHote: c.hote !== null,
+      onNePlusAttendre: () => c.hote?.arreteAttente(),
+    };
+  if (e.reprise > 0) return { type: 'reprise', n: Math.ceil(e.reprise) };
+  return null;
+}
+
+/** Les joueurs humains assis (hors hôte) avec leur latence, vue par l'hôte. */
+export function construitPings(c: ContexteVues): LignePing[] {
+  const pings = c.hote?.pings ?? c.client?.pings;
+  if (!c.etat || !pings) return [];
+  const moi = c.hote?.appareil ?? c.client?.appareil;
+  return c.etat.sieges.flatMap((o, i) =>
+    o && i > 0 ? [{ nom: o.nom, ms: pings[i] ?? null, moi: o.appareil === moi }] : [],
+  );
 }

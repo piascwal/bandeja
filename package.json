@@ -1,6 +1,6 @@
 {
   "name": "bandeja",
-  "version": "0.17.1",
+  "version": "0.18.0",
   "private": true,
   "description": "Bandeja — padel arcade en pixel art, en double contre l'ordinateur.",
   "type": "module",
@@ -34,6 +34,6 @@
     "ws": "^8.22.0"
   },
   "dependencies": {
-    "@piascwal/lan-kit": "github:piascwal/lan-kit#v0.1.0"
+    "@piascwal/lan-kit": "github:piascwal/lan-kit#v0.2.0"
   }
 }

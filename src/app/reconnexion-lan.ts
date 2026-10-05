@@ -1,4 +1,5 @@
 import { attente } from '@piascwal/lan-kit';
+import type { Canal } from '../net/canal';
 import { SessionClient, type Identite } from '../net/session-client';
 
 /** Marge au-delà du délai de l'hôte, le temps qu'il constate lui aussi la fin de l'attente. */
@@ -8,6 +9,7 @@ const ATTENTE_ANNONCES_MS = 1500;
 
 export interface OptionsReconnexion {
   nom: string;
+  canal: Canal;
   identite: Identite;
   /** l'identifiant de la partie à retrouver (celui de son annonce) */
   idHote: string;
@@ -42,7 +44,7 @@ export class Reconnexion {
     while (this.actif && performance.now() < fin) {
       let c: SessionClient | null = null;
       try {
-        c = await SessionClient.cree(o.nom, o.identite);
+        c = await SessionClient.cree(o.nom, o.identite, o.canal);
         await attente(ATTENTE_ANNONCES_MS);
         const annonce = c.parties.find((p) => p.id === o.idHote);
         if (annonce && this.actif) {

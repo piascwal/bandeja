@@ -7,27 +7,25 @@ import { appliqueInstantane, rafraichitPrevision } from '../net/appliquer';
 import { NOMS_FORMATS } from '../net/formats';
 import { instantaneDe } from '../net/instantane';
 import { Synchro } from '../net/synchro';
-import { SessionClient, type DebutMatch, type Identite, type RaisonFin } from '../net/session-client';
+import {
+  MESSAGES_FIN,
+  SessionClient,
+  type DebutMatch,
+  type Identite,
+  type RaisonFin,
+} from '../net/session-client';
 import { SessionHote } from '../net/session-hote';
+import { CANAL_LOCAL, type Canal } from '../net/canal';
 import { delaiReconnexion } from '../net/dev';
 import { jeuActif, siegesHumains, type EtatSalon } from '../net/salon';
 import type { VueListe } from '@render/lan-liste';
-import type { VueSalon } from '@render/lan-salon';
 import type { AttenteLan } from '@render/lan-etats';
 import { C } from '@render/palette';
 import type { BandejaApp } from './app';
 import { joueEvenements } from './evenements';
+import { ParcoursLigne } from './parcours-ligne';
 import { Reconnexion } from './reconnexion-lan';
-import { construitVueListe, construitVueSalon, type ContexteVues } from './vues-lan';
-
-const MESSAGES_FIN: Record<RaisonFin, string> = {
-  quitte: 'L HOTE A QUITTE LA PARTIE',
-  perdu: 'CONNEXION PERDUE',
-  complet: 'PARTIE COMPLETE',
-  version: 'VERSION DIFFERENTE : METTEZ A JOUR',
-  spectateurs: 'PLUS DE PLACE POUR REGARDER',
-  injoignable: 'PARTIE INTROUVABLE',
-};
+import { construitVueAttente, type ContexteVues } from './vues-lan';
 
 /**
  * Le parcours « multi Wi-Fi » : la liste des parties, la salle d'attente, et
@@ -35,8 +33,12 @@ const MESSAGES_FIN: Record<RaisonFin, string> = {
  * sièges distants en plus ; l'invité ne simule rien, il dessine l'état reçu.
  */
 export class ParcoursLan {
+  /** le parcours du jeu en ligne (choix du mode, création et recherche de salon) */
+  readonly ligne: ParcoursLigne;
   hote: SessionHote | null = null;
   client: SessionClient | null = null;
+  /** où se retrouvent les joueurs : le Wi-Fi, ou le salon d'un code */
+  canal: Canal = CANAL_LOCAL;
   phaseListe: VueListe['phase'] = 'recherche';
   message: string | null = null;
   private readonly synchro = new Synchro();
@@ -46,7 +48,9 @@ export class ParcoursLan {
   /** essais de retour de CET appareil dans le match qu'il vient de perdre */
   private reco: Reconnexion | null = null;
 
-  constructor(private readonly app: BandejaApp) {}
+  constructor(private readonly app: BandejaApp) {
+    this.ligne = new ParcoursLigne(app, this);
+  }
 
   /** Une partie en réseau est en cours (ou le salon d'une partie) : la boucle ne simule plus comme en solo. */
   get actif(): boolean {
@@ -59,14 +63,30 @@ export class ParcoursLan {
 
   // ------------------------------------------------------------ navigation
 
-  /** Menu → liste des parties du Wi-Fi. */
-  ouvre(): void {
+  /** L'écran des parties : la liste du Wi-Fi, ou l'accueil du jeu en ligne. */
+  private get ecranListe(): 'lan-liste' | 'ligne' {
+    return this.canal.type === 'ligne' ? 'ligne' : 'lan-liste';
+  }
+
+  /** Retour à l'écran des parties, avec le message qui explique pourquoi. */
+  private versListe(message: string): void {
+    this.app.retourMenu();
+    if (this.canal.type === 'ligne') {
+      this.phaseListe = 'pret';
+      this.app.ecranUI = 'ligne';
+    } else this.ouvre();
+    this.message = message;
+  }
+
+  /** Menu → liste des parties du Wi-Fi, ou (avec un code) recherche du salon en ligne. */
+  ouvre(canal: Canal = CANAL_LOCAL): void {
     this.fermeSessions();
+    this.canal = canal;
     this.annule = false;
     this.message = null;
     this.phaseListe = 'recherche';
-    this.app.ecranUI = 'lan-liste';
-    SessionClient.cree(this.app.pref.nom)
+    this.app.ecranUI = this.ecranListe;
+    SessionClient.cree(this.app.pref.nom, undefined, canal)
       .then((c) => {
         if (this.annule) return c.ferme();
         this.client = c;
@@ -86,14 +106,17 @@ export class ParcoursLan {
   }
 
   /** Crée une partie : cet appareil devient le serveur. */
-  cree(): void {
+  cree(canal: Canal = this.canal): void {
     this.client?.ferme();
     this.client = null;
+    this.canal = canal;
+    this.annule = false;
     this.phaseListe = 'connexion';
     const a = this.app;
-    SessionHote.cree(a.pref.nom, { format: 'coop', niveau: a.pref.niveau, jeux: a.pref.jeux })
+    const config = { format: 'coop', niveau: a.pref.niveau, jeux: a.pref.jeux } as const;
+    SessionHote.cree(a.pref.nom, config, canal)
       .then((h) => {
-        if (this.annule || a.ecranUI !== 'lan-liste') return h.fermeSession();
+        if (this.annule || a.ecranUI !== this.ecranListe) return h.fermeSession();
         this.hote = h;
         h.onChange = () => this.surEtat();
         h.onDebut = () => this.debutHote();
@@ -103,7 +126,7 @@ export class ParcoursLan {
       })
       .catch(() => {
         this.phaseListe = 'erreur';
-        this.message = 'RESEAU INTROUVABLE';
+        this.message = this.canal.type === 'ligne' ? 'INTERNET INTROUVABLE' : 'RESEAU INTROUVABLE';
       });
   }
 
@@ -156,15 +179,14 @@ export class ParcoursLan {
       if (assis) return this.reconnecte(c.identite, c.idHote);
     }
     this.client = null;
-    this.app.retourMenu();
-    this.ouvre(); // retour à la liste, avec la raison
-    this.message = MESSAGES_FIN[raison];
+    this.versListe(MESSAGES_FIN[raison]);
   }
 
   private reconnecte(identite: Identite, idHote: string): void {
     this.client = null;
     this.reco = new Reconnexion({
       nom: this.app.pref.nom,
+      canal: this.canal,
       identite,
       idHote,
       delaiS: delaiReconnexion(),
@@ -179,9 +201,7 @@ export class ParcoursLan {
       echec: () => {
         this.reco = null;
         this.client = null;
-        this.app.retourMenu();
-        this.ouvre();
-        this.message = MESSAGES_FIN.perdu;
+        this.versListe(MESSAGES_FIN.perdu);
       },
     });
   }
@@ -310,15 +330,8 @@ export class ParcoursLan {
 
   // ------------------------------------------------------------ vues
 
-  vueListe(): VueListe {
-    return construitVueListe(this.contexte());
-  }
-
-  vueSalon(): VueSalon | null {
-    return construitVueSalon(this.contexte());
-  }
-
-  private contexte(): ContexteVues {
+  /** Ce que les écrans du multijoueur ont besoin de savoir et de pouvoir faire. */
+  contexte(): ContexteVues {
     return {
       hote: this.hote,
       client: this.client,
@@ -329,23 +342,16 @@ export class ParcoursLan {
       cree: () => this.cree(),
       actualise: () => this.actualise(),
       quitte: () => this.quitte(),
+      reconnexion: this.reco !== null,
+      enJeu: this.app.ecranUI === 'jeu',
+      canal: this.canal,
+      copie: this.ligne.copie,
+      partage: (code) => this.ligne.partage(code),
     };
   }
 
   /** Ce qui fige le match à l'écran : joueurs absents, retour du jeu, ou cet appareil qui se reconnecte. */
   vueAttente(): AttenteLan | null {
-    if (this.reco) return { type: 'reconnexion', onQuitte: () => this.quitte() };
-    const e = this.etat;
-    if (!e || e.phase !== 'jeu' || this.app.ecranUI !== 'jeu') return null;
-    if (e.absents.length > 0)
-      return {
-        type: 'absents',
-        noms: e.absents.map((s) => e.sieges[s]?.nom ?? ''),
-        reste: Math.ceil(e.reconnexion),
-        jeSuisHote: this.hote !== null,
-        onNePlusAttendre: () => this.hote?.arreteAttente(),
-      };
-    if (e.reprise > 0) return { type: 'reprise', n: Math.ceil(e.reprise) };
-    return null;
+    return construitVueAttente(this.contexte());
   }
 }

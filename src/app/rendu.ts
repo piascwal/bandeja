@@ -4,6 +4,9 @@ import { defenseurParade, dessineParade } from '@render/parade-vue';
 import { dessineFissure } from '@render/fissure';
 import { dessineEchange } from '@render/hud-echange';
 import { dessineBanniere, dessineJauge, dessineTableau } from '@render/hud';
+import { dessineChoix } from '@render/lan-choix';
+import { dessineLigne } from '@render/ligne-accueil';
+import { dessinePings } from '@render/hud-ping';
 import { dessineAttente } from '@render/lan-etats';
 import { dessineListe } from '@render/lan-liste';
 import { dessineSalon } from '@render/lan-salon';
@@ -15,6 +18,8 @@ import { dessineMiseAJour, dessineRappelMiseAJour } from '@render/mise-a-jour-vu
 import { dessineRalenti } from '@render/ralenti-vue';
 import { dessineScene } from '@render/scene';
 import type { BandejaApp } from './app';
+import { saisitPseudo } from './pseudo';
+import { construitPings, construitVueListe, construitVueSalon } from './vues-lan';
 
 const secousseAleatoire = (s: number) => (s > 0.2 ? Math.round((Math.random() * 2 - 1) * s) : 0);
 
@@ -33,6 +38,8 @@ export function rendu(app: BandejaApp, t: number): void {
   if (!app.decor || !app.sprites) return;
   const horsMatch =
     ecranUI === 'menu' ||
+    ecranUI === 'multi-choix' ||
+    ecranUI === 'ligne' ||
     ecranUI === 'reglages' ||
     ecranUI === 'commandes' ||
     ecranUI === 'lan-liste' ||
@@ -73,6 +80,7 @@ export function rendu(app: BandejaApp, t: number): void {
     dessineRalenti(v, app.boutons, app.ralenti.progression, t, () => app.passeRalenti());
   } else if (ecranUI === 'jeu') {
     dessineJauge(v, jeu);
+    if (app.lan.actif) dessinePings(v, construitPings(app.lan.contexte()));
     dessineParade(v, jeu, t);
     const e = app.entrees;
     const joy = e.joy;
@@ -89,7 +97,7 @@ export function rendu(app: BandejaApp, t: number): void {
       niveauSuivant: () => app.niveauSuivant(),
       jeuxSuivants: () => app.jeuxSuivants(),
       reglages: () => app.ouvreReglages(true),
-      multi: () => app.lan.ouvre(),
+      multi: () => app.lan.ligne.ouvreChoix(),
     };
     dessineMenu(v, app.boutons, reglages, actions, t, __VERSION_APP__);
     if (app.attenteDemarrage) dessineDemarrage(v, t);
@@ -100,10 +108,14 @@ export function rendu(app: BandejaApp, t: number): void {
         onPlusTard: () => app.maj.plusTard(),
       });
     else if (app.maj.refusee) dessineRappelMiseAJour(v, app.boutons, () => app.maj.rouvre());
+  } else if (ecranUI === 'multi-choix') {
+    dessineChoix(v, app.boutons, app.lan.ligne.vueChoix());
+  } else if (ecranUI === 'ligne') {
+    dessineLigne(v, app.boutons, app.lan.ligne.vueLigne(), t);
   } else if (ecranUI === 'lan-liste') {
-    dessineListe(v, app.boutons, app.lan.vueListe(), t);
+    dessineListe(v, app.boutons, construitVueListe(app.lan.contexte()), t);
   } else if (ecranUI === 'lan-salon') {
-    const salon = app.lan.vueSalon();
+    const salon = construitVueSalon(app.lan.contexte());
     if (salon) dessineSalon(v, app.boutons, salon);
   } else if (ecranUI === 'reglages') {
     dessineReglages(v, app.boutons, {
@@ -111,6 +123,8 @@ export function rendu(app: BandejaApp, t: number): void {
       aide: app.pref.aide,
       bandeCommandes: app.pref.bandeCommandes,
       secoussesReduites: app.pref.secoussesReduites,
+      nom: app.pref.nom,
+      onNom: () => saisitPseudo(app.pref),
       onSon: () => app.basculeSon(),
       onAide: () => app.basculeAide(),
       onBande: () => app.basculeBande(),

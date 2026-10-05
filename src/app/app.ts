@@ -17,10 +17,21 @@ import { estAutonome, PleinEcranAuPremierGeste } from './plein-ecran';
 import { chargePreferences, sauvePreferences, type Preferences } from './preferences';
 import { ParcoursLan } from './parcours-lan';
 import { MiseAJour } from './mise-a-jour';
+import { codeDuLien } from '@piascwal/lan-kit';
 import { Ralenti } from './ralenti';
 import { rendu } from './rendu';
 
-export type EcranUI = 'menu' | 'reglages' | 'commandes' | 'lan-liste' | 'lan-salon' | 'jeu' | 'pause' | 'fin';
+export type EcranUI =
+  | 'menu'
+  | 'reglages'
+  | 'commandes'
+  | 'multi-choix'
+  | 'ligne'
+  | 'lan-liste'
+  | 'lan-salon'
+  | 'jeu'
+  | 'pause'
+  | 'fin';
 
 /**
  * L'application : canevas et mise à l'échelle, boucle de jeu à pas fixe,
@@ -86,7 +97,8 @@ export class BandejaApp {
       pause: () => this.pause(true),
       basculePause: () => {
         if (this.ecranUI === 'commandes') this.ecranUI = 'reglages';
-        else if (this.ecranUI === 'reglages') this.ecranUI = 'menu';
+        else if (this.ecranUI === 'reglages' || this.ecranUI === 'multi-choix') this.ecranUI = 'menu';
+        else if (this.ecranUI === 'ligne') this.lan.ligne.retour();
         else if (this.ecranUI === 'lan-liste' || this.ecranUI === 'lan-salon') this.lan.quitte();
         else if (this.ecranUI === 'jeu' || this.ecranUI === 'pause') this.pause(this.ecranUI === 'jeu');
       },
@@ -108,8 +120,17 @@ export class BandejaApp {
       if (document.hidden && this.ecranUI === 'jeu') this.pause(true);
     });
     this.dispose();
+    this.ouvreInvitation();
     this.dernier = performance.now();
     requestAnimationFrame((t) => this.boucle(t));
+  }
+
+  /** Le jeu a été ouvert par un lien d'invitation (`#salon=CODE`) : on propose de rejoindre ce salon. */
+  private ouvreInvitation(): void {
+    const code = codeDuLien(location.hash);
+    if (!code) return;
+    history.replaceState(null, '', location.pathname + location.search);
+    this.lan.ligne.surInvitation(code);
   }
 
   get vue(): Vue {

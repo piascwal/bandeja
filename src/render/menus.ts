@@ -60,7 +60,7 @@ export function dessineMenu(
     texte(g, k, cx - pw / 2 + 10, y + 4, C.gris, 1, 'g');
     bouton(g, zones, `< ${val} >`, cx - 14, y, 104, 13, act, { couleur: '#232a58' });
   });
-  // comme dans Face-Off : JOUER et MULTI WIFI côte à côte, les réglages centrés dessous
+  // comme dans Face-Off : JOUER et MULTI côte à côte, les réglages centrés dessous
   const jy = py + 38;
   const pulse = Math.sin(t * 5) > 0;
   bouton(g, zones, 'JOUER', cx - 88, jy, 84, 22, a.joue, {
@@ -68,7 +68,7 @@ export function dessineMenu(
     e: 2,
     couleur: pulse ? '#e63a58' : ROUGE.couleur,
   });
-  bouton(g, zones, 'MULTI WIFI', cx + 4, jy, 84, 22, a.multi, BLEU);
+  bouton(g, zones, 'MULTI', cx + 4, jy, 84, 22, a.multi, BLEU);
   bouton(g, zones, 'REGLAGES AVANCES', cx - 60, jy + 28, 120, 13, a.reglages, { couleur: '#232a58' });
 
   const vict = r.victoires[r.niveau] ?? 0;

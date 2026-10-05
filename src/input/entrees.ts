@@ -166,6 +166,8 @@ export class Entrees {
   }
 
   private surTouche(e: KeyboardEvent): void {
+    // un champ de saisie (pseudo, code) est ouvert : ces touches sont du texte, pas des commandes
+    if (e.target instanceof HTMLInputElement) return;
     if (e.repeat) return;
     if (e.code !== 'Escape') this.h.pleinEcran();
     if (this.h.geste()) return;
