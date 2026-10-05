@@ -1,3 +1,4 @@
+import { LARG, LONG } from '@core/constants';
 import type { Decal } from './effets';
 import { px } from './primitives';
 import type { Vue } from './vue';
@@ -106,10 +107,31 @@ function trou(v: Vue, d: Decal, a: number): void {
 }
 
 /** Les dégâts des super coups sur la piste et les vitres, dessinés avant les joueurs. */
-export function dessineDecals(v: Vue, decals: readonly Decal[]): void {
-  for (const d of decals) {
+export function dessineDecals(v: Vue, decals: readonly Decal[], kind: Decal['kind']): void {
+  const { g, K } = v;
+  const liste = decals.filter((d) => d.kind === kind);
+  if (!liste.length) return;
+  g.save();
+  if (kind === 'sol') {
+    // le sol cassé reste sur le sol : rien ne déborde sur les vitres, qui sont dessinées par-dessus
+    g.beginPath();
+    [
+      [0, 0],
+      [LONG, 0],
+      [LONG, LARG],
+      [0, LARG],
+    ].forEach(([x, y], i) => {
+      const [sx, sy] = K.proj(x!, y!, 0);
+      if (i === 0) g.moveTo(sx, sy);
+      else g.lineTo(sx, sy);
+    });
+    g.closePath();
+    g.clip();
+  }
+  for (const d of liste) {
     const a = Math.min(1, d.vie / 1.5);
-    if (d.kind === 'sol') cratere(v, d, a);
+    if (kind === 'sol') cratere(v, d, a);
     else trou(v, d, a);
   }
+  g.restore();
 }

@@ -9,7 +9,9 @@ import type { Coup, Joueur, Mur, Partie, Point2 } from './types';
 /** Place de repli du joueur : au filet ou au fond selon la posture de l'équipe. */
 export function formation(jeu: Partie, s: Joueur): Point2 {
   const prof = jeu.posture[s.eq] === 'filet' ? 7.1 : 1.9;
-  return { x: xProf(s.eq, prof), y: clamp(s.home + (jeu.balle.y - 5) * 0.3, 0.8, LARG - 0.8) };
+  // la balle sortie de la piste (un super coup, un coup perdu) ne tire plus personne : sinon les deux partenaires s'entassent dans un coin
+  const by = jeu.phase === 'jeu' && !jeu.balle.dehors ? clamp(jeu.balle.y, 0, LARG) : 5;
+  return { x: xProf(s.eq, prof), y: clamp(s.home + (by - 5) * 0.3, 0.8, LARG - 0.8) };
 }
 
 interface ChoixCoup {

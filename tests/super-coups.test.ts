@@ -296,3 +296,17 @@ describe('la parade d’un super coup', () => {
     expect(arretes).toBeLessThan(25);
   });
 });
+
+describe('après un super coup, les joueurs ne s’entassent pas', () => {
+  it('la balle partie très loin ne tire plus personne : les partenaires gardent leur écart pendant tout le point', () => {
+    const jeu = partieTest({ mode: 'match', jeux: 3, sieges: [] }, 5);
+    jeu.phase = 'point';
+    jeu.dureePoint = 9;
+    Object.assign(jeu.balle, { x: 148, y: 420, z: 45, dehors: true, roule: false });
+    for (let i = 0; i < 240 * 8; i++) pas(jeu, PAS);
+    for (const eq of [0, 1]) {
+      const [a, b] = jeu.joueurs.filter((s) => s.eq === eq);
+      expect(Math.abs(a!.y - b!.y)).toBeGreaterThan(2.5);
+    }
+  });
+});

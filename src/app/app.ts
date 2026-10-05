@@ -77,6 +77,7 @@ export class BandejaApp {
   /** la jauge du super coup de chaque équipe était pleine à l'image précédente */
   private jaugePleine: [boolean, boolean] = [false, false];
   private cumul = 0;
+  private ralentiAvant = false;
 
   constructor(readonly ecran: HTMLCanvasElement) {
     this.g = ecran.getContext('2d')!;
@@ -329,6 +330,9 @@ export class BandejaApp {
     if (this.jeu.phase === 'service') this.effets.repare();
     if (this.ecranUI === 'jeu') {
       this.ralenti.suit(this.jeu, dt, this.K.miroir);
+      // le ralenti commence : le cratère et la fissure du super coup ne restent pas affichés après lui
+      if (this.ralenti.actif && !this.ralentiAvant) this.effets.repare();
+      this.ralentiAvant = this.ralenti.actif;
       this.surveilleJauges();
     }
     if (!lan.actif && this.jeu.mode === 'match' && this.jeu.phase === 'fin' && this.ecranUI === 'jeu')

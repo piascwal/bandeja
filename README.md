@@ -403,7 +403,8 @@ imparable. Le CPU tente sa chance au hasard. Le curseur est synchronisé dans l'
 
 **Fin spectaculaire.** La balle d'un super coup **tape toujours le sol d'abord** (jamais
 une vitre), et ce choc ouvre la scène : avant le ralenti, chaque écran joue sa propre scène (`finale-super.ts`, `finale-vue.ts`) : coup de
-zoom sur l'impact, terrain cratérisé ou vitre fissurée qui reste abîmé(e) (`decals.ts`),
+zoom sur l'impact, terrain cratérisé ou vitre fissurée (`decals.ts` : le cratère est dessiné sous les vitres et
+coupé aux limites de la piste ; il disparaît quand le ralenti commence),
 filtre de particules sur tout l'écran, puis la balle monte dans le ciel jusqu'à l'espace
 et on la voit retomber doucement sur la lune. Le bandeau du point s'affiche alors ; un
 appui passe la scène. Le ralenti d'un super coup est toujours rejoué, après la scène.
@@ -412,6 +413,12 @@ appui passe la scène. Le ralenti d'un super coup est toujours rejoué, après l
 du filet), le renvoi est normal, son coup est limité à mi-puissance
 et l'équipe qui a lobé a l'avantage : son prochain coup est plus fort (+0,2). Un
 lob encore haut au-dessus d'un joueur au filet peut toujours être smashé.
+
+**Rebond contre la vitre du fond.** La balle qui tape le sol puis la vitre du fond monte
+maintenant haut et reste dans son camp près de deux fois sur trois (`rebondVitre` : vitesse
+vers le filet plafonnée à 4,5 m/s, chandelle de 6,5 m/s) ; sinon elle revient comme avant.
+Avant, un plat chargé ou une bandeja revenait seul chez celui qui avait frappé neuf fois sur
+dix ; maintenant une sur trois environ (`tests/vitres.test.ts`).
 
 **Jeu de vitre.** Un coup _plat_ chargé (au-delà de la moitié de la jauge) a un
 rebond vif (`Balle.vif`) : plus il est chargé, plus la balle bondit après son

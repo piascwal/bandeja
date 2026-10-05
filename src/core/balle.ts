@@ -45,10 +45,24 @@ const coteDe = (x: number): Equipe => (x < MIL ? 0 : 1);
 /** Arcade : la vitre relance la balle vers le haut (m/s), pour qu'elle revienne à hauteur de jeu. */
 const COUP_VITRE = 2.0;
 
+/** Contre une vitre du fond, la balle « monte » dans son camp plus souvent qu'elle ne revient chez celui qui a frappé. */
+const PART_VITRE_HAUTE = 0.65;
+/** Le rebond « monté » : peu de vitesse conservée vers le filet (jamais plus de 4,5 m/s, même après un coup très fort), et une chandelle (m/s). */
+const E_VITRE_HAUTE = 0.28;
+const VX_VITRE_HAUTE_MAX = 4.5;
+const VZ_VITRE_HAUTE = 6.5;
+
 function rebondVitre(b: CorpsBalle, axe: 'x' | 'y'): void {
-  const e = b.spin === 'vibora' ? 0.62 : b.spin === 'coupe' ? 0.8 : 0.8;
+  // contre le fond, la plupart des balles montent haut et restent dans leur camp ; les autres reviennent
+  const haute = axe === 'x' && b.spin !== 'vibora' && (bruit(b) + 1) / 2 < PART_VITRE_HAUTE;
+  const e = haute ? E_VITRE_HAUTE : b.spin === 'vibora' ? 0.62 : 0.8;
   if (axe === 'x') b.vx = -b.vx * e;
   else b.vy = -b.vy * e;
+  if (haute) {
+    b.vx = Math.max(-VX_VITRE_HAUTE_MAX, Math.min(VX_VITRE_HAUTE_MAX, b.vx));
+    b.vz = Math.min(Math.max(b.vz * 0.9, 0) + VZ_VITRE_HAUTE, 11); // haute, pas hors du jeu
+    return;
+  }
   // le coupé revient mollement vers le filet, la víbora « meurt » contre la vitre : la balle redescend aussitôt
   if (b.spin === 'coupe') b.vz = Math.max(b.vz * 0.9, 0) + COUP_VITRE * 0.8;
   else if (b.spin === 'vibora') {

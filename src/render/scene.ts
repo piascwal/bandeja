@@ -39,8 +39,9 @@ export function dessineScene(v: Vue, sc: Scene): void {
     effets.excite > 0.05 ? Math.floor(jeu.temps * 9) & 1 : Math.floor(jeu.temps * 0.7) % 5 === 0 ? 1 : 0;
   g.drawImage(decor.foule[bond]!, 0, 0);
   g.drawImage(decor.terrain, 0, 0);
+  dessineDecals(v, effets.decals, 'sol'); // sous les vitres : le cratère reste dans la piste
   g.drawImage(decor.murs, 0, 0);
-  dessineDecals(v, effets.decals);
+  dessineDecals(v, effets.decals, 'vitre');
   const b = jeu.balle;
   const hum = jeu.humain;
 
