@@ -1,6 +1,6 @@
 import { dessineCommandes } from '@render/commandes';
 import { dessineFinale } from '@render/finale-vue';
-import { defenseurParade, dessineParade } from '@render/parade-vue';
+import { dessineParade } from '@render/parade-vue';
 import { dessineFissure } from '@render/fissure';
 import { dessineEchange } from '@render/hud-echange';
 import { dessineBanniere, dessineJauge, dessineTableau } from '@render/hud';
@@ -84,8 +84,8 @@ export function rendu(app: BandejaApp, t: number): void {
     dessineParade(v, jeu, t);
     const e = app.entrees;
     const joy = e.joy;
-    // pendant la parade, le camp qui subit n'a que la jauge et son bouton STOP
-    if (!defenseurParade(jeu))
+    // pendant la parade, plus de commandes : le camp qui subit a la jauge et son bouton STOP, les autres voient la jauge adverse
+    if (!jeu.parade)
       dessineCommandes(v, jeu, {
         tactile: e.tactile,
         joy,

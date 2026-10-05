@@ -52,10 +52,12 @@ describe('les boutons', () => {
     jeu.balle.z = 0.8;
     expect(coupPrevu(jeu, s, 'plat', 0.1)).toBe('coupe');
     expect(coupPrevu(jeu, s, 'plat', 0.9)).toBe('plat');
-    // même sur une balle haute, FRAPPE reste un coup normal : le smash est sur SMASH
+    // sur une balle haute, le joueur est en position d'attaque : FRAPPE donne le coup aérien, comme SMASH
     jeu.balle.z = HAUT_SMASH + 0.5;
-    expect(coupPrevu(jeu, s, 'plat', 0.9)).toBe('plat');
-    expect(coupPrevu(jeu, s, 'plat', 0.1)).toBe('coupe');
+    s.x = 8;
+    expect(coupPrevu(jeu, s, 'plat', 0.9)).toBe('smash');
+    expect(['smash', 'vibora', 'bandeja']).toContain(coupPrevu(jeu, s, 'plat', 0.1));
+    expect(coupPrevu(jeu, s, 'lobe', 0.9)).toBe('lobe');
     jeu.balle.z = 0.8;
     expect(coupPrevu(jeu, s, 'lobe', 0.1)).toBe('lobe');
     expect(coupPrevu(jeu, s, 'amorti', 0.1)).toBe('amorti');

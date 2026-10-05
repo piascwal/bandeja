@@ -29,9 +29,17 @@ export interface Situation {
   precision: number;
   /** 0 → 1 : charge de l'appui */
   charge: number;
+  /** les adversaires sont au filet (un lob les prend à revers) plutôt qu'au fond (un amorti les prend de court) */
+  filetAdverse: boolean;
 }
 
-export function situationDe(b: Balle, s: Joueur, precision: number, charge: number): Situation {
+export function situationDe(
+  b: Balle,
+  s: Joueur,
+  precision: number,
+  charge: number,
+  filetAdverse = false,
+): Situation {
   return {
     z: b.z,
     vitesse: Math.hypot(b.vx, b.vy, b.vz),
@@ -40,6 +48,7 @@ export function situationDe(b: Balle, s: Joueur, precision: number, charge: numb
     mur: b.mur,
     precision,
     charge,
+    filetAdverse,
   };
 }
 
@@ -67,13 +76,17 @@ const COUPS_PUISSANTS: ReadonlySet<Coup> = new Set(['plat', 'smash', 'bandeja', 
  * réception de ce qui précède.
  */
 export function affinite(type: Coup, sit: Situation): number {
-  const facile = clamp(1 - (sit.vitesse - 8) / 20, 0.1, 1); // une balle lente est plus facile à jouer
-  let a = HAUTEURS[type][classeHauteur(sit.z)] * (0.45 + 0.55 * facile);
+  // une balle lente est plus facile à jouer, mais une balle rapide ne rend pas un bon coup « mauvais » : elle le rend un peu moins beau
+  const facile = clamp(1 - (sit.vitesse - 8) / 20, 0.1, 1);
+  let a = HAUTEURS[type][classeHauteur(sit.z)] * (0.72 + 0.28 * facile);
   // où l'on se trouve
   if (type === 'smash' && sit.loin < 4) a += 0.12;
   else if (type === 'amorti') a += sit.loin < 5 ? 0.12 : -0.3;
   else if ((type === 'lobe' || type === 'bandeja') && sit.loin > 5) a += 0.1;
   else if (type === 'vibora' && sit.loin > 3 && sit.loin < 7) a += 0.08;
+  // où sont les adversaires : un lob les prend à revers au filet, un amorti les prend de court au fond
+  if (type === 'lobe') a += sit.filetAdverse ? 0.15 : -0.1;
+  else if (type === 'amorti') a += sit.filetAdverse ? -0.15 : 0.1;
   // ce qui vient de se passer
   switch (sit.prev) {
     case 'amorti': // une balle courte, très basse : le smash n'a aucun sens, la finesse oui
@@ -84,10 +97,10 @@ export function affinite(type: Coup, sit: Situation): number {
       if (type === 'smash' || type === 'bandeja') a *= 1.15;
       break;
     case 'smash': // une balle rapide : on se défend, un lob la remet en jeu
-      a *= type === 'lobe' ? 0.9 : 0.6;
+      a *= type === 'lobe' ? 0.95 : 0.8;
       break;
     case 'vibora':
-      if (type !== 'lobe') a *= 0.8;
+      if (type !== 'lobe') a *= 0.85;
       break;
     default:
       break;
@@ -107,8 +120,8 @@ export interface Qualite {
 export function niveauDe(score: number): NiveauQualite {
   if (score < 0.2) return 1;
   if (score < 0.4) return 2;
-  if (score < 0.6) return 3;
-  if (score < 0.8) return 4;
+  if (score < 0.58) return 3;
+  if (score < 0.75) return 4;
   return 5;
 }
 
@@ -116,7 +129,8 @@ export function niveauDe(score: number): NiveauQualite {
 export function qualite(type: Coup, sit: Situation): Qualite {
   const a = affinite(type, sit);
   const charge = COUPS_PUISSANTS.has(type) ? sit.charge : 1;
-  const score = clamp(a * (0.6 + 0.4 * sit.precision) * (0.75 + 0.25 * charge), 0, 1);
+  // l'exécution (timing du contact, charge) compte, mais un coup bien choisi reste un bon coup
+  const score = clamp(a * (0.8 + 0.2 * sit.precision) * (0.85 + 0.15 * charge), 0, 1);
   return { score, niveau: niveauDe(score) };
 }
 

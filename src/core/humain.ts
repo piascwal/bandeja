@@ -124,6 +124,8 @@ export function coupPrevu(jeu: Partie, s: Joueur, bouton: Bouton, charge: number
   const haut = jeu.balle.z > HAUT_SMASH;
   switch (bouton) {
     case 'plat':
+      // balle haute : le joueur est déjà en position d'attaque, FRAPPE donne le coup aérien (smash, víbora ou bandeja)
+      if (haut) return coupAerien(s, p);
       return charge < 0.5 ? 'coupe' : 'plat';
     case 'smash':
       return haut ? coupAerien(s, p) : 'plat';

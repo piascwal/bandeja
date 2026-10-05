@@ -354,6 +354,16 @@ qualité règle la trajectoire : un coup parfait est rapide et net, un lob raté
 lent, haut et court alors qu'un lob parfait monte haut, loin et vite, un amorti raté est
 trop long et trop vif.
 
+Ce que la couleur dit, et ne dit pas : elle juge **le choix du coup** pour la situation
+(c'est l'essentiel) puis **l'exécution** (timing et charge, qui ne pèsent que 20 % et 15 %).
+Une balle rapide ne rend pas un bon coup rouge : elle le rend un peu moins beau. Les
+adversaires comptent : un lob prend à revers ceux du filet, un amorti surprend ceux du
+fond. Sur une balle haute (joueur en position d'attaque), FRAPPE comme SMASH donnent le
+coup aérien (smash, víbora ou bandeja, selon la place et la charge) ; seul un LOB ou un
+AMORTI y reste un coup de finesse, jugé comme tel. La couleur ne dit rien du résultat
+(un smash vert peut finir en faute, un coup orange peut gagner le point) : elle dit
+« c'était le bon coup, bien joué ».
+
 **Jauge du super coup.** Chaque coup la remplit selon sa qualité (+1 % pour un
 coup très médiocre, jusqu'à +10 % pour un coup parfait, +2,5 % de plus après un renvoi de
 vitre). Deux barres de part et d'autre du tableau des scores (équipe 1 à gauche, équipe

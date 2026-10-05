@@ -141,7 +141,7 @@ export function executeCoup(
   if (prime) p += PRIME_AVANTAGE;
   // la qualité du coup, d'après la situation de jeu
   const precision = opts?.precision ?? clamp(1 - Math.hypot(b.x - s.x, b.y - s.y) / (PORTEE * 1.3), 0, 1);
-  const situation = situationDe(b, s, precision, opts?.charge ?? p);
+  const situation = situationDe(b, s, precision, opts?.charge ?? p, jeu.posture[autre(eq)] === 'filet');
   const brut = qualite(opts?.intention ?? type, situation).score;
   const score = variante ? 1 : clamp(brut * (subi ? 0.75 : 1) * (prime ? 1.1 : 1), 0, 1);
   const niveau = variante ? 5 : niveauDe(score);

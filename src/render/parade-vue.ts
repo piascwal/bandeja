@@ -40,7 +40,7 @@ export function dessineParade(v: Vue, jeu: Partie, t: number): void {
   px(g, W - 3, 0, 3, H, '#ff2a4a');
   g.globalAlpha = 1;
   const reste = Math.max(0, 1 - p.ecoule / PARADE_DUREE_MAX);
-  const jauge = (cx: number, y: number, w: number, h: number) => {
+  const jauge = (cx: number, y: number, w: number, h: number, titre?: string) => {
     dessineCurseur(g, {
       x: cx - w / 2,
       y,
@@ -52,6 +52,7 @@ export function dessineParade(v: Vue, jeu: Partie, t: number): void {
       zone: [ZONE_PARADE.min, ZONE_PARADE.max],
       temps: t,
       intense: true,
+      titre,
     });
     // le temps qui reste (côté hôte et solo : l'écoulé n'est pas transmis aux invités)
     if (p.ecoule > 0) {
@@ -60,9 +61,9 @@ export function dessineParade(v: Vue, jeu: Partie, t: number): void {
     }
   };
   if (!defenseur) {
-    const cx = Math.round(W / 2);
-    texte(g, 'SUPER COUP !', cx, 42, pouls > 0.5 ? '#ffffff' : '#ff7a3c', 2, 'c');
-    jauge(cx, 56, Math.min(130, W - 40), 10);
+    // la jauge de l'adversaire (ou du CPU), en bas à gauche à la place du joystick : on la voit comme la sienne
+    const w = Math.min(130, Math.round(W * 0.33));
+    jauge(6 + Math.round(w / 2), H - 34, w, 11, jeu.humain ? 'IL PARE' : 'PARADE');
     return;
   }
   // à la place des boutons d'action : la jauge au-dessus d'un gros bouton STOP

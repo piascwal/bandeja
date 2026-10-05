@@ -152,7 +152,10 @@ function aidesJoueur(v: Vue, jeu: Partie, hum: Joueur): void {
   // le coup qui partira, de la couleur de la qualité qu'il aurait maintenant (rouge médiocre → vert parfait)
   const prevu = coupPrevu(jeu, hum, bouton, hum.charge);
   const intention = bouton === 'smash' && jeu.balle.z <= HAUT_SMASH ? 'smash' : prevu;
-  const q = qualite(intention, situationDe(jeu.balle, hum, precisionContact(jeu, hum), hum.charge));
+  const q = qualite(
+    intention,
+    situationDe(jeu.balle, hum, precisionContact(jeu, hum), hum.charge, jeu.posture[1 - hum.eq] === 'filet'),
+  );
   texte(g, NOMS_COUPS[prevu], sx, y0 - 10, COULEURS_QUALITE[q.niveau] ?? C.or, 1, 'c');
 }
 
