@@ -47,10 +47,10 @@ const COUP_VITRE = 2.0;
 
 /** Contre une vitre du fond, la balle « monte » dans son camp plus souvent qu'elle ne revient chez celui qui a frappé. */
 const PART_VITRE_HAUTE = 0.65;
-/** Le rebond « monté » : peu de vitesse conservée vers le filet (jamais plus de 4,5 m/s, même après un coup très fort), et une chandelle (m/s). */
+/** Le rebond « monté » : peu de vitesse conservée vers le filet (jamais plus de 5 m/s, même après un coup très fort), et une chandelle (m/s). */
 const E_VITRE_HAUTE = 0.28;
-const VX_VITRE_HAUTE_MAX = 4.5;
-const VZ_VITRE_HAUTE = 6.5;
+const VX_VITRE_HAUTE_MAX = 5;
+const VZ_VITRE_HAUTE = 5.2;
 
 function rebondVitre(b: CorpsBalle, axe: 'x' | 'y'): void {
   // contre le fond, la plupart des balles montent haut et restent dans leur camp ; les autres reviennent
@@ -68,7 +68,7 @@ function rebondVitre(b: CorpsBalle, axe: 'x' | 'y'): void {
   else if (b.spin === 'vibora') {
     b.vz = Math.min(b.vz, 0) * 0.5 - 1.1;
     if (axe === 'x') b.vy += (b.spinDir || 0) * 1.2;
-  } else b.vz = Math.max(b.vz * 0.9, 0) + COUP_VITRE;
+  } else b.vz = Math.min(Math.max(b.vz * 0.9, 0) + COUP_VITRE, 14);
 }
 
 function passageFilet(b: CorpsBalle, x0: number, y0: number, z0: number, ev?: SurContact): void {

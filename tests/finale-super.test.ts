@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FINALE_FIN_S, BANDEAU_S } from '../src/render/finale-super';
+import { ajouteCratere, BANDEAU_S, FINALE_FIN_S, lisCrateres } from '../src/render/finale-super';
 import { Effets } from '../src/render/effets';
 import { DUREE_POINT_SUPER, FINALE_SUPER_S, RALENTI_CLIP, RALENTI_RYTHME } from '@core/constants';
 
@@ -35,5 +35,34 @@ describe('fin spectaculaire du super coup', () => {
     expect(fx.finale.zoom).toBe(1);
     expect(DUREE_POINT_SUPER).toBeGreaterThan(FINALE_SUPER_S + RALENTI_CLIP / RALENTI_RYTHME);
     expect(FINALE_SUPER_S).toBeGreaterThanOrEqual(FINALE_FIN_S);
+  });
+});
+
+describe('les cratères de la lune', () => {
+  it('chaque balle laisse un cratère, les plus anciens finissent par s’effacer', () => {
+    let lune: ReturnType<typeof lisCrateres> = [];
+    for (let i = 0; i < 55; i++) lune = ajouteCratere(lune, { x: (i % 10) / 10, y: 0.5, r: 16 });
+    expect(lune).toHaveLength(40);
+    expect(lune[39]).toEqual({ x: 0.4, y: 0.5, r: 16 });
+  });
+
+  it('relit les cratères sauvegardés en ignorant tout ce qui est abîmé', () => {
+    expect(lisCrateres(null)).toEqual([]);
+    expect(lisCrateres('pas du json')).toEqual([]);
+    expect(lisCrateres('{"x":1}')).toEqual([]);
+    const bon = { x: 0.3, y: 0.6, r: 16 };
+    const brut = JSON.stringify([bon, { x: 4, y: 0.6, r: 16 }, { x: 0.3, y: 0.6, r: 500 }, 'x', null]);
+    expect(lisCrateres(brut)).toEqual([bon]);
+  });
+
+  it('la scène choisit où la balle s’écrase, et ajoute son cratère une seule fois', () => {
+    const fx = new Effets();
+    fx.finale.declenche(1, 0, 0);
+    expect(fx.finale.xLune).toBeGreaterThanOrEqual(0.3);
+    expect(fx.finale.xLune).toBeLessThanOrEqual(0.7);
+    expect(fx.finale.cratereAjoute).toBe(false);
+    fx.finale.ajouteCratereLune(16);
+    fx.finale.ajouteCratereLune(16);
+    expect(fx.finale.cratereAjoute).toBe(true);
   });
 });

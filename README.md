@@ -405,8 +405,11 @@ imparable. Le CPU tente sa chance au hasard. Le curseur est synchronisé dans l'
 une vitre), et ce choc ouvre la scène : avant le ralenti, chaque écran joue sa propre scène (`finale-super.ts`, `finale-vue.ts`) : coup de
 zoom sur l'impact, terrain cratérisé ou vitre fissurée (`decals.ts` : le cratère est dessiné sous les vitres et
 coupé aux limites de la piste ; il disparaît quand le ralenti commence),
-filtre de particules sur tout l'écran, puis la balle monte dans le ciel jusqu'à l'espace
-et on la voit retomber doucement sur la lune. Le bandeau du point s'affiche alors ; un
+filtre de particules sur tout l'écran, puis la balle monte dans le ciel jusqu'à l'espace,
+arrive à toute vitesse sur la lune (une grosse boule grise à l'horizon arrondi, déjà criblée de
+cratères) et s'y écrase (éclair, onde de choc, débris) en creusant
+un **nouveau cratère** : ceux de la lune viennent tous des joueurs de padel, ils s'accumulent
+d'une partie à l'autre (`localStorage`, 40 au plus). Le bandeau du point s'affiche alors ; un
 appui passe la scène. Le ralenti d'un super coup est toujours rejoué, après la scène.
 
 **Lob subi.** Quand un lob a passé le joueur (la balle a rebondi, ou il est loin
@@ -416,9 +419,13 @@ lob encore haut au-dessus d'un joueur au filet peut toujours être smashé.
 
 **Rebond contre la vitre du fond.** La balle qui tape le sol puis la vitre du fond monte
 maintenant haut et reste dans son camp près de deux fois sur trois (`rebondVitre` : vitesse
-vers le filet plafonnée à 4,5 m/s, chandelle de 6,5 m/s) ; sinon elle revient comme avant.
+vers le filet plafonnée à 5 m/s, chandelle de 5,2 m/s) ; sinon elle revient comme avant.
 Avant, un plat chargé ou une bandeja revenait seul chez celui qui avait frappé neuf fois sur
 dix ; maintenant une sur trois environ (`tests/vitres.test.ts`).
+
+**Repère au sol.** Après le premier rebond de la balle (donc aussi quand elle revient de la
+vitre), une croix au sol marque l'endroit où se placer pour la jouer : clignotante si c'est
+vous qui devez la prendre, discrète sinon.
 
 **Jeu de vitre.** Un coup _plat_ chargé (au-delà de la moitié de la jauge) a un
 rebond vif (`Balle.vif`) : plus il est chargé, plus la balle bondit après son

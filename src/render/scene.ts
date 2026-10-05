@@ -102,6 +102,14 @@ function dessineReperes(v: Vue, jeu: Partie, hum: Joueur): void {
     const [sx, sy] = v.K.proj(rebond.x, rebond.y, 0);
     croixSol(v.g, sx, sy, c);
   }
+  // après le rebond (et notamment quand la balle revient de la vitre) : le repère au sol de l'endroit où se placer pour la jouer
+  if (jeu.phase === 'jeu' && b.camp === hum.eq && b.sol === 1) {
+    const plan = jeu.plan[hum.eq];
+    if (plan) {
+      const [sx, sy] = v.K.proj(plan.x, plan.y, 0);
+      croixSol(v.g, sx, sy, plan.s === hum ? clignote(8) : 'rgba(255,255,255,0.45)');
+    }
+  }
   // où ira votre coup avec la direction actuelle du joystick
   if (jeu.phase === 'jeu' && b.camp === hum.eq && b.sol < 2) {
     const c = cibleCoup(hum, coupPrevu(jeu, hum, hum.intent?.type ?? 'plat', hum.charge));

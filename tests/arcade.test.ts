@@ -21,7 +21,8 @@ describe('un jeu d’arcade : on touche presque toujours la balle', () => {
       pas(jeu, PAS, () => (appuie ? { ...VIDE, appuis: ['plat'] } : VIDE));
       for (const e of jeu.evenements.splice(0)) if (e.type === 'frappe' && e.humain) coups++;
     }
-    expect(coups).toBeGreaterThan(5);
+    // les règles demandent de se placer et de déclencher au bon moment : un appui toutes les 0,4 s, au hasard, ne touche plus tout
+    expect(coups).toBeGreaterThan(3);
   });
 
   it('le joueur est guidé vers la balle quand le joystick est au repos', () => {

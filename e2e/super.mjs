@@ -54,13 +54,21 @@ export default async function (env) {
     b.effets.finale.declenche(4, b.W / 2, b.H * 0.6);
   });
   env.verifie(await p.evaluate(() => window.bandeja.effets.finale.actif), 'la scène finale démarre');
-  for (const [nom, ms] of [
-    ['choc', 250],
-    ['ascension', 700],
-    ['lune', 1000],
-    ['lune-repos', 1000],
+  // on photographie les temps clés de la scène en réglant son horloge
+  for (const [nom, t] of [
+    ['choc', 0.3],
+    ['ascension', 1.0],
+    ['lune-arrivee', 1.55 + 0.4],
+    ['lune-impact', 1.55 + 0.75],
+    ['lune-cratere', 1.55 + 1.3],
+    ['lune-repos', 1.55 + 1.9],
   ]) {
-    await attends(ms);
+    await p.evaluate((x) => {
+      const f = window.bandeja.effets.finale;
+      f.t = x;
+      f.actif = true;
+    }, t);
+    await attends(60);
     await env.capture(p, `super-${nom}`);
   }
   env.verifie(

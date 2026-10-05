@@ -40,7 +40,8 @@ describe('démo ordinateur contre ordinateur', () => {
       }
       const b = jeu.balle;
       expect(Number.isFinite(b.x) && Number.isFinite(b.z)).toBe(true);
-      if (!b.dehors) {
+      // un super coup (le CPU en lâche parfois) file dans l'espace : il n'a pas de plafond
+      if (!b.dehors && !b.super) {
         expect(b.x).toBeGreaterThanOrEqual(0);
         expect(b.x).toBeLessThanOrEqual(LONG);
         expect(b.z).toBeLessThan(HAUT_GRILLE_FOND + 20);
