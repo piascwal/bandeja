@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DUREE_POINT, DUREE_POINT_RALENTI, PAS } from '@core/constants';
+import { DUREE_POINT, DUREE_POINT_RALENTI, DUREE_POINT_SUPER, PAS } from '@core/constants';
 import { pas } from '@core/partie';
 import { Ralenti } from '../src/app/ralenti';
 import { partieTest } from './outils';
@@ -9,13 +9,15 @@ describe('ralenti des points', () => {
     const jeu = partieTest({ mode: 'match', jeux: 3, sieges: [] }, 7);
     const durees = new Set<number>();
     let phase = jeu.phase;
-    for (let i = 0; i < 60 / PAS; i++) {
+    for (let i = 0; i < 240 / PAS; i++) {
       pas(jeu, PAS);
       if (jeu.phase === 'point' && phase !== 'point') durees.add(jeu.dureePoint);
       phase = jeu.phase;
       jeu.evenements.length = 0;
     }
-    expect([...durees].every((d) => d === DUREE_POINT || d === DUREE_POINT_RALENTI)).toBe(true);
+    expect(
+      [...durees].every((d) => d === DUREE_POINT || d === DUREE_POINT_RALENTI || d === DUREE_POINT_SUPER),
+    ).toBe(true);
     expect(durees.has(DUREE_POINT_RALENTI)).toBe(true);
   });
 

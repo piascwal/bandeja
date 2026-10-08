@@ -55,12 +55,25 @@ describe('physique de la balle', () => {
     expect(b.vx).toBeGreaterThan(0);
   });
 
-  it('sort par-dessus le grillage du fond au-delà de 4 m', () => {
+  it('un coup « por » sort par-dessus le grillage du fond au-delà de 4 m', () => {
     const b = nouvelleBalle();
-    Object.assign(b, { x: LONG - 0.5, y: 5, z: 5, vx: 10, vy: 0, vz: 2 });
+    Object.assign(b, { x: LONG - 0.5, y: 5, z: 5, vx: 10, vy: 0, vz: 2, por: 4 });
     const c = vole(b, (k) => k.t === 'sortie');
     expect(c.at(-1)).toMatchObject({ t: 'sortie', cote: 1 });
     expect(b.dehors).toBe(true);
+  });
+
+  it('tout autre coup est retenu par le grillage : jamais de sortie sans « por »', () => {
+    const b = nouvelleBalle();
+    Object.assign(b, { x: LONG - 0.5, y: 5, z: 5, vx: 10, vy: 0, vz: 2 });
+    const c = vole(b, (k) => k.t === 'grille');
+    expect(c.at(-1)).toMatchObject({ t: 'grille', cote: 1 });
+    expect(b.dehors).toBe(false);
+    expect(b.vx).toBeLessThan(0);
+    const l = nouvelleBalle();
+    Object.assign(l, { x: 12, y: 9.8, z: 3.5, vx: 0, vy: 8, vz: 2 });
+    vole(l, (k) => k.t === 'grille');
+    expect(l.dehors).toBe(false);
   });
 
   it('touche le grillage latéral au milieu de la piste', () => {

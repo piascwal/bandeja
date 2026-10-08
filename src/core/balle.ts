@@ -18,6 +18,7 @@ export function nouvelleBalle(): Balle {
     roule: false,
     dehors: false,
     portres: false,
+    por: 0,
     vif: 0,
     super: 0,
     eqF: 0,
@@ -130,11 +131,22 @@ function rebondSol(b: CorpsBalle, ev?: SurContact): void {
     b.vif = 0;
   }
   if (b.portres) {
-    // le smash « por tres » : rebond énorme, la balle s'envole hors de la piste
+    // le smash « por » : un rebond énorme, la balle s'envole hors de la piste (por 4 par le fond, por 3 par un côté)
     b.portres = false;
     b.vz = 12.5;
-    b.vx *= 0.42;
-    b.vy = (b.y < 5 ? -1 : 1) * 2.8;
+    // la chandelle est réglée pour arriver au mur à 5 m de haut, au-dessus de la vitre et du grillage
+    const T = 0.5;
+    if (b.por === 4) {
+      const versFond = b.x > MIL ? 1 : -1;
+      const d = Math.max(0.5, versFond > 0 ? LONG - b.x : b.x);
+      b.vx = (versFond * d) / T;
+      b.vy *= 0.3;
+    } else {
+      const cote = Math.abs(b.vy) > 0.5 ? Math.sign(b.vy) : b.y < LARG / 2 ? -1 : 1;
+      const d = Math.max(0.4, cote > 0 ? LARG - b.y : b.y);
+      b.vy = (cote * d) / T;
+      b.vx *= 0.15;
+    }
   }
   const cote = coteDe(b.x);
   ev?.('sol', cote, vImpact);
@@ -159,7 +171,8 @@ function perceVitre(b: CorpsBalle, cote: Equipe, ev?: SurContact): boolean {
 function mursDuFond(b: CorpsBalle, ev?: SurContact): boolean {
   if (b.x >= 0 && b.x <= LONG) return false;
   const cote: Equipe = b.x < 0 ? 0 : 1;
-  if (b.z > HAUT_GRILLE_FOND) {
+  // seuls les coups « por » et les super coups passent par-dessus les murs : les autres sont retenus par le grillage
+  if (b.z > HAUT_GRILLE_FOND && (b.por > 0 || b.super > 0)) {
     b.dehors = true;
     ev?.('sortie', cote);
     return true;
@@ -184,7 +197,7 @@ function mursDuFond(b: CorpsBalle, ev?: SurContact): boolean {
 function mursLateraux(b: CorpsBalle, ev?: SurContact): void {
   if (b.y >= 0 && b.y <= LARG) return;
   const cote = coteDe(b.x);
-  if (b.z > HAUT_VITRE) {
+  if (b.z > HAUT_VITRE && (b.por > 0 || b.super > 0)) {
     b.dehors = true;
     ev?.('sortie', cote);
     return;
@@ -196,7 +209,7 @@ function mursLateraux(b: CorpsBalle, ev?: SurContact): void {
   }
   b.y = b.y < 0 ? -b.y : 2 * LARG - b.y;
   const v = Math.abs(b.vy);
-  if (b.x < VITRE_COTE || b.x > LONG - VITRE_COTE) {
+  if ((b.x < VITRE_COTE || b.x > LONG - VITRE_COTE) && b.z <= HAUT_VITRE) {
     rebondVitre(b, 'y');
     ev?.('vitre', cote, v);
   } else {

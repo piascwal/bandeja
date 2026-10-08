@@ -417,6 +417,22 @@ du filet), le renvoi est normal, son coup est limité à mi-puissance
 et l'équipe qui a lobé a l'avantage : son prochain coup est plus fort (+0,2). Un
 lob encore haut au-dessus d'un joueur au filet peut toujours être smashé.
 
+**Por 3 et por 4** (`core/por.ts`, `tests/por.test.ts`). Faire sortir la balle de la piste
+n'est possible que dans des situations précises, sinon le grillage la retient (`b.por` :
+seule une balle qui en a le droit passe par-dessus les murs).
+
+- **Smash** : le seul coup qui les cherche. Balle haute (au-dessus de 2,2 m), joueur au
+  filet (moins de 4,5 m), bien armé (puissance 0,75 ou plus), bien joué (qualité 0,6 ou plus),
+  face à des adversaires collés au filet ou sur un lob ; jamais sur un lob subi. Même alors,
+  une fois sur deux la balle reste en jeu. À plat vers le centre de la vitre du fond : **por 4**
+  (elle monte et passe par-dessus le mur du fond) ; en diagonale : **por 3** (par-dessus la
+  vitre de côté).
+- **Víbora** : très rarement (12 %), très forte et très bien jouée, depuis le filet : por 3.
+- **Jamais** : bandeja, volée (balle sous la hauteur de smash), lob, amorti, coupé, service,
+  renvois de vitre. Les super coups, eux, sortent toujours (c'est leur effet).
+  En simulation CPU contre CPU, les por sont passés de 38 % des points à environ 7 %.
+  Non repris du guide : le vent et la température (pas de météo), le rulo à la grille.
+
 **Rebond contre la vitre du fond.** La balle qui tape le sol puis la vitre du fond monte
 maintenant haut et reste dans son camp près de deux fois sur trois (`rebondVitre` : vitesse
 vers le filet plafonnée à 5 m/s, chandelle de 5,2 m/s) ; sinon elle revient comme avant.

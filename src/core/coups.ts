@@ -2,6 +2,7 @@ import { clamp, gauss } from './aleatoire';
 import { lance } from './balle';
 import { ACCEL_ECHANGE, ACCEL_MAX, HAUT_MAX, HAUT_SMASH, MIL, PORTEE } from './constants';
 import { contreVitre } from './contre-vitre';
+import { typeDePor } from './por';
 import { GAIN_JAUGE, GAIN_VITRE, niveauDe, qualite, situationDe } from './qualite';
 import { lanceSuper, ouvreParade, type VarianteSuper } from './super-coup';
 import { autre, xProf } from './terrain';
@@ -161,6 +162,7 @@ export function executeCoup(
   if (variante) {
     type = lanceSuper(jeu, s, variante as VarianteSuper);
     b.portres = false;
+    b.por = 0;
     b.vif = 1; // le premier rebond déclenche la suite du super coup (voir `superRebond`)
   } else if (type !== 'vitre' && type !== 'cote') {
     const versFond = eq === 0 ? 1 : -1; // sens de x vers la vitre adverse
@@ -193,9 +195,15 @@ export function executeCoup(
     const risque = type === 'plat' || type === 'smash' ? 0.01 + 0.05 * p * e : 0.006 * e;
     lance(b, tx, ty, t.v, t.spin, rng() < risque ? -0.3 : (marge ?? t.marge));
     b.spinDir = ty < 5 ? -1 : 1;
-    b.portres = type === 'smash' && p >= 0.8 && b.z > 2.2;
+    // por 3 / por 4 : réservés à certains coups, dans certaines situations (voir `por.ts`)
+    b.por = typeDePor(type, p, score, situation, subi, ty, rng());
+    b.portres = b.por > 0;
     b.vif = rebondVif(type, p, rng());
-  } else b.vif = 0;
+  } else {
+    b.vif = 0;
+    b.por = 0;
+    b.portres = false;
+  }
   b.eqF = eq;
   b.camp = autre(eq);
   b.sol = 0;

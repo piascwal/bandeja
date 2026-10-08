@@ -30,6 +30,7 @@ export function contreVitre(b: CorpsBalle, eq: Equipe, ty: number, mur: Mur, rng
   b.spin = 'plat';
   b.roule = false;
   b.portres = false;
+  b.por = 0;
   return true;
 }
 
@@ -66,6 +67,7 @@ function simule(x: number, y: number, z: number, vx: number, vy: number, vz: num
     roule: false,
     dehors: false,
     portres: false,
+    por: 0,
     vif: 0,
     super: 0,
   };

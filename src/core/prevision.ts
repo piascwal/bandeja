@@ -18,6 +18,7 @@ export function predit(b0: Balle, eq: Equipe): Prediction {
     roule: b0.roule,
     dehors: b0.dehors,
     portres: b0.portres,
+    por: b0.por,
     vif: b0.vif,
     super: b0.super,
   };

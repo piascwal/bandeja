@@ -101,8 +101,10 @@ export interface CorpsBalle {
   spinDir: number;
   roule: boolean;
   dehors: boolean;
-  /** smash « por tres » : le prochain rebond l'envoie hors de la piste */
+  /** smash « por » : le prochain rebond l'envoie hors de la piste */
   portres: boolean;
+  /** seule une balle qui a le droit de sortir passe par-dessus les murs : 0 aucune, 3 par les côtés (por 3), 4 par le fond (por 4) */
+  por: number;
   /** rebond vif : le prochain rebond au sol relance la balle (0 : aucun, 1 : vers la vitre en hauteur, au-delà : hors de la piste) */
   vif: number;
   /** super coup en vol (0 aucun, 1 météore, 2 comète, 3 phénix, 4 fantôme) : imparable, il gagne le point à son premier rebond */
