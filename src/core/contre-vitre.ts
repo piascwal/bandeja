@@ -1,8 +1,8 @@
 import type { Aleatoire } from './aleatoire';
 import { physique, type SurContact } from './balle';
-import { LARG, MIL, PAS } from './constants';
-import { dir } from './terrain';
-import type { CorpsBalle, Equipe, Mur } from './types';
+import { HAUT_SMASH, LARG, MIL, PAS } from './constants';
+import { dir, fond } from './terrain';
+import type { Balle, CorpsBalle, Equipe, Joueur, Mur } from './types';
 
 /**
  * Contre-vitre : on renvoie la balle dans sa propre vitre (celle du fond, ou
@@ -32,6 +32,19 @@ export function contreVitre(b: CorpsBalle, eq: Equipe, ty: number, mur: Mur, rng
   b.portres = false;
   b.por = 0;
   return true;
+}
+
+/**
+ * Le joueur est-il dans une situation de contre-vitre ? Deux cas, balle rebondie et sous la hauteur de smash :
+ * le lob profond (la balle est passée derrière lui, près de la vitre du fond, il lui fait face) ;
+ * le manque de recul (il est collé à la vitre et la balle monte tout près).
+ */
+export function vitreJouable(b: Balle, s: Joueur): boolean {
+  if (b.sol < 1 || b.z > HAUT_SMASH) return false;
+  const balle = Math.abs(b.x - fond(s.eq));
+  const joueur = Math.abs(s.x - fond(s.eq));
+  const derriere = balle < joueur - 0.2;
+  return (derriere && balle < 2.2) || (balle < 1.3 && joueur < 1.8);
 }
 
 /** Les élans essayés : vers le fond, ou vers la vitre de côté. */

@@ -2,6 +2,7 @@ import { alea, clamp } from './aleatoire';
 import { HAUT_SMASH, LARG, MIL } from './constants';
 import { lanceApproche, peutApprocher } from './approche';
 import { executeCoup, frappable, PROF } from './coups';
+import { vitreJouable } from './contre-vitre';
 import { jaugeVal, servir } from './service';
 import { arreteParade, varianteSuper } from './super-coup';
 import { autre, dir, xProf } from './terrain';
@@ -130,6 +131,8 @@ export function coupPrevu(jeu: Partie, s: Joueur, bouton: Bouton, charge: number
   const haut = jeu.balle.z > HAUT_SMASH;
   switch (bouton) {
     case 'plat':
+      // balle dans le dos, près de la vitre du fond (lob profond) ou joueur collé à elle : FRAPPE renvoie la balle dans la vitre
+      if (vitreJouable(jeu.balle, s)) return 'vitre';
       // balle haute : le joueur est déjà en position d'attaque, FRAPPE donne le coup aérien (smash, víbora ou bandeja)
       if (haut) return coupAerien(s, p);
       return charge < 0.5 ? 'coupe' : 'plat';
@@ -167,7 +170,7 @@ function coupHumain(jeu: Partie, s: Joueur): void {
   const type = coupPrevu(jeu, s, bouton, s.charge);
   const p = 0.25 + 0.75 * s.charge;
   const { tx, ty } = cibleCoup(s, type);
-  executeCoup(jeu, s, type, p, tx + alea(jeu.rng, -0.2, 0.2), ty, null, {
+  executeCoup(jeu, s, type, p, tx + alea(jeu.rng, -0.2, 0.2), ty, type === 'vitre' ? 'fond' : null, {
     precision: precisionContact(jeu, s),
     intention: type,
     charge: s.charge,
