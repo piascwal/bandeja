@@ -34,17 +34,42 @@ export function contreVitre(b: CorpsBalle, eq: Equipe, ty: number, mur: Mur, rng
   return true;
 }
 
-/**
- * Le joueur est-il dans une situation de contre-vitre ? Deux cas, balle rebondie et sous la hauteur de smash :
- * le lob profond (la balle est passée derrière lui, près de la vitre du fond, il lui fait face) ;
- * le manque de recul (il est collé à la vitre et la balle monte tout près).
- */
+/** Deux cas, balle rebondie et sous la hauteur de smash : balle passée dans le dos près de la vitre, ou joueur collé à elle. */
+function pres(balle: number, joueur: number, lob: number, colle: number): boolean {
+  return (balle < joueur - 0.2 && balle < lob) || (balle < colle - 0.5 && joueur < colle);
+}
+
+/** Vitre du fond : un lob profond est passé derrière le joueur, ou il est collé à elle et la balle monte tout près. */
+const fondJouable = (b: Balle, s: Joueur): boolean =>
+  pres(Math.abs(b.x - fond(s.eq)), Math.abs(s.x - fond(s.eq)), 2.2, 1.8);
+
+/** La vitre de côté la plus proche, si la balle y est dans le dos du joueur ou si le joueur y est collé. */
+function coteJouable(b: Balle, s: Joueur): Mur | null {
+  const mur: Mur = b.y < LARG / 2 ? 'haut' : 'bas';
+  const dist = (y: number): number => (mur === 'haut' ? y : LARG - y);
+  return pres(dist(b.y), dist(s.y), 1.8, 1.6) ? mur : null;
+}
+
+/** Le joueur est-il dans une situation de renvoi de vitre (fond ou côté) ? */
 export function vitreJouable(b: Balle, s: Joueur): boolean {
   if (b.sol < 1 || b.z > HAUT_SMASH) return false;
-  const balle = Math.abs(b.x - fond(s.eq));
-  const joueur = Math.abs(s.x - fond(s.eq));
-  const derriere = balle < joueur - 0.2;
-  return (derriere && balle < 2.2) || (balle < 1.3 && joueur < 1.8);
+  return fondJouable(b, s) || coteJouable(b, s) !== null;
+}
+
+/**
+ * La vitre que le joueur renvoie, d'après sa visée (le joystick) : vers l'arrière, le fond ;
+ * vers un côté, la vitre de ce côté ; sans visée, le fond d'abord. Vers le filet, ou vers une
+ * vitre qui n'est pas dans la situation, un coup ordinaire (null).
+ */
+export function murVise(b: Balle, s: Joueur, v: { x: number; y: number }): Mur | null {
+  if (!vitreJouable(b, s)) return null;
+  const fondOk = fondJouable(b, s);
+  const cote = coteJouable(b, s);
+  const lateral = Math.abs(v.y) > 0.4 ? (v.y < 0 ? 'haut' : 'bas') : null;
+  const arriere = v.x * dir(s.eq) < -0.4;
+  if (lateral) return cote === lateral ? cote : arriere && fondOk ? 'fond' : null;
+  if (v.x * dir(s.eq) > 0.4) return null;
+  return fondOk ? 'fond' : cote;
 }
 
 /** Les élans essayés : vers le fond, ou vers la vitre de côté. */

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { PAS } from '@core/constants';
-import { vitreJouable } from '@core/contre-vitre';
+import { murVise, vitreJouable } from '@core/contre-vitre';
 import { pas } from '@core/partie';
 import type { Balle, Commande } from '@core/types';
 import { partieTest } from './outils';
@@ -56,7 +56,7 @@ describe('renvoi direct dans sa vitre (contre-vitre du joueur)', () => {
       const cmd: Commande = i === 0 ? { dx: 0, dy: 0, appuis: ['plat'] } : VIDE;
       pas(jeu, PAS, () => cmd);
       for (const e of jeu.evenements) {
-        if (e.type === 'frappe') coup = e.coup;
+        if (e.type === 'frappe' && e.humain) coup = e.coup;
         if (e.type === 'impact') evs.push(`${e.surface}`);
       }
       jeu.evenements.length = 0;
@@ -64,6 +64,54 @@ describe('renvoi direct dans sa vitre (contre-vitre du joueur)', () => {
     }
     expect(coup).toBe('vitre');
     expect(evs[0]).toBe('vitre');
+    expect(jeu.balle.camp).toBe(1);
+  });
+});
+
+describe('vitre de côté et visée', () => {
+  /** Un joueur en milieu de piste mais collé à la vitre de côté y = 0, la balle dans son dos près de cette vitre. */
+  const cote = () => {
+    const { jeu, s } = situation(3, 3);
+    s.y = 1.2;
+    Object.assign(jeu.balle, { y: 0.4 });
+    return { jeu, s };
+  };
+
+  it('la situation de côté est reconnue, pas au milieu de la piste', () => {
+    const c = cote();
+    expect(vitreJouable(c.jeu.balle, c.s)).toBe(true);
+    const milieu = situation(3, 3);
+    expect(vitreJouable(milieu.jeu.balle, milieu.s)).toBe(false);
+  });
+
+  it('on vise une vitre en poussant le joystick vers elle ; vers le filet, le coup est ordinaire', () => {
+    const c = cote();
+    expect(murVise(c.jeu.balle, c.s, { x: 0, y: -1 })).toBe('haut');
+    expect(murVise(c.jeu.balle, c.s, { x: 0, y: 1 })).toBeNull(); // vers l'autre côté : coup ordinaire
+    expect(murVise(c.jeu.balle, c.s, { x: 1, y: 0 })).toBeNull(); // vers le filet
+    expect(murVise(c.jeu.balle, c.s, { x: 0, y: 0 })).toBe('haut'); // sans visée : la vitre en cause
+    const f = situation(1.4, 0.8);
+    expect(murVise(f.jeu.balle, f.s, { x: -1, y: 0 })).toBe('fond');
+    expect(murVise(f.jeu.balle, f.s, { x: 1, y: 0 })).toBeNull();
+    expect(murVise(f.jeu.balle, f.s, { x: 0, y: 0 })).toBe('fond');
+  });
+
+  it('FRAPPE en visant le côté : la balle tape sa vitre de côté puis retombe chez l’adversaire', () => {
+    const { jeu } = cote();
+    const surfaces: string[] = [];
+    let coup = '';
+    for (let i = 0; i < 1500; i++) {
+      const cmd: Commande = i === 0 ? { dx: 0, dy: -1, appuis: ['plat'] } : { dx: 0, dy: -1, appuis: [] };
+      pas(jeu, PAS, () => cmd);
+      for (const e of jeu.evenements) {
+        if (e.type === 'frappe' && e.humain) coup = e.coup;
+        if (e.type === 'impact') surfaces.push(e.surface);
+      }
+      jeu.evenements.length = 0;
+      if (coup && jeu.balle.camp === 1 && jeu.balle.sol >= 1) break;
+    }
+    expect(coup).toBe('cote');
+    expect(surfaces[0]).toBe('vitre');
     expect(jeu.balle.camp).toBe(1);
   });
 });

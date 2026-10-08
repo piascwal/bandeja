@@ -2,7 +2,7 @@ import { alea, clamp } from './aleatoire';
 import { HAUT_SMASH, LARG, MIL } from './constants';
 import { lanceApproche, peutApprocher } from './approche';
 import { executeCoup, frappable, PROF } from './coups';
-import { vitreJouable } from './contre-vitre';
+import { murVise } from './contre-vitre';
 import { jaugeVal, servir } from './service';
 import { arreteParade, varianteSuper } from './super-coup';
 import { autre, dir, xProf } from './terrain';
@@ -131,8 +131,14 @@ export function coupPrevu(jeu: Partie, s: Joueur, bouton: Bouton, charge: number
   const haut = jeu.balle.z > HAUT_SMASH;
   switch (bouton) {
     case 'plat':
-      // balle dans le dos, près de la vitre du fond (lob profond) ou joueur collé à elle : FRAPPE renvoie la balle dans la vitre
-      if (vitreJouable(jeu.balle, s)) return 'vitre';
+      // balle dans le dos près d'une vitre (lob profond) ou joueur collé à elle : FRAPPE la renvoie dans la vitre qu'on vise
+      switch (murVise(jeu.balle, s, directionVisee(s))) {
+        case 'fond':
+          return 'vitre';
+        case 'haut':
+        case 'bas':
+          return 'cote';
+      }
       // balle haute : le joueur est déjà en position d'attaque, FRAPPE donne le coup aérien (smash, víbora ou bandeja)
       if (haut) return coupAerien(s, p);
       return charge < 0.5 ? 'coupe' : 'plat';
@@ -167,10 +173,13 @@ function coupHumain(jeu: Partie, s: Joueur): void {
   // jauge pleine : SMASH déclenche un super coup, dont la variante dépend de la situation
   const variante =
     bouton === 'smash' && jeu.jaugeSmash[s.eq] >= 1 ? varianteSuper(b, Math.abs(s.x - MIL)) : 0;
-  const type = coupPrevu(jeu, s, bouton, s.charge);
+  const prevu = coupPrevu(jeu, s, bouton, s.charge);
+  // la vitre de côté est un plat dont le rebond voulu est cherché (sans élan possible, c'est un coup direct)
+  const type = prevu === 'cote' ? 'plat' : prevu;
+  const mur = prevu === 'vitre' ? 'fond' : prevu === 'cote' ? murVise(b, s, directionVisee(s)) : null;
   const p = 0.25 + 0.75 * s.charge;
   const { tx, ty } = cibleCoup(s, type);
-  executeCoup(jeu, s, type, p, tx + alea(jeu.rng, -0.2, 0.2), ty, type === 'vitre' ? 'fond' : null, {
+  executeCoup(jeu, s, type, p, tx + alea(jeu.rng, -0.2, 0.2), ty, mur, {
     precision: precisionContact(jeu, s),
     intention: type,
     charge: s.charge,

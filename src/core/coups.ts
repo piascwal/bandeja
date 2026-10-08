@@ -19,6 +19,7 @@ export const PROF: Partial<Record<Coup, number>> = {
   amorti: 8.4,
   /** le renvoi de vitre vise ~6 m derrière le filet (voir `contreVitre`) */
   vitre: 4,
+  cote: 4,
 };
 
 /**

@@ -423,13 +423,16 @@ du filet), le renvoi est normal, son coup est limité à mi-puissance
 et l'équipe qui a lobé a l'avantage : son prochain coup est plus fort (+0,2). Un
 lob encore haut au-dessus d'un joueur au filet peut toujours être smashé.
 
-**Renvoi dans sa vitre** (`vitreJouable` dans `core/contre-vitre.ts`). Balle déjà rebondie et sous
-la hauteur de smash, FRAPPE renvoie la balle contre **sa propre vitre du fond** quand : (1) un
-lob profond est passé derrière le joueur, près de la vitre (moins de 2,2 m), ou (2) le joueur
-est collé à la vitre (moins de 1,8 m) et la balle monte tout près (moins de 1,3 m). Le nom
-du coup affiché est « VITRE » ; le joystick règle le côté, et la balle ressort au-dessus du
-filet, vers 6 m derrière lui. Si aucun élan ne marche, le renvoi devient un lob. Les boutons
-LOB et AMORTI gardent leur coup. Le CPU le jouait déjà ; l'humain, non (`tests/contre-vitre-humain.test.ts`).
+**Renvoi dans sa vitre** (`murVise` dans `core/contre-vitre.ts`). Balle déjà rebondie et sous la
+hauteur de smash, FRAPPE renvoie la balle contre une vitre quand : (1) la balle est passée dans
+le dos du joueur, près de la vitre (lob profond : moins de 2,2 m du fond, 1,8 m d'un côté), ou
+(2) le joueur est collé à la vitre (moins de 1,8 m du fond, 1,6 m d'un côté) et la balle monte
+tout près. La visée au joystick choisit la vitre : vers l'arrière, celle du fond ; vers un
+côté, la vitre de ce côté ; sans visée, le fond d'abord. Vers le filet (ou vers l'autre côté), le
+coup reste ordinaire. Le nom affiché est « VITRE » (fond) ou « COTE ». La balle ressort au-dessus
+du filet, vers 6 m derrière lui ; si aucun élan ne marche, le coup devient un lob (fond) ou un coup
+direct (côté). LOB et AMORTI gardent leur coup. Le CPU le jouait déjà
+(`tests/contre-vitre-humain.test.ts`).
 
 **Por 3 et por 4** (`core/por.ts`, `tests/por.test.ts`). Faire sortir la balle de la piste
 n'est possible que dans des situations précises, sinon le grillage la retient (`b.por` :
