@@ -51,13 +51,14 @@ export default async function (env) {
     const b = window.bandeja;
     b.effets.abime('sol', 5, 3, 0, 4);
     b.effets.debris(b.W / 2, b.H * 0.6);
-    b.effets.finale.declenche(4, b.W / 2, b.H * 0.6);
+    b.effets.finale.declenche(4, b.W / 2, b.H * 0.6, 0.8);
   });
   env.verifie(await p.evaluate(() => window.bandeja.effets.finale.actif), 'la scène finale démarre');
   // on photographie les temps clés de la scène en réglant son horloge
   for (const [nom, t] of [
     ['choc', 0.3],
     ['ascension', 1.0],
+    ['ascension-haut', 1.4],
     ['lune-arrivee', 1.55 + 0.4],
     ['lune-impact', 1.55 + 0.75],
     ['lune-cratere', 1.55 + 1.3],

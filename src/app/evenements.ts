@@ -14,7 +14,7 @@ const exploit = (raison: string) => raison.startsWith('POR') || NOMS_SUPER.some(
 /** La variante du super coup en vol (0 : aucun) : elle décide des effets de ses impacts. */
 let superEnCours = 0;
 /** Le dernier impact à l'écran : c'est là que la fin spectaculaire du super coup se joue. */
-let dernierImpact: [number, number] = [0, 0];
+let dernierImpact: [number, number, number] = [0, 0, 0];
 
 /** Les effets d'un impact de super coup : cratère, vitre qui explose, écran qui se fissure. */
 function impactSuper(
@@ -22,11 +22,12 @@ function impactSuper(
   ev: Extract<Evenement, { type: 'impact' }>,
   sx: number,
   sy: number,
+  cap: number,
   fx: Effets,
   son: MoteurSon,
 ): void {
   const c = COULEURS_SUPER[variante] ?? C.or;
-  dernierImpact = [sx, sy];
+  dernierImpact = [sx, sy, cap];
   if (ev.surface === 'vitre') {
     fx.abime('vitre', ev.x, ev.y, ev.z, variante);
     // la balle traverse la vitre : elle vole en éclats
@@ -38,7 +39,7 @@ function impactSuper(
     fx.flash = 0.7;
   } else if (ev.surface === 'sol') {
     // toujours le sol d'abord : la balle y tape, puis elle part (la scène finale s'ouvre sur ce choc)
-    if (!fx.finale.declenchee) fx.finale.declenche(variante, sx, sy);
+    if (!fx.finale.declenchee) fx.finale.declenche(variante, sx, sy, cap);
     fx.abime('sol', ev.x, ev.y, 0, variante);
     fx.debris(sx, sy);
     fx.etincelles(sx, sy, 50, c, 170);
@@ -48,6 +49,20 @@ function impactSuper(
     // l'éclair fait voler l'écran en éclats : l'écran se fissure
     if (variante === 4) fx.fissurer(sx, sy);
   }
+}
+
+/**
+ * Le cap pris par la balle après son rebond, vu de l'écran : de -1 (à gauche) à 1 (à droite).
+ * C'est la direction de sa vitesse horizontale (sa norme ne compte pas : le rebond d'un super
+ * coup l'écrase), projetée sur la piste de cet écran.
+ */
+function capApresRebond(jeu: Partie, ev: { x: number; y: number }, K: Projection): number {
+  const { vx, vy } = jeu.balle;
+  const n = Math.hypot(vx, vy);
+  if (n < 0.5) return 0;
+  const [x0, y0] = K.proj(ev.x, ev.y, 0);
+  const [x1, y1] = K.proj(ev.x + vx / n, ev.y + vy / n, 0);
+  return (x1 - x0) / Math.max(1e-6, Math.hypot(x1 - x0, y1 - y0));
 }
 
 /**
@@ -68,7 +83,7 @@ export function joueEvenements(
     switch (ev.type) {
       case 'impact': {
         const [sx, sy] = K.proj(ev.x, ev.y, ev.z);
-        if (superEnCours) impactSuper(superEnCours, ev, sx, sy, fx, son);
+        if (superEnCours) impactSuper(superEnCours, ev, sx, sy, capApresRebond(jeu, ev, K), fx, son);
         if (ev.surface === 'sol') {
           if (ev.force > 1) {
             son.sol();
@@ -139,7 +154,8 @@ export function joueEvenements(
         const sous = match ? (ev.gagnant === moi ? 'POINT POUR VOUS' : 'POINT ADVERSE') : null;
         if (superEnCours > 0 && match) {
           // super coup : la scène finale (ouverte au choc sur le sol) se joue d'abord, le bandeau vient à sa fin, avant le ralenti
-          if (!fx.finale.declenchee) fx.finale.declenche(superEnCours, dernierImpact[0], dernierImpact[1]);
+          if (!fx.finale.declenchee)
+            fx.finale.declenche(superEnCours, dernierImpact[0], dernierImpact[1], dernierImpact[2]);
           fx.differe(ev.raison, sous, EQUIPES[ev.gagnant].maillot);
           superEnCours = 0;
         } else fx.annonce(ev.raison, sous, EQUIPES[ev.gagnant].maillot, 1.6);

@@ -74,10 +74,15 @@ function ascension(v: Vue, f: FinaleSuper): void {
     px(g, x, y, 1, 14 + h(i + 3) * 18, '#ffffff');
   }
   // la balle : elle accélère en montant, avec sa traînée de feu
-  const pos = (q: number): [number, number] => [
-    W * 0.5 + Math.sin(q * 3.1) * (f.variante === 3 ? 22 : 8),
-    H * 0.95 - q * q * H * 1.25,
-  ];
+  // elle garde le cap pris au rebond : elle penche du côté où elle partait (30° au plus)
+  const depart = Math.max(W * 0.25, Math.min(W * 0.75, f.x));
+  const pos = (q: number): [number, number] => {
+    const montee = q * q * H * 1.25;
+    return [
+      depart + f.cap * 0.58 * montee + Math.sin(q * 3.1) * (f.variante === 3 ? 22 : 0),
+      H * 0.95 - montee,
+    ];
+  };
   for (let i = 30; i >= 1; i--) {
     const q = Math.max(0, p - i * 0.012);
     const [x, y] = pos(q);

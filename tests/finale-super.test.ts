@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { BANDEAU_S, FINALE_FIN_S } from '../src/render/finale-super';
+import { BANDEAU_S, FINALE_FIN_S, FinaleSuper } from '../src/render/finale-super';
 import { Effets } from '../src/render/effets';
 import { DUREE_POINT_SUPER, FINALE_SUPER_S, RALENTI_CLIP, RALENTI_RYTHME } from '@core/constants';
 
@@ -35,5 +35,17 @@ describe('fin spectaculaire du super coup', () => {
     expect(fx.finale.zoom).toBe(1);
     expect(DUREE_POINT_SUPER).toBeGreaterThan(FINALE_SUPER_S + RALENTI_CLIP / RALENTI_RYTHME);
     expect(FINALE_SUPER_S).toBeGreaterThanOrEqual(FINALE_FIN_S);
+  });
+});
+
+describe('cap de la montée', () => {
+  it('garde le cap donné, borné entre -1 et 1', () => {
+    const f = new FinaleSuper();
+    f.declenche(1, 10, 10, 0.4);
+    expect(f.cap).toBe(0.4);
+    f.declenche(1, 10, 10, -7);
+    expect(f.cap).toBe(-1);
+    f.declenche(1, 10, 10);
+    expect(f.cap).toBe(0);
   });
 });

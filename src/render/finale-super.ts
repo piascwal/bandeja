@@ -21,13 +21,16 @@ export class FinaleSuper {
   /** point d'impact à l'écran (pixels logiques) */
   x = 0;
   y = 0;
-  declenche(variante: number, x: number, y: number): void {
+  /** inclinaison de la montée : sens et ampleur (-1 à 1) du cap pris par la balle après son rebond, à l'écran */
+  cap = 0;
+  declenche(variante: number, x: number, y: number, cap = 0): void {
     this.variante = variante;
     this.t = 0;
     this.actif = true;
     this.declenchee = true;
     this.x = x;
     this.y = y;
+    this.cap = Math.max(-1, Math.min(1, cap));
   }
 
   maj(dt: number): void {

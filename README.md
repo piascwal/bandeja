@@ -412,7 +412,7 @@ imparable. Le CPU tente sa chance au hasard. Le curseur est synchronisé dans l'
 une vitre), et ce choc ouvre la scène : avant le ralenti, chaque écran joue sa propre scène (`finale-super.ts`, `finale-vue.ts`) : coup de
 zoom sur l'impact, terrain cratérisé ou vitre fissurée (`decals.ts` : le cratère est dessiné sous les vitres et
 coupé aux limites de la piste ; il disparaît quand le ralenti commence),
-filtre de particules sur tout l'écran, puis la balle monte dans le ciel jusqu'à l'espace,
+filtre de particules sur tout l'écran, puis la balle monte dans le ciel jusqu'à l'espace en gardant le cap pris au rebond (elle penche du côté où elle partait),
 arrive à toute vitesse sur la lune (une grosse boule grise à l'horizon arrondi, criblée d'un ensemble fixe de
 cratères) et s'y écrase (éclair, onde de choc, débris) toujours dans le même cratère
 (rien n'est mémorisé d'une partie à l'autre). Le bandeau du point s'affiche alors ; un
