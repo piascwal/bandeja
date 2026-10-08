@@ -1,10 +1,10 @@
 import { clamp } from './aleatoire';
-import { BONUS_HUMAIN, LARG, LONG, MIL, SUPER_COURSE, VMAX } from './constants';
+import { BONUS_HUMAIN, LARG, LONG, MIL, VMAX } from './constants';
 import { dir } from './terrain';
 import type { Joueur, Partie, Point2 } from './types';
 
 /** Un humain qui arme son coup trop tôt ralentit fort : il faut d'abord se placer, puis déclencher au bon moment. */
-const FREIN_ARME = 0.45;
+const FREIN_ARME = 0.3;
 const ECART_MIN = 0.7;
 /** Distance minimale au filet (m) : le dessin du joueur ne le dépasse pas. */
 const ECART_FILET = 0.8;
@@ -34,17 +34,7 @@ export function bouge(jeu: Partie, s: Joueur, dt: number): void {
   let dvy = 0;
   const vmax = VMAX * (s.humain ? BONUS_HUMAIN : s.niv.vit);
   const but = s.humain && jeu.phase !== 'service' ? pointDeFrappe(jeu, s) : null;
-  if (s.humain && s.auto > 0 && jeu.phase === 'jeu') {
-    // super coup demandé : le joueur fonce vers la balle, sans plus rien demander au joystick
-    const b = jeu.balle;
-    const cible = {
-      x: clamp(b.x, s.eq === 0 ? 0.25 : MIL + ECART_FILET, s.eq === 0 ? MIL - ECART_FILET : LONG - 0.25),
-      y: clamp(b.y, 0.25, LARG - 0.25),
-    };
-    const [gx, gy] = versPoint(s, cible, vmax * SUPER_COURSE);
-    dvx = gx;
-    dvy = gy;
-  } else if (s.humain && jeu.phase !== 'service') {
+  if (s.humain && jeu.phase !== 'service') {
     const k = s.intent && s.intent.t > 0.15 ? FREIN_ARME : 1;
     dvx = s.ex * vmax * k;
     dvy = s.ey * vmax * k;
@@ -71,6 +61,8 @@ export function bouge(jeu: Partie, s: Joueur, dt: number): void {
   s.y = clamp(s.y, 0.25, LARG - 0.25);
   s.pas += Math.hypot(s.vx, s.vy) * dt;
   s.swing = Math.max(0, s.swing - dt / 0.32);
+  // le saut retombe
+  s.saut = Math.max(0, s.saut - 9 * dt);
   s.tourne = Math.max(0, s.tourne - dt);
   s.cd -= dt;
 }

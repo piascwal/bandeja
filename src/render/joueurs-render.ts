@@ -8,6 +8,10 @@ import type { Vue } from './vue';
 const coteCoup = (jeu: Partie, s: Joueur, vj: VueJoueurs): Pose =>
   jeu.balle.y >= s.y === vj.regard(s) > 0 ? 'droit' : 'revers';
 
+/** Les images de la course, dans l'ordre de la foulée, et la distance (m) que chacune dure. */
+const FOULEE: readonly Pose[] = ['course', 'course2', 'course3', 'course2'];
+const PAS_FOULEE = 0.55;
+
 /** La pose à afficher : coup en cours, préparation, course ou attente. */
 export function poseJoueur(jeu: Partie, s: Joueur, vj: VueJoueurs): Pose {
   const b = jeu.balle;
@@ -23,11 +27,13 @@ export function poseJoueur(jeu: Partie, s: Joueur, vj: VueJoueurs): Pose {
   const v = Math.hypot(s.vx, s.vy);
   const e = vj.etat(s);
   if (e.court ? v < 1.8 : v > 2.8) e.court = !e.court;
-  return e.court ? 'course' : 'attente';
+  // la foulée : quatre images qui se suivent au rythme des pas (la distance parcourue)
+  return e.court ? FOULEE[Math.floor(s.pas / PAS_FOULEE) % FOULEE.length]! : 'attente';
 }
 
 export function dessineJoueur(v: Vue, jeu: Partie, s: Joueur, sprites: SpritesEquipe, vj: VueJoueurs): void {
-  const [sx, sy] = v.K.proj(s.x, s.y, 0);
+  // le saut d'un joueur qui s'envole vers la balle (super coup) le lève au-dessus de son ombre
+  const [sx, sy] = v.K.proj(s.x, s.y, s.saut);
   const vit = Math.hypot(s.vx, s.vy);
   const f = vj.regard(s);
   const nom = poseJoueur(jeu, s, vj);

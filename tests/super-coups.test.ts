@@ -77,10 +77,8 @@ describe('le super coup', () => {
     const { jeu, s } = situation({ z: 2.4, vx: -2, coup: 'lobe', sol: 0 }, 6);
     jeu.jaugeSmash[0] = 1;
     appliqueCommande(jeu, s, { ...VIDE, appuis: ['smash'] }, PAS);
-    for (let i = 0; i < 4 && jeu.balle.super === 0; i++) {
-      jeu.balle.x -= 0.05;
-      appliqueCommande(jeu, s, VIDE, PAS);
-    }
+    // la scène se fige, le joueur rejoint la balle puis la frappe
+    for (let i = 0; i < 240 && jeu.balle.super === 0; i++) pas(jeu, PAS);
     expect(jeu.balle.super).toBe(1); // une balle haute : la météore
     expect(jeu.parade).not.toBeNull(); // le jeu est figé : l'adversaire doit arrêter le curseur
     jeu.parade = null; // parade ratée
@@ -91,35 +89,63 @@ describe('le super coup', () => {
     expect(jeu.gagnant).toBe(0);
   });
 
-  it('SUPER dès que la balle est dans notre camp : le joueur court seul vers elle et lance le gros coup, même de loin', () => {
-    // le joueur est au fond, la balle près du filet : hors de portée d'un coup normal
-    const { jeu, s } = situation(
-      { x: 9, y: 2, z: 1.2, vx: -2, vy: 0, vz: 0, sol: 0, coup: 'lob' as never },
-      1,
-    );
+  it('SUPER dès que la balle est dans notre camp : la scène se fige, le joueur court puis s’envole vers la balle et lance le gros coup', () => {
+    // le joueur est au fond, la balle haute près du filet : loin de sa raquette
+    const { jeu, s } = situation({ x: 9, y: 2, z: 3.2, vx: -2, vy: 0, vz: 0, sol: 0, coup: 'plat' }, 1);
     s.y = 8;
+    const autre = jeu.joueurs[1]!;
+    autre.x = 3;
     jeu.jaugeSmash[0] = 1;
-    jeu.balle.coup = 'plat';
     appliqueCommande(jeu, s, { ...VIDE, appuis: ['smash'] }, PAS);
-    expect(s.auto).toBeGreaterThan(0);
-    for (let i = 0; i < 240 && jeu.balle.super === 0; i++) pas(jeu, PAS, (j) => (j === s ? VIDE : VIDE));
+    expect(jeu.approche).not.toBeNull();
+    const avant = { bx: jeu.balle.x, bz: jeu.balle.z, ax: autre.x, cx: jeu.joueurs[2]!.x };
+    let hauteurMax = 0;
+    for (let i = 0; i < 240 && jeu.approche; i++) {
+      pas(jeu, PAS);
+      hauteurMax = Math.max(hauteurMax, s.saut);
+      // tout est figé, sauf le joueur
+      expect(jeu.balle.x).toBe(avant.bx);
+      expect(jeu.balle.z).toBe(avant.bz);
+      expect(autre.x).toBe(avant.ax);
+      expect(jeu.joueurs[2]!.x).toBe(avant.cx);
+    }
+    expect(jeu.approche).toBeNull();
+    // il a sauté jusqu'à la balle (3,2 m : la raquette est à 1,5 m debout) et frappé
+    expect(hauteurMax).toBeGreaterThan(1.2);
     expect(jeu.balle.super).toBeGreaterThan(0);
     expect(jeu.balle.eqF).toBe(0);
-    expect(s.auto).toBe(0);
+    expect(s.haut).toBe(true);
+    expect(s.poseCoup).toBe('smash2');
+    // le jeu reprend par la parade de l'adversaire
+    expect(jeu.parade).not.toBeNull();
+    expect(jeu.jaugeSmash[0]).toBe(0);
   });
 
-  it('sans la jauge pleine, SUPER ne fait pas courir : le joueur reste maître de ses déplacements', () => {
+  it('une balle basse : le joueur court sans sauter', () => {
+    const { jeu, s } = situation({ x: 7, y: 5, z: 0.8, vx: -2, vy: 0, vz: 0, sol: 1, coup: 'plat' }, 1);
+    jeu.jaugeSmash[0] = 1;
+    appliqueCommande(jeu, s, { ...VIDE, appuis: ['smash'] }, PAS);
+    let hauteurMax = 0;
+    for (let i = 0; i < 240 && jeu.approche; i++) {
+      pas(jeu, PAS);
+      hauteurMax = Math.max(hauteurMax, s.saut);
+    }
+    expect(hauteurMax).toBeLessThan(0.1);
+    expect(jeu.balle.super).toBeGreaterThan(0);
+  });
+
+  it('sans la jauge pleine, SUPER ne fige rien : le joueur reste maître de ses déplacements', () => {
     const { jeu, s } = situation({ x: 9, y: 2, z: 1.2, vx: -2, vy: 0, vz: 0, sol: 0 }, 1);
     jeu.jaugeSmash[0] = 0.5;
     appliqueCommande(jeu, s, { ...VIDE, appuis: ['smash'] }, PAS);
-    expect(s.auto).toBe(0);
+    expect(jeu.approche).toBeNull();
   });
 
-  it('balle dans l’autre camp : SUPER ne déclenche pas la course', () => {
+  it('balle dans l’autre camp : SUPER ne déclenche pas l’approche', () => {
     const { jeu, s } = situation({ x: 12, y: 5, z: 1.2, vx: 8, camp: 1, sol: 0 }, 1);
     jeu.jaugeSmash[0] = 1;
     appliqueCommande(jeu, s, { ...VIDE, appuis: ['smash'] }, PAS);
-    expect(s.auto).toBe(0);
+    expect(jeu.approche).toBeNull();
   });
 
   it('sans jauge pleine, la touche du haut vaut FRAPPE : jamais de super coup ni de coup perdu', () => {

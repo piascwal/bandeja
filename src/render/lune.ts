@@ -1,4 +1,4 @@
-import { ASCENSION_FIN_S, FINALE_FIN_S, LUNE_FIN_S, crateresLune, type FinaleSuper } from './finale-super';
+import { ASCENSION_FIN_S, FINALE_FIN_S, LUNE_FIN_S, type FinaleSuper } from './finale-super';
 import { clamp01, h, melange } from './finale-outils';
 import { C, COULEURS_SUPER } from './palette';
 import { px } from './primitives';
@@ -6,8 +6,14 @@ import type { Vue } from './vue';
 
 /** La balle s'écrase sur la lune à ce moment du plan (s) : avant, elle arrive ; après, elle laisse son cratère. */
 const IMPACT_S = 0.6;
-/** Rayon du cratère laissé par la balle (pixels logiques). */
-const RAYON_CRATERE = 16;
+/** Le cratère que la balle creuse, toujours au même endroit (0 → 1 dans le plan) et du même rayon (pixels logiques). */
+const CRATERE = { x: 0.6, y: 0.4, r: 16 };
+/** Les cratères déjà là : ceux des balles des parties d'avant. */
+const CRATERES = Array.from({ length: 12 }, (_, i) => ({
+  x: 0.04 + h(i + 100) * 0.92,
+  y: h(i + 130),
+  r: 5 + h(i + 160) * 12,
+}));
 
 /** Un cratère vu de biais : une ellipse sombre, son bord éclairé en haut. */
 function cratere(g: CanvasRenderingContext2D, x: number, y: number, r: number, alpha: number): void {
@@ -29,9 +35,8 @@ function cratere(g: CanvasRenderingContext2D, x: number, y: number, r: number, a
 
 /**
  * Le plan sur la lune : ciel étoilé, la Terre au loin, sol gris déjà criblé des
- * cratères de toutes les balles précédentes ; la balle arrive à toute vitesse du
- * ciel, s'écrase (éclair, onde de choc, débris, poussière) et creuse un nouveau
- * cratère, qui restera pour les prochaines fois.
+ * cratères ; la balle arrive à toute vitesse du ciel, s'écrase (éclair, onde de
+ * choc, débris, poussière) et creuse toujours le même cratère.
  */
 export function lune(v: Vue, f: FinaleSuper): void {
   const { g, W, H } = v;
@@ -80,20 +85,13 @@ export function lune(v: Vue, f: FinaleSuper): void {
     cx * W,
     horizon + sag(cx * W) + 10 + cy * (H - horizon - 34),
   ];
-  // les cratères déjà là : ceux des balles des parties d'avant, puis ceux de cette lune sauvegardés
-  for (let i = 0; i < 8; i++) {
-    const [ax, ay] = place(0.05 + h(i + 100) * 0.9, h(i + 130));
-    cratere(g, ax, ay, 6 + h(i + 160) * 12, fondu);
-  }
-  const anciens = crateresLune();
-  const n = f.cratereAjoute ? anciens.length - 1 : anciens.length;
-  for (let i = 0; i < n; i++) {
-    const c = anciens[i]!;
+  // les cratères déjà là, ceux de toutes les balles des parties d'avant
+  for (const c of CRATERES) {
     const [cx, cy] = place(c.x, c.y);
     cratere(g, cx, cy, c.r, fondu);
   }
   // la balle : elle arrive en diagonale, de plus en plus vite, puis s'écrase
-  const [bx, by] = place(f.xLune, f.yLune);
+  const [bx, by] = place(CRATERE.x, CRATERE.y);
   const age = tau - IMPACT_S;
   if (age < 0) {
     const k = clamp01(tau / IMPACT_S);
@@ -115,9 +113,8 @@ export function lune(v: Vue, f: FinaleSuper): void {
     return;
   }
   // l'impact : le cratère se creuse en un instant, et il restera
-  f.ajouteCratereLune(RAYON_CRATERE);
   const creuse = 1 - (1 - clamp01(age / 0.3)) ** 3;
-  cratere(g, bx, by + 2, RAYON_CRATERE * creuse, fondu);
+  cratere(g, bx, by + 2, CRATERE.r * creuse, fondu);
   // l'onde de choc, qui s'étale sur le sol
   if (age < 0.6) {
     g.globalAlpha = fondu * (1 - age / 0.6) * 0.8;

@@ -2,7 +2,7 @@ import type { Equipe } from '@core/types';
 import { recoloreTampon } from './couleurs';
 import { canvas, miroir } from './primitives';
 
-export type Pose = 'attente' | 'course' | 'droit' | 'revers' | 'smash1' | 'smash2';
+export type Pose = 'attente' | 'course' | 'course2' | 'course3' | 'droit' | 'revers' | 'smash1' | 'smash2';
 
 export interface InfoPose {
   w: number;
@@ -16,13 +16,16 @@ export interface InfoPose {
 }
 
 /**
- * Les joueurs dessinés (public/sprites/) : six poses (attente, course, coup
+ * Les joueurs dessinés (public/sprites/) : huit images (attente, trois de course, coup
  * droit, revers, coup aérien armé, coup aérien sauté), fond retiré, tournées
  * vers la droite.
  */
 export const POSES: Record<Pose, InfoPose> = {
   attente: { w: 74, h: 111, pied: { x: 34, y: 110 }, tete: 32, ech: 1 },
   course: { w: 90, h: 111, pied: { x: 72.5, y: 110 }, tete: 47.5, ech: 1 },
+  // les deux autres images de la foulée (scripts/sprite-course.mjs) : jambes qui se croisent, grande enjambée
+  course2: { w: 79, h: 112, pied: { x: 40, y: 111 }, tete: 38.2, ech: 1 },
+  course3: { w: 86, h: 111, pied: { x: 43, y: 110 }, tete: 45.4, ech: 1 },
   // le dessin du coup droit est un peu plus près que les autres : on le réduit légèrement
   droit: { w: 107, h: 116, pied: { x: 61, y: 115 }, tete: 86, ech: 0.88 },
   revers: { w: 75, h: 122, pied: { x: 37.5, y: 121 }, tete: 42.5, ech: 1 },

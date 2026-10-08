@@ -213,16 +213,16 @@ export function executeCoup(
   b.coup = type;
   b.super = variante;
   b.trace.length = 0;
-  s.poseCoup = haut || variante === 1 ? 'smash2' : 'attente';
+  // le sprite pieds en l'air est réservé au smash et aux super coups ; bandeja et víbora gardent la pose d'armé, les deux pieds au sol
+  s.poseCoup = variante > 0 || (haut && type === 'smash') ? 'smash2' : haut ? 'smash1' : 'attente';
   // le joueur se tourne vers là où part la balle (y compris vers sa vitre)
   if (type === 'vitre' || type === 'cote') {
     s.faceCoup = b.vx >= 0 ? 1 : -1;
     s.tourne = 0.45;
   }
   s.swing = 1;
-  s.haut = haut || variante === 1;
+  s.haut = haut || variante > 0;
   s.cd = 0.35;
-  s.auto = 0;
   s.intent = null;
   s.charge = 0;
   jeu.tFrappe = 0;

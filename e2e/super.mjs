@@ -76,6 +76,34 @@ export default async function (env) {
     'la scène finale se termine',
   );
 
+  // la course : quatre images de foulée, saisies en plein mouvement
+  await p.evaluate(() => {
+    const b = window.bandeja;
+    const j = b.jeu;
+    j.phase = 'jeu';
+    j.parade = null;
+    j.approche = null;
+    Object.assign(j.balle, {
+      x: j.humain.eq === 0 ? 14 : 6,
+      y: 5,
+      z: 1,
+      vx: 0,
+      vy: 0,
+      vz: 0,
+      camp: 1 - j.humain.eq,
+      sol: 0,
+      coup: 'plat',
+    });
+    j.humain.x = j.humain.eq === 0 ? 8 : 12;
+    j.humain.y = 8;
+  });
+  await p.keyboard.down('ArrowUp');
+  for (let i = 0; i < 3; i++) {
+    await attends(180);
+    await env.capture(p, `course-${i}`);
+  }
+  await p.keyboard.up('ArrowUp');
+
   // un vrai super coup : SUPER alors que la balle est loin dans notre camp, le joueur court la chercher,
   // la balle tape le sol, et la scène finale s'ouvre sur ce choc (jamais sur une vitre)
   let reussi = false;
@@ -106,6 +134,14 @@ export default async function (env) {
       });
     });
     await p.keyboard.press('KeyI');
+    if (essai === 0) {
+      await attends(110);
+      await env.capture(p, 'super-approche');
+      env.verifie(
+        await p.evaluate(() => window.bandeja.jeu.approche !== null || window.bandeja.jeu.balle.super > 0),
+        'SUPER fige la scène : le joueur part vers la balle',
+      );
+    }
     reussi = await env.attendsQue(p, () => window.bandeja.effets.finale.declenchee, undefined, 6000);
   }
   env.verifie(reussi, 'un super coup lancé de loin ouvre la scène finale');

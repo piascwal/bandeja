@@ -131,7 +131,7 @@ Règles : **toute modification incompatible d'un message incrémente
 version ne se voient pas) ; les listes d'énumérations ne se réordonnent jamais
 sans cela. L'hôte est autoritaire : il ne reçoit que des intentions bornées.
 
-Le regard des joueurs et la pose de course ne sont pas dans la simulation : ils
+Le regard des joueurs et l'image de course ne sont pas dans la simulation : ils
 dépendent de l'écran (`render/regard.ts`). Un humain de l'équipe 1 voit la
 piste retournée (`Projection.miroir`) et joue lui aussi à droite.
 
@@ -315,11 +315,18 @@ son compromis. Le CPU n'a pas ces règles. Le bouton du haut n'apparaît que pou
 coup, et la touche I ou Espace vaut FRAPPE tant que la jauge n'est pas pleine : l'appui
 n'est jamais perdu.
 
-**SUPER, le coup assuré.** Jauge pleine et balle dans notre camp, un appui sur SUPER envoie
-le joueur **courir tout seul** vers la balle (près de trois fois sa vitesse, 1,6 s au plus)
-et la frapper de plus loin que d'ordinaire : le gros coup n'est jamais raté pour cause
-de placement, même quand la balle est loin. Il faut quand même qu'elle soit encore
-jouable (pas deux rebonds, pas au-dessus de 3 m).
+**SUPER, le coup assuré.** Jauge pleine et balle dans notre camp, un appui sur SUPER **fige la
+scène** (`core/approche.ts`) : seul le joueur bouge. Il court vers la balle (plus de quatre fois
+sa vitesse) et **s'envole** (`Joueur.saut`, synchronisé dans l'instantané) jusqu'au niveau de
+l'impact, puis frappe avec la pose pieds en l'air. La scène se débloque sur le coup ; la
+parade (ci-dessous) reprend alors au ralenti jusqu'au clic de l'adversaire. Le gros coup n'est
+jamais raté pour cause de placement, mais la balle doit rester jouable (pas deux rebonds, pas
+au-dessus de 4,5 m) ; l'approche s'annule après 1,3 s.
+
+**Poses de coup.** Course en 4 temps (`course`, `course2`, `course`, `course3`, un temps tous les
+0,55 m parcourus ; images produites par `scripts/sprite-course.mjs`). Bandeja et víbora gardent
+la pose de préparation (`smash1`, pieds au sol) ; seuls le smash et les coups SUPER utilisent
+la pose pieds en l'air (`smash2`).
 
 **La balle accélère** de 6 % à chaque coup après le deuxième, jusqu'à +90 %
 (`ACCEL_*` dans `core/constants.ts`), sauf le lob et l'amorti. Un compteur
@@ -338,7 +345,7 @@ l'équipe 1 à gauche, joystick et boutons identiques. Les positions de service
 seul : on peut donc appuyer un peu avant. Plus l'appui est précoce, plus le
 coup est puissant (la jauge au-dessus du joueur se remplit) ; le nom du coup
 qui partira s'affiche au-dessus de la jauge, et un losange marque sur le
-terrain adverse où la balle ira. Armer un coup ralentit à peine la course.
+terrain adverse où la balle ira. Armer un coup ralentit nettement la course (`FREIN_ARME` 0,3) : on dose mieux la direction.
 
 **Les coups.** FRAPPE peu chargé est un coup _coupé_ (lent, qui revient de la
 vitre), chargé un coup _plat_ (qui ricoche de la vitre vers le filet). Sur une
@@ -406,10 +413,9 @@ une vitre), et ce choc ouvre la scène : avant le ralenti, chaque écran joue sa
 zoom sur l'impact, terrain cratérisé ou vitre fissurée (`decals.ts` : le cratère est dessiné sous les vitres et
 coupé aux limites de la piste ; il disparaît quand le ralenti commence),
 filtre de particules sur tout l'écran, puis la balle monte dans le ciel jusqu'à l'espace,
-arrive à toute vitesse sur la lune (une grosse boule grise à l'horizon arrondi, déjà criblée de
-cratères) et s'y écrase (éclair, onde de choc, débris) en creusant
-un **nouveau cratère** : ceux de la lune viennent tous des joueurs de padel, ils s'accumulent
-d'une partie à l'autre (`localStorage`, 40 au plus). Le bandeau du point s'affiche alors ; un
+arrive à toute vitesse sur la lune (une grosse boule grise à l'horizon arrondi, criblée d'un ensemble fixe de
+cratères) et s'y écrase (éclair, onde de choc, débris) toujours dans le même cratère
+(rien n'est mémorisé d'une partie à l'autre). Le bandeau du point s'affiche alors ; un
 appui passe la scène. Le ralenti d'un super coup est toujours rejoué, après la scène.
 
 **Lob subi.** Quand un lob a passé le joueur (la balle a rebondi, ou il est loin

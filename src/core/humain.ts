@@ -1,5 +1,6 @@
 import { alea, clamp } from './aleatoire';
-import { HAUT_SMASH, LARG, MIL, SUPER_DUREE_S, SUPER_PORTEE } from './constants';
+import { HAUT_SMASH, LARG, MIL } from './constants';
+import { lanceApproche, peutApprocher } from './approche';
 import { executeCoup, frappable, PROF } from './coups';
 import { jaugeVal, servir } from './service';
 import { arreteParade, varianteSuper } from './super-coup';
@@ -59,14 +60,16 @@ export function appliqueCommande(jeu: Partie, s: Joueur, cmd: Commande, dt: numb
   if (jeu.phase !== 'jeu') {
     s.intent = null;
     s.charge = 0;
-    s.auto = 0;
     return;
   }
   // on peut appuyer en avance : le coup part dès que la balle est à portée,
   // et plus on a appuyé tôt, plus il est puissant
   for (const a of cmd.appuis) {
-    // SUPER alors que la balle est dans notre camp : le joueur court tout seul vers elle pour lancer le gros coup
-    if (a === 'smash' && jeu.jaugeSmash[s.eq] >= 1 && jeu.balle.camp === s.eq) s.auto = SUPER_DUREE_S;
+    // SUPER alors que la balle est dans notre camp : la scène se fige, le joueur court et s'envole vers elle pour lancer le gros coup
+    if (a === 'smash' && peutApprocher(jeu, s)) {
+      lanceApproche(jeu, s);
+      return;
+    }
     // le bouton du haut n'existe que pour le super coup : sans jauge pleine, son appui (touche I ou Espace) vaut FRAPPE
     const bouton: Bouton = a === 'smash' && jeu.jaugeSmash[s.eq] < 1 ? 'plat' : a;
     if (s.intent) s.intent.type = bouton;
@@ -78,19 +81,18 @@ export function appliqueCommande(jeu: Partie, s: Joueur, cmd: Commande, dt: numb
   if (s.intent) {
     s.intent.t += dt;
     s.charge = Math.min(1, s.charge + dt / DUREE_CHARGE);
-    if (s.intent.t > OUBLI_APPUI && s.auto <= 0) {
+    if (s.intent.t > OUBLI_APPUI) {
       s.intent = null;
       s.charge = 0;
     }
   }
-  if (s.auto > 0) s.auto = Math.max(0, s.auto - dt);
-  if (s.intent && frappable(jeu, s, s.auto > 0 ? SUPER_PORTEE : BONUS_PORTEE)) {
+  if (s.intent && frappable(jeu, s, BONUS_PORTEE)) {
     const b = jeu.balle;
     const d = Math.hypot(b.x - s.x, b.y - s.y);
     // le coup attend que la balle soit tout près (ou qu'elle s'éloigne) : c'est le bon timing qui lui donne sa qualité
     // (jamais d'attente si la balle va rebondir une deuxième fois : on ne la rate pas)
     const perdue = b.sol >= 1 && b.z < 0.5 && b.vz < 0;
-    const attend = s.auto <= 0 && d > DISTANCE_IDEALE && d <= s.dBalle && !perdue;
+    const attend = d > DISTANCE_IDEALE && d <= s.dBalle && !perdue;
     s.dBalle = d;
     if (!attend) coupHumain(jeu, s);
   } else s.dBalle = 99;

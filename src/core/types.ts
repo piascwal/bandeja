@@ -13,7 +13,7 @@ export type TypeService = 'plat' | 'coupe';
 export type Surface = 'sol' | 'vitre' | 'grille' | 'filet' | 'sortie';
 export type Phase = 'service' | 'jeu' | 'point' | 'fin';
 export type Posture = 'fond' | 'filet';
-export type PoseCoup = 'attente' | 'smash2';
+export type PoseCoup = 'attente' | 'smash1' | 'smash2';
 
 export interface Niveau {
   nom: string;
@@ -77,8 +77,8 @@ export interface Joueur {
   charge: number;
   /** temps de récupération après un coup */
   cd: number;
-  /** super coup demandé : secondes pendant lesquelles le joueur court tout seul vers la balle pour le lancer (0 : aucun) */
-  auto: number;
+  /** hauteur du saut (m) : le joueur décolle pour atteindre une balle haute (super coup) */
+  saut: number;
   /** distance parcourue, pour l'animation des pas */
   pas: number;
   /** sens de l'attaque à l'écran */
@@ -228,6 +228,8 @@ export interface Partie {
   /** jauge de smash de chaque équipe (0 → 1) : pleine, le prochain smash en hauteur est garanti par 3 / par 4 */
   jaugeSmash: [number, number];
   /** parade d'un super coup en cours : le jeu est figé, le camp qui subit doit arrêter le curseur */
+  /** un super coup est demandé : la scène est figée, seul ce joueur (son siège) court puis saute vers la balle pour le lancer */
+  approche: { id: number; t: number } | null;
   parade: Parade | null;
   /** coups joués depuis le service : la balle accélère au fil de l'échange */
   echange: number;

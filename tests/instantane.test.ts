@@ -55,6 +55,18 @@ describe('instantané binaire', () => {
     }
   });
 
+  it('transmet les trois poses de coup et la hauteur du saut', () => {
+    const { jeu } = instants(3, 20);
+    const photo = instantaneDe(jeu, 0);
+    for (const pose of ['attente', 'smash1', 'smash2'] as const) {
+      photo.joueurs[0]!.poseCoup = pose;
+      photo.joueurs[0]!.saut = pose === 'smash2' ? 2.4 : 0;
+      const d = decodeInstantane(encodeInstantane(photo))!;
+      expect(d.joueurs[0]!.poseCoup).toBe(pose);
+      expect(d.joueurs[0]!.saut).toBeCloseTo(photo.joueurs[0]!.saut, 1);
+    }
+  });
+
   it("pose l'instantané sur la partie locale d'un invité", () => {
     const { jeu } = instants(3, 20);
     const invite = partieTest({ mode: 'match', sieges: [0, 1], local: 1 }, 99);

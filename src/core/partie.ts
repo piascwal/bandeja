@@ -1,3 +1,4 @@
+import { avanceApproche } from './approche';
 import type { Aleatoire } from './aleatoire';
 import { nouvelleBalle, physique } from './balle';
 import { DUREE_MAX_ECHANGE, PARADE_RALENTI, DUREE_POINT, JEUX, NIVEAUX, VITESSE } from './constants';
@@ -68,6 +69,7 @@ export function nouvellePartie(o: OptionsPartie): Partie {
     echange: 0,
     jaugeSmash: [0, 0],
     parade: null,
+    approche: null,
     avantage: null,
     tPhase: 0,
     dureePoint: DUREE_POINT,
@@ -120,6 +122,11 @@ export function pas(
       prevoir(jeu);
       jeu.tPred = 0.1;
     }
+  }
+  if (jeu.approche) {
+    // super coup demandé : tout est figé, sauf le joueur qui court puis s'envole vers la balle
+    avanceApproche(jeu, dt);
+    return;
   }
   if (jeu.parade) {
     // parade d'un super coup : seuls les appuis de ceux qui doivent arrêter le curseur comptent, il avance en temps réel

@@ -23,6 +23,8 @@ export interface JoueurInstantane {
   /** direction voulue, repère de la piste */
   ex: number;
   ey: number;
+  /** hauteur du saut (m) */
+  saut: number;
 }
 
 export interface BalleInstantane {
@@ -78,8 +80,8 @@ export interface Instantane {
   stats: { gagnants: [number, number]; portres: [number, number]; fautes: [number, number]; vitres: number };
 }
 
-/** Taille fixe : 7 (en-tête) + 10 (score) + 5 (jauge) + 4 x 27 (joueurs) + 31 (balle) + 7 (stats). */
-export const TAILLE_INSTANTANE = 174;
+/** Taille fixe : 7 (en-tête) + 10 (score) + 5 (jauge) + 4 x 28 (joueurs) + 31 (balle) + 7 (stats). */
+export const TAILLE_INSTANTANE = 178;
 const TOURNE_MAX = 0.5;
 const POS_MAX = 100;
 const VIT_MAX = 200;
@@ -118,6 +120,7 @@ export function instantaneDe(jeu: Partie, seq: number): Instantane {
       pas: s.pas,
       ex: s.ex,
       ey: s.ey,
+      saut: s.saut,
     })),
     balle: {
       x: b.x,
@@ -163,12 +166,13 @@ export function encodeInstantane(s: Instantane): ArrayBuffer {
   for (const j of s.joueurs) {
     w.f32(j.x).f32(j.y).f32(j.vx).f32(j.vy);
     w.u8(j.swing * 255).u8((j.tourne / TOURNE_MAX) * 255);
-    w.bits(j.haut, j.poseCoup === 'smash2', j.faceCoup > 0, j.intent !== null);
+    w.bits(j.haut, j.poseCoup === 'smash2', j.faceCoup > 0, j.intent !== null, j.poseCoup === 'smash1');
     w.u8(j.intent ? indice(BOUTONS, j.intent) : 0)
       .u8(j.charge * 255)
       .f32(j.pas)
       .i8(j.ex * 100)
-      .i8(j.ey * 100);
+      .i8(j.ey * 100)
+      .u8(j.saut * 50);
   }
   const b = s.balle;
   w.f32(b.x).f32(b.y).f32(b.z).f32(b.vx).f32(b.vy).f32(b.vz);
@@ -219,12 +223,19 @@ export function decodeInstantane(buf: ArrayBuffer): Instantane | null {
       const vy = r.f32(VIT_MAX);
       const swing = r.u8() / 255;
       const tourne = (r.u8() / 255) * TOURNE_MAX;
-      const [haut, smash2, faceDroite, armee] = r.bits() as [boolean, boolean, boolean, boolean];
+      const [haut, smash2, faceDroite, armee, smash1] = r.bits() as [
+        boolean,
+        boolean,
+        boolean,
+        boolean,
+        boolean,
+      ];
       const typeIntent = r.enumere(BOUTONS.length);
       const charge = r.u8() / 255;
       const pas = r.f32(1e7);
       const ex = r.i8() / 100;
       const ey = r.i8() / 100;
+      const saut = Math.min(5, r.u8() / 50);
       return {
         x,
         y,
@@ -232,7 +243,7 @@ export function decodeInstantane(buf: ArrayBuffer): Instantane | null {
         vy,
         swing,
         haut,
-        poseCoup: smash2 ? POSES_COUP[1]! : POSES_COUP[0]!,
+        poseCoup: smash2 ? POSES_COUP[1]! : smash1 ? POSES_COUP[2]! : POSES_COUP[0]!,
         tourne,
         faceCoup: faceDroite ? 1 : -1,
         intent: armee ? BOUTONS[typeIntent]! : null,
@@ -240,6 +251,7 @@ export function decodeInstantane(buf: ArrayBuffer): Instantane | null {
         pas,
         ex,
         ey,
+        saut,
       };
     });
     const bx = r.f32(POS_MAX);

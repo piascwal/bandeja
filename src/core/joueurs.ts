@@ -33,7 +33,7 @@ export function nouveauJoueur(id: number, eq: Equipe, poste: 0 | 1, humain: bool
     intent: null,
     charge: 0,
     cd: 0,
-    auto: 0,
+    saut: 0,
     pas: 0,
     face,
     tourne: 0,

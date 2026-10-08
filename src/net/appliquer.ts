@@ -45,6 +45,7 @@ export function appliqueInstantane(jeu: Partie, s: Instantane): void {
     p.intent = j.intent ? { type: j.intent, t: 0 } : null;
     p.charge = j.charge;
     p.pas = j.pas;
+    p.saut = j.saut;
     p.ex = j.ex;
     p.ey = j.ey;
   });
