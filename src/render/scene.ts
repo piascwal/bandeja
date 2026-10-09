@@ -1,8 +1,7 @@
 import { clamp } from '@core/aleatoire';
-import { HAUT_SMASH, LARG } from '@core/constants';
+import { LARG } from '@core/constants';
 import { frappable } from '@core/coups';
-import { BONUS_PORTEE, cibleCoup, coupPrevu, precisionContact, viseServ } from '@core/humain';
-import { COULEURS_QUALITE, qualite, situationDe } from '@core/qualite';
+import { BONUS_PORTEE, cibleCoup, coupPrevu, viseServ } from '@core/humain';
 import { cibleService } from '@core/service';
 import type { Joueur, Partie } from '@core/types';
 import { auraJoueur } from './aura';
@@ -11,7 +10,7 @@ import { dessineBalle, ombre } from './balle-render';
 import type { Decor } from './decor';
 import type { Effets } from './effets';
 import { dessineJoueur } from './joueurs-render';
-import { C, NOMS_COUPS } from './palette';
+import { C } from './palette';
 import { texte } from './police';
 import { croixSol, px } from './primitives';
 import type { VueJoueurs } from './regard';
@@ -150,7 +149,7 @@ function aidesJoueur(v: Vue, jeu: Partie, hum: Joueur): void {
   const y0 = yy - 5;
   px(g, x0 - 1, y0 - 1, w + 2, 4, C.contour);
   px(g, x0, y0, Math.round(w * hum.charge), 2, hum.charge > 0.8 ? '#ff7a3c' : C.or);
-  // le coup qui partira, et ce qu'il faut faire : la balle part toute seule dès qu'elle est à portée
+  // la balle part toute seule dès qu'elle est à portée ; le nom du coup n'apparaît qu'à l'impact (voir `evenements.ts`)
   const bouton = hum.intent.type;
   if (bouton === 'smash' && jeu.jaugeSmash[hum.eq] >= 1) {
     // jauge pleine : SMASH est le super coup
@@ -158,14 +157,6 @@ function aidesJoueur(v: Vue, jeu: Partie, hum: Joueur): void {
     else texte(g, 'SUPER !', sx, y0 - 10, C.or, 1, 'c');
     return;
   }
-  // le coup qui partira, de la couleur de la qualité qu'il aurait maintenant (rouge médiocre → vert parfait)
-  const prevu = coupPrevu(jeu, hum, bouton, hum.charge);
-  const intention = bouton === 'smash' && jeu.balle.z <= HAUT_SMASH ? 'smash' : prevu;
-  const q = qualite(
-    intention,
-    situationDe(jeu.balle, hum, precisionContact(jeu, hum), hum.charge, jeu.posture[1 - hum.eq] === 'filet'),
-  );
-  texte(g, NOMS_COUPS[prevu], sx, y0 - 10, COULEURS_QUALITE[q.niveau] ?? C.or, 1, 'c');
 }
 
 /** Flèche rouge vif au-dessus d'un autre joueur humain : bien visible sur la piste. */

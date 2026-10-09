@@ -343,9 +343,8 @@ l'équipe 1 à gauche, joystick et boutons identiques. Les positions de service
 
 **Quand part le coup ?** Dès que la balle est à portée après l'appui, tout
 seul : on peut donc appuyer un peu avant. Plus l'appui est précoce, plus le
-coup est puissant (la jauge au-dessus du joueur se remplit) ; le nom du coup
-qui partira s'affiche au-dessus de la jauge, et un losange marque sur le
-terrain adverse où la balle ira. Armer un coup ralentit nettement la course (`FREIN_ARME` 0,3, puis `FREIN_ZONE` dans la zone de frappe) : on dose mieux la direction.
+coup est puissant (la jauge au-dessus du joueur se remplit) ; un losange marque sur le
+terrain adverse où la balle ira. Armer un coup fige presque le joueur (`FREIN_ARME` 0,12, puis `FREIN_ZONE` dans la zone de frappe : le joueur est presque figé) : on dose mieux la direction.
 
 **Les coups.** FRAPPE peu chargé est un coup _coupé_ (lent, qui revient de la
 vitre), chargé un coup _plat_ (qui ricoche de la vitre vers le filet). Sur une
@@ -362,7 +361,7 @@ timing (balle bien au contact) et la charge. Exemples : un lob lent et haut reç
 filet fait un smash parfait ; un smash après un amorti très bas est médiocre ; un
 super lob est bien plus facile après une balle lente revenue de la vitre à mi-hauteur ;
 un amorti ne marche qu'au filet. Le nom du coup s'affiche, de la couleur de sa qualité,
-au moment du coup (et en direct au-dessus du joueur pendant qu'il arme son coup). La
+au moment du coup seulement (jamais avant : on ne voit que le coup joué). La
 qualité règle la trajectoire : un coup parfait est rapide et net, un lob raté est
 lent, haut et court alors qu'un lob parfait monte haut, loin et vite, un amorti raté est
 trop long et trop vif.
@@ -425,14 +424,13 @@ lob encore haut au-dessus d'un joueur au filet peut toujours être smashé.
 
 **Renvoi dans sa vitre** (`murVise` dans `core/contre-vitre.ts`). C'est le joueur qui décide, avec le
 joystick au moment du coup : poussé vers l'**arrière**, FRAPPE renvoie la balle contre la vitre du
-fond ; poussé vers un **côté**, contre la vitre de ce côté. Il faut que la balle soit dans le dos du
-joueur près de la vitre (lob profond : moins de 2,2 m du fond, 1,8 m d'un côté) ou que le joueur y
-soit collé (moins de 1,8 m du fond, 1,6 m d'un côté) avec la balle tout près. Cela marche à toute
+fond ; poussé vers un **côté**, contre la vitre de ce côté. Il faut que la balle soit entre le joueur et cette vitre (ou à son niveau) et à moins de 3 m du fond (2,4 m d'un côté). Cela marche à toute
 hauteur, même sur une balle de smash, de bandeja ou de víbora : on peut feinter, avancer comme pour
 un smash puis reculer le joystick et jouer la vitre. Joystick au repos, ou vers le filet, le coup
-reste ordinaire, vers l'avant. Dans la **zone de frappe** (balle à moins de 2 m environ) un joueur
-qui a armé son coup ralentit encore de moitié (`FREIN_ZONE`) : la direction pèse plus que le
-placement. Le nom affiché est « VITRE » (fond) ou « COTE ». La balle ressort au-dessus du filet,
+reste ordinaire, vers l'avant. Armer son coup fige presque le joueur (`FREIN_ARME` 0,12, puis `FREIN_ZONE` ×0,35 dans la zone de frappe,
+balle à moins de 2 m environ) : on se place d'abord, puis le joystick sert à diriger le coup. Le nom
+du coup n'est plus affiché au-dessus du joueur avant la frappe : il apparaît seulement à l'impact,
+« VITRE » (fond) ou « COTE » pour les renvois de vitre. La balle ressort au-dessus du filet,
 vers 6 m derrière lui ; si aucun élan ne marche, le coup devient un lob (fond) ou un coup direct
 (côté). LOB et AMORTI gardent leur coup. Le CPU le jouait déjà (`tests/contre-vitre-humain.test.ts`).
 

@@ -34,20 +34,19 @@ export function contreVitre(b: CorpsBalle, eq: Equipe, ty: number, mur: Mur, rng
   return true;
 }
 
-/** Deux cas : balle passée dans le dos du joueur près de la vitre, ou joueur collé à elle et balle tout près. */
-function pres(balle: number, joueur: number, lob: number, colle: number): boolean {
-  return (balle < joueur - 0.2 && balle < lob) || (balle < colle - 0.5 && joueur < colle);
-}
+/** La balle est entre le joueur et la vitre (ou à côté de lui) et assez près d'elle : on peut la lui renvoyer. */
+const pres = (balle: number, joueur: number, limite: number): boolean =>
+  balle < Math.min(joueur + 0.3, limite);
 
 /** Vitre du fond : un lob profond est passé derrière le joueur, ou il est collé à elle et la balle monte tout près. */
 const fondJouable = (b: Balle, s: Joueur): boolean =>
-  pres(Math.abs(b.x - fond(s.eq)), Math.abs(s.x - fond(s.eq)), 2.2, 1.8);
+  pres(Math.abs(b.x - fond(s.eq)), Math.abs(s.x - fond(s.eq)), 3);
 
-/** La vitre de côté la plus proche, si la balle y est dans le dos du joueur ou si le joueur y est collé. */
+/** La vitre de côté la plus proche, si la balle est entre elle et le joueur (ou à son niveau). */
 function coteJouable(b: Balle, s: Joueur): Mur | null {
   const mur: Mur = b.y < LARG / 2 ? 'haut' : 'bas';
   const dist = (y: number): number => (mur === 'haut' ? y : LARG - y);
-  return pres(dist(b.y), dist(s.y), 1.8, 1.6) ? mur : null;
+  return pres(dist(b.y), dist(s.y), 2.4) ? mur : null;
 }
 
 /** Le joueur est-il à portée d'une vitre pour y renvoyer la balle (fond ou côté), à n'importe quelle hauteur ? */

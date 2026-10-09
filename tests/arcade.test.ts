@@ -216,7 +216,7 @@ describe('on ne rate pas une balle armée', () => {
     expect(jeu.balle.camp).toBe(1);
   });
 
-  it('armer son coup tôt ralentit : on court bien moins vite qu’en se plaçant d’abord', () => {
+  it('armer son coup fige presque le joueur : on dirige le coup au lieu de courir', () => {
     const cours = (arme: boolean) => {
       const jeu = partieTest({ mode: 'match', sieges: [0] }, 12);
       const s = jeu.joueurs[0]!;
@@ -224,14 +224,15 @@ describe('on ne rate pas une balle armée', () => {
       s.y = 5;
       jeu.phase = 'jeu';
       Object.assign(jeu.balle, { x: 9, y: 5, z: 2, vx: 0, vy: 0, vz: 0, camp: 1, sol: 0, coup: 'lobe' });
-      for (let i = 0; i < 120; i++) {
-        appliqueCommande(jeu, s, { dx: 1, dy: 0, appuis: arme && i === 0 ? ['plat'] : [] }, PAS);
-        if (arme && !s.intent) s.intent = { type: 'plat', t: 1 };
+      if (arme) s.intent = { type: 'plat', t: 0.1 };
+      for (let i = 0; i < 30; i++) {
+        appliqueCommande(jeu, s, { dx: 1, dy: 0, appuis: [] }, PAS);
         bouge(jeu, s, PAS);
       }
-      return s.x;
+      return Math.abs(s.x - 3);
     };
-    expect(cours(false) - 3).toBeGreaterThan((cours(true) - 3) * 1.6);
+    // armé, le joueur ne bouge presque plus : on dirige le coup, on ne court plus
+    expect(cours(false)).toBeGreaterThan(cours(true) * 4);
   });
 
   it('la raquette ne rattrape pas tout : une balle à plus d’un mètre quinze n’est pas jouée', () => {
