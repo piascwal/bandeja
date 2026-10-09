@@ -1,6 +1,6 @@
 import type { Aleatoire } from './aleatoire';
 import { physique, type SurContact } from './balle';
-import { HAUT_SMASH, LARG, MIL, PAS } from './constants';
+import { LARG, MIL, PAS } from './constants';
 import { dir, fond } from './terrain';
 import type { Balle, CorpsBalle, Equipe, Joueur, Mur } from './types';
 
@@ -34,7 +34,7 @@ export function contreVitre(b: CorpsBalle, eq: Equipe, ty: number, mur: Mur, rng
   return true;
 }
 
-/** Deux cas, balle rebondie et sous la hauteur de smash : balle passée dans le dos près de la vitre, ou joueur collé à elle. */
+/** Deux cas : balle passée dans le dos du joueur près de la vitre, ou joueur collé à elle et balle tout près. */
 function pres(balle: number, joueur: number, lob: number, colle: number): boolean {
   return (balle < joueur - 0.2 && balle < lob) || (balle < colle - 0.5 && joueur < colle);
 }
@@ -50,26 +50,20 @@ function coteJouable(b: Balle, s: Joueur): Mur | null {
   return pres(dist(b.y), dist(s.y), 1.8, 1.6) ? mur : null;
 }
 
-/** Le joueur est-il dans une situation de renvoi de vitre (fond ou côté) ? */
-export function vitreJouable(b: Balle, s: Joueur): boolean {
-  if (b.sol < 1 || b.z > HAUT_SMASH) return false;
-  return fondJouable(b, s) || coteJouable(b, s) !== null;
-}
+/** Le joueur est-il à portée d'une vitre pour y renvoyer la balle (fond ou côté), à n'importe quelle hauteur ? */
+export const vitreJouable = (b: Balle, s: Joueur): boolean => fondJouable(b, s) || coteJouable(b, s) !== null;
 
 /**
- * La vitre que le joueur renvoie, d'après sa visée (le joystick) : vers l'arrière, le fond ;
- * vers un côté, la vitre de ce côté ; sans visée, le fond d'abord. Vers le filet, ou vers une
- * vitre qui n'est pas dans la situation, un coup ordinaire (null).
+ * La vitre que le joueur renvoie, d'après sa visée (le joystick au moment du coup) : vers
+ * l'arrière, le fond ; vers un côté, la vitre de ce côté. C'est à lui de la choisir, même
+ * sur une balle de smash (c'est alors une feinte) : joystick au repos, vers le filet ou vers
+ * une vitre qui n'est pas à portée, le coup reste ordinaire (null).
  */
 export function murVise(b: Balle, s: Joueur, v: { x: number; y: number }): Mur | null {
-  if (!vitreJouable(b, s)) return null;
-  const fondOk = fondJouable(b, s);
-  const cote = coteJouable(b, s);
   const lateral = Math.abs(v.y) > 0.4 ? (v.y < 0 ? 'haut' : 'bas') : null;
   const arriere = v.x * dir(s.eq) < -0.4;
-  if (lateral) return cote === lateral ? cote : arriere && fondOk ? 'fond' : null;
-  if (v.x * dir(s.eq) > 0.4) return null;
-  return fondOk ? 'fond' : cote;
+  if (lateral && coteJouable(b, s) === lateral) return lateral;
+  return arriere && fondJouable(b, s) ? 'fond' : null;
 }
 
 /** Les élans essayés : vers le fond, ou vers la vitre de côté. */

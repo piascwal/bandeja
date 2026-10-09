@@ -1,10 +1,14 @@
 import { clamp } from './aleatoire';
 import { BONUS_HUMAIN, LARG, LONG, MIL, VMAX } from './constants';
+import { frappable } from './coups';
 import { dir } from './terrain';
 import type { Joueur, Partie, Point2 } from './types';
 
 /** Un humain qui arme son coup trop tôt ralentit fort : il faut d'abord se placer, puis déclencher au bon moment. */
 const FREIN_ARME = 0.3;
+/** Dans la zone de frappe (balle presque à portée), le joueur ralentit encore : la direction visée compte davantage. */
+const FREIN_ZONE = 0.5;
+const ZONE_FRAPPE = 1.8;
 const ECART_MIN = 0.7;
 /** Distance minimale au filet (m) : le dessin du joueur ne le dépasse pas. */
 const ECART_FILET = 0.8;
@@ -35,7 +39,8 @@ export function bouge(jeu: Partie, s: Joueur, dt: number): void {
   const vmax = VMAX * (s.humain ? BONUS_HUMAIN : s.niv.vit);
   const but = s.humain && jeu.phase !== 'service' ? pointDeFrappe(jeu, s) : null;
   if (s.humain && jeu.phase !== 'service') {
-    const k = s.intent && s.intent.t > 0.15 ? FREIN_ARME : 1;
+    const arme = s.intent !== null && s.intent.t > 0.15;
+    const k = arme ? FREIN_ARME * (frappable(jeu, s, ZONE_FRAPPE) ? FREIN_ZONE : 1) : 1;
     dvx = s.ex * vmax * k;
     dvy = s.ey * vmax * k;
     if (but) {
