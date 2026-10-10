@@ -71,8 +71,9 @@ export function placementVitre(b: Balle, s: Joueur, mur: Mur): number {
     mur === 'fond' ? Math.abs(x - fond(s.eq)) : mur === 'haut' ? y : LARG - y;
   const balle = dist(b.x, b.y);
   const joueur = dist(s.x, s.y);
-  const derriere = clamp(joueur - balle + 0.3, 0, 1);
-  const proche = clamp(1 - (balle - 1) / 3, 0, 1);
+  // large tolérance : même une balle un peu devant le joueur ou à quelques mètres de la vitre reste jouable
+  const derriere = clamp((joueur - balle + 1.5) / 1.8, 0, 1);
+  const proche = clamp(1 - (balle - 1.5) / 6, 0, 1);
   // la vitre de côté ne couvre que le bout de la piste : plus loin, c'est le grillage, qui ne rend rien
   const vitre = mur === 'fond' || Math.abs(b.x - fond(s.eq)) < VITRE_COTE ? 1 : 0.3;
   return (0.5 * derriere + 0.5 * proche) * vitre;

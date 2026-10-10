@@ -162,8 +162,8 @@ export function executeCoup(
   if (mur) {
     const cote = mur === 'fond' ? 'vitre' : 'cote';
     if (libre) {
-      // le joueur a choisi sa vitre : bien joué (vert) elle part chez l'adversaire, moyen elle part de travers, raté elle revient
-      if (!(niveau >= 3 && contreVitre(b, eq, ty, mur, rng, niveau >= 4 ? 0 : 0.14)))
+      // le joueur a choisi sa vitre : elle part chez l'adversaire, à peine faussée si le coup est médiocre ; brute seulement si aucun élan n'existe
+      if (!contreVitre(b, eq, ty, mur, rng, niveau >= 3 ? 0 : niveau === 2 ? 0.06 : 0.14))
         vitreBrute(b, eq, mur, rng);
       type = cote;
     } else if (contreVitre(b, eq, ty, mur, rng)) type = cote;

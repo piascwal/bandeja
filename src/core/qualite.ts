@@ -67,8 +67,8 @@ const HAUTEURS: Record<Coup, [number, number, number, number]> = {
   cote: [0.6, 0.6, 0.4, 0.2],
 };
 
-/** Aisance d'un renvoi de vitre voulu par le joueur : plus exigeant sur la place, mais un beau renvoi vaut un coup vert. */
-const HAUTEURS_VITRE_LIBRE: [number, number, number, number] = [1, 0.9, 0.55, 0.3];
+/** Aisance d'un renvoi de vitre voulu par le joueur : tolérant sur la place et la hauteur : un renvoi correct est déjà un coup vert. */
+const HAUTEURS_VITRE_LIBRE: [number, number, number, number] = [1, 1, 0.85, 0.65];
 
 const classeHauteur = (z: number): 0 | 1 | 2 | 3 => (z < 0.6 ? 0 : z < 1.5 ? 1 : z < HAUT_SMASH ? 2 : 3);
 
@@ -85,7 +85,7 @@ export function affinite(type: Coup, sit: Situation): number {
   const facile = clamp(1 - (sit.vitesse - 8) / 20, 0.1, 1);
   const libre = sit.vitre !== undefined && (type === 'vitre' || type === 'cote');
   let a = (libre ? HAUTEURS_VITRE_LIBRE : HAUTEURS[type])[classeHauteur(sit.z)] * (0.72 + 0.28 * facile);
-  if (libre) a *= 0.25 + 0.75 * sit.vitre!;
+  if (libre) a *= 0.6 + 0.4 * sit.vitre!;
   // où l'on se trouve
   if (type === 'smash' && sit.loin < 4) a += 0.12;
   else if (type === 'amorti') a += sit.loin < 5 ? 0.12 : -0.3;

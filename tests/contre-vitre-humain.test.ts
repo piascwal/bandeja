@@ -77,14 +77,15 @@ describe('on choisit sa vitre avec le joystick, dans toutes les situations', () 
     expect(p(mauvais)).toBeLessThan(0.3);
   });
 
-  it('un renvoi bien placé est vert, un renvoi mal placé est médiocre', () => {
+  it('un renvoi bien placé est vert, un renvoi mal placé reste correct (large tolérance)', () => {
     const niveau = (c: ReturnType<typeof situation>) => {
       const sit = situationDe(c.jeu.balle, c.s, 0.9, 1);
       sit.vitre = placementVitre(c.jeu.balle, c.s, 'fond');
       return qualite('vitre', sit).niveau;
     };
     expect(niveau(situation(2, 0.7))).toBeGreaterThanOrEqual(4);
-    expect(niveau(situation(1.5, 4))).toBeLessThanOrEqual(2);
+    expect(niveau(situation(1.5, 4))).toBeGreaterThanOrEqual(3);
+    expect(niveau(situation(3, 2.5))).toBeGreaterThanOrEqual(4); // balle un peu devant la vitre, joueur au milieu
   });
 
   it('bien placé et visé vers le fond : la balle touche la vitre puis retombe chez l’adversaire', () => {
