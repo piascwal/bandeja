@@ -54,12 +54,13 @@ function joue(jeu: ReturnType<typeof situation>['jeu'], dx: number, dy: number, 
 }
 
 describe('on choisit sa vitre avec le joystick, dans toutes les situations', () => {
-  it('poussé presque à fond vers l’arrière ou vers un côté ; sinon coup ordinaire', () => {
+  it('poussé presque à fond vers l’arrière : la vitre du fond ; sinon coup ordinaire, pas de vitre de côté', () => {
     // l'équipe 0 est en miroir sur son écran, mais murVise reçoit la visée de la piste : x > 0 vers le filet
     expect(murVise({ x: -1, y: 0 }, 0)).toBe('fond');
     expect(murVise({ x: -0.9, y: 0.3 }, 0)).toBe('fond');
-    expect(murVise({ x: 0, y: -1 }, 0)).toBe('haut');
-    expect(murVise({ x: 0.2, y: 1 }, 0)).toBe('bas');
+    // plus de renvoi vers les vitres de côté : pousser vers un côté donne un coup ordinaire
+    expect(murVise({ x: 0, y: -1 }, 0)).toBeNull();
+    expect(murVise({ x: 0.2, y: 1 }, 0)).toBeNull();
     expect(murVise({ x: 1, y: 0 }, 0)).toBeNull(); // vers le filet
     expect(murVise({ x: 0, y: 0 }, 0)).toBeNull(); // au repos
     expect(murVise({ x: -0.5, y: 0 }, 0)).toBeNull(); // pas assez poussé : on dirige juste le coup
@@ -97,14 +98,13 @@ describe('on choisit sa vitre avec le joystick, dans toutes les situations', () 
     expect(passe).toBe(true); // elle passe chez l'adversaire sans avoir rebondi chez nous
   });
 
-  it('bien placé et visé vers le côté : la vitre de côté, puis chez l’adversaire', () => {
-    const { jeu, s } = situation(3, 3);
-    s.y = 1.6;
+  it('poussé vers un côté, le coup n’est plus un renvoi de vitre de côté', () => {
+    const { jeu, s: joueur } = situation(3, 3);
+    joueur.y = 1.6;
     Object.assign(jeu.balle, { y: 0.5 });
-    const { coup, surfaces, passe } = joue(jeu, 0, -1);
-    expect(coup).toBe('cote');
-    expect(surfaces[0]).toBe('vitre');
-    expect(passe).toBe(true); // elle passe chez l'adversaire sans avoir rebondi chez nous
+    const { coup } = joue(jeu, 0, -1);
+    expect(coup).not.toBe('cote');
+    expect(coup).not.toBe('vitre');
   });
 
   it('même mal placé, le joueur tire sur sa vitre : le coup part, et la balle ne passe pas chez l’adversaire', () => {
@@ -117,7 +117,7 @@ describe('on choisit sa vitre avec le joystick, dans toutes les situations', () 
   it('au repos le coup reste ordinaire, même à côté de la vitre', () => {
     const { jeu } = situation(1.8, 0.8);
     const { coup } = joue(jeu, 0, 0);
-    expect(['vitre', 'cote']).not.toContain(coup);
+    expect(coup).not.toBe('vitre');
   });
 
   it('une balle haute : le coup vitre attend qu’elle descende', () => {

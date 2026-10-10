@@ -142,13 +142,7 @@ export function coupPrevu(jeu: Partie, s: Joueur, bouton: Bouton, charge: number
   switch (bouton) {
     case 'plat':
       // joystick poussé vers une vitre : FRAPPE la renvoie, dans toutes les situations (voir `murVise`)
-      switch (murVise(directionVisee(s), s.eq)) {
-        case 'fond':
-          return 'vitre';
-        case 'haut':
-        case 'bas':
-          return 'cote';
-      }
+      if (murVise(directionVisee(s), s.eq)) return 'vitre';
       // balle haute : le joueur est déjà en position d'attaque, FRAPPE donne le coup aérien (smash, víbora ou bandeja)
       if (haut) return coupAerien(s, p);
       return charge < 0.5 ? 'coupe' : 'plat';

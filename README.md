@@ -449,23 +449,24 @@ lob encore haut au-dessus d'un joueur au filet peut toujours être smashé.
 
 **Renvoi dans sa vitre** (`murVise`, `placementVitre`, `vitreBrute` dans `core/contre-vitre.ts`). Le
 joueur décide, avec le joystick au moment du coup : poussé presque à fond (`SEUIL_VITRE` 0,8, cône
-d'environ 40°) vers l'**arrière**, FRAPPE part sur la vitre du fond ; vers un **côté**, sur la vitre
-de ce côté. Aucune autre condition, dans toutes les situations, même en position de bandeja ou de
+d'environ 40°) vers l'**arrière**, FRAPPE part sur la vitre du fond. **Il n'y a plus de renvoi vers les
+vitres de côté** pour l'humain : pousser vers un côté donne un coup ordinaire (le CPU garde les siens).
+Aucune autre condition, dans toutes les situations, même en position de bandeja ou de
 víbora (une feinte : on avance comme pour un smash, puis on pousse le joystick vers la vitre). Seule
 contrainte : une balle encore plus haute que la hauteur de smash (1,9 m) attend qu'elle descende, le
 coup est gardé tant qu'elle est à portée. Tolérance large : la qualité du renvoi (mêmes couleurs que les autres coups) dépend de la place du
 joueur par rapport à la balle et à la vitre (la balle dans son dos est idéale, mais une balle un peu
-devant ou à quelques mètres de la vitre reste jouable ; la vitre de côté ne couvre que les 4 premiers
+devant ou à quelques mètres de la vitre reste jouable ; la vitre de côté, pour le CPU, ne couvre que les 4 premiers
 mètres, au-delà c'est le grillage), de la hauteur de la balle et du timing. Dans presque tous les cas
 l'élan est cherché par simulation (`contreVitre`) et la balle ressort au-dessus du filet, vers 6 m
 derrière lui : exact à partir du vert, à peine faussé en orange (6 %) ou en rouge (14 %). Le coup
 n'est « brut » (droit sur la vitre, de travers, souvent chez soi : `vitreBrute`) que s'il n'existe
 aucun élan. La pénalité du lob subi ne s'applique pas à ce coup : c'est la réponse au lob.
-Le nom du coup (« VITRE » ou « COTE ») n'apparaît qu'à l'impact. Armer son coup fige presque le
+Le nom du coup (« VITRE ») n'apparaît qu'à l'impact. Armer son coup fige presque le
 joueur (`FREIN_ARME` 0,12, puis `FREIN_ZONE` ×0,35 dans la zone de frappe, balle à moins de 2 m
 environ) : on se place d'abord, puis le joystick sert à diriger le coup. La recherche d'élan joue
 exactement le pas du jeu (le rebond de vitre dépend de la position précise de la balle). Le CPU
-garde son ancien renvoi (`tests/contre-vitre-humain.test.ts`).
+garde son ancien renvoi, y compris de côté (`tests/contre-vitre-humain.test.ts`).
 
 **Por 3 et por 4** (`core/por.ts`, `tests/por.test.ts`). Faire sortir la balle de la piste
 n'est possible que dans des situations précises, sinon le grillage la retient (`b.por` :

@@ -48,17 +48,15 @@ export const SEUIL_VITRE = 0.8;
 const COS_CONE = 0.75;
 
 /**
- * La vitre que le joueur veut jouer, d'après son joystick au moment du coup : poussé vers
- * l'arrière, la vitre du fond ; vers un côté, la vitre de ce côté ; sinon rien (coup ordinaire).
- * Aucune autre condition : on peut viser sa vitre dans toutes les situations, la qualité du
- * renvoi (voir `placementVitre`) dit ce qu'il donne.
+ * La vitre du fond que le joueur veut jouer, d'après son joystick au moment du coup : poussé vers
+ * l'arrière. Pas de renvoi vers les vitres de côté pour l'humain. Aucune autre condition : on peut
+ * viser sa vitre dans toutes les situations, la qualité du renvoi (voir `placementVitre`) dit ce
+ * qu'il donne.
  */
 export function murVise(v: { x: number; y: number }, eq: Equipe): Mur | null {
   const n = Math.hypot(v.x, v.y);
   if (n < SEUIL_VITRE) return null;
-  if ((v.x / n) * dir(eq) < -COS_CONE) return 'fond';
-  if (v.y / n < -COS_CONE) return 'haut';
-  return v.y / n > COS_CONE ? 'bas' : null;
+  return (v.x / n) * dir(eq) < -COS_CONE ? 'fond' : null;
 }
 
 /**
