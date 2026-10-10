@@ -51,7 +51,7 @@ export function lisEvenement(o: unknown): Evenement | null {
         !nombre(e.x, -100, 100) ||
         !nombre(e.y, -100, 100) ||
         !entier(e.q, 1, 5) ||
-        !entier(e.sv, 0, 6)
+        !entier(e.sv, 0, 3)
       )
         return null;
       return {

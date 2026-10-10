@@ -136,7 +136,6 @@ export class MoteurSon {
     this.smash();
     this.ton(180 + variante * 70, 0.55, 'sawtooth', 0.14, 1800);
     this.souffle(0.5, 'highpass', 2500, 1, 0.45, 0.05);
-    if (variante === 3) this.ton(880, 0.6, 'triangle', 0.1, 1760, 0.1);
   }
 
   sol(): void {

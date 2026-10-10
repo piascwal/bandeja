@@ -22,21 +22,11 @@ interface Bulle {
   vie: number;
 }
 
-/** L'écran fissuré par un super coup : le point d'impact, ce qu'il reste de temps, et la graine du dessin. */
-export interface Fissure {
-  x: number;
-  y: number;
-  vie: number;
-  graine: number;
-}
-
-/** Un dégât laissé sur le terrain ou sur une vitre par un super coup. */
+/** Un cratère laissé sur le terrain par un super coup. */
 export interface Decal {
-  kind: 'sol' | 'vitre';
   /** position sur la piste (m) */
   x: number;
   y: number;
-  z: number;
   variante: number;
   graine: number;
   vie: number;
@@ -68,7 +58,6 @@ export class Effets {
   secousse = 0;
   flash = 0;
   banniere: Banniere | null = null;
-  fissure: Fissure | null = null;
   /** la fin spectaculaire d'un super coup */
   readonly finale = new FinaleSuper();
   decals: Decal[] = [];
@@ -80,34 +69,24 @@ export class Effets {
     this.particules = [];
     this.bulles = [];
     this.banniere = null;
-    this.fissure = null;
     this.decals = [];
     this.bandeau = null;
     this.finale.reinitialise();
   }
 
-  /** Les dégâts de la piste (cratères, vitres brisées, écran fissuré) disparaissent. */
   /** Les dégâts de ce point avec leur date, pour le ralenti (vidé quand le jeu reprend sur un nouveau point). */
-  readonly journal: {
-    t: number;
-    kind: 'sol' | 'vitre';
-    x: number;
-    y: number;
-    z: number;
-    variante: number;
-  }[] = [];
+  readonly journal: { t: number; x: number; y: number; variante: number }[] = [];
 
   repare(): void {
     this.decals = [];
-    this.fissure = null;
     if (!this.finale.actif) this.finale.reinitialise();
   }
 
-  /** Le terrain ou la vitre est abîmé(e) à cet endroit. */
-  abime(kind: 'sol' | 'vitre', x: number, y: number, z: number, variante: number, t?: number): void {
+  /** Le terrain est abîmé à cet endroit. */
+  abime(x: number, y: number, variante: number, t?: number): void {
     // le ralenti rejoue ces dégâts au moment où la balle les fait : on garde leur date (`temps` de la partie)
-    if (t !== undefined) this.journal.push({ t, kind, x, y, z, variante });
-    this.decals.push({ kind, x, y, z, variante, graine: Math.floor(Math.random() * 1e9), vie: 60 });
+    if (t !== undefined) this.journal.push({ t, x, y, variante });
+    this.decals.push({ x, y, variante, graine: Math.floor(Math.random() * 1e9), vie: 60 });
   }
 
   /** Des morceaux de terrain arrachés par un choc. */
@@ -142,25 +121,6 @@ export class Effets {
     }
   }
 
-  /** Une vitre qui vole en éclats : des éclats clairs, gros, qui retombent doucement. */
-  eclatsVitre(x: number, y: number, n = 120): void {
-    const cs = ['#ffffff', '#dff4ff', '#9fd8ff', '#bfe6ff'];
-    for (let i = 0; i < n; i++) {
-      const a = Math.random() * Math.PI * 2;
-      const v = alea(40, 230);
-      this.particules.push({
-        x,
-        y,
-        vx: Math.cos(a) * v,
-        vy: Math.sin(a) * v - 20,
-        vie: alea(0.5, 1.2),
-        c: cs[i % cs.length]!,
-        frot: 1.6,
-        t: i % 3 === 0 ? 3 : 2,
-      });
-    }
-  }
-
   poussiere(x: number, y: number, n: number, c = '#9fb8e8'): void {
     for (let i = 0; i < n; i++) {
       this.particules.push({ x, y, vx: alea(-30, 30), vy: alea(-25, -5), vie: alea(0.15, 0.35), c });
@@ -182,11 +142,6 @@ export class Effets {
         frot: 2.2,
       });
     }
-  }
-
-  /** L'écran se fissure à partir de (x, y). */
-  fissurer(x: number, y: number): void {
-    this.fissure = { x, y, vie: 1.8, graine: Math.floor(Math.random() * 1e9) };
   }
 
   bulle(txt: string, x: number, y: number, c: string): void {
@@ -227,14 +182,10 @@ export class Effets {
     if (this.bandeau) {
       this.bandeau.attente += dt;
       const f = this.finale;
-      if ((f.declenchee && (!f.actif || f.t >= BANDEAU_S)) || this.bandeau.attente > 4.5) {
+      if ((f.declenchee && (!f.actif || f.t >= BANDEAU_S)) || this.bandeau.attente > 7) {
         this.annonce(this.bandeau.txt, this.bandeau.sous, this.bandeau.c, 1.4);
         this.bandeau = null;
       }
-    }
-    if (this.fissure) {
-      this.fissure.vie -= dt;
-      if (this.fissure.vie <= 0) this.fissure = null;
     }
   }
 }

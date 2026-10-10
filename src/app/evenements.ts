@@ -16,7 +16,7 @@ let superEnCours = 0;
 /** Le dernier impact à l'écran : c'est là que la fin spectaculaire du super coup se joue. */
 let dernierImpact: [number, number, number] = [0, 0, 0];
 
-/** Les effets d'un impact de super coup : cratère, vitre qui explose, écran qui se fissure. */
+/** Les effets d'un impact de super coup sur le sol : cratère, débris, écran qui tremble ; la scène finale s'ouvre. */
 function impactSuper(
   variante: number,
   ev: Extract<Evenement, { type: 'impact' }>,
@@ -29,26 +29,15 @@ function impactSuper(
 ): void {
   const c = COULEURS_SUPER[variante] ?? C.or;
   dernierImpact = [sx, sy, cap];
-  if (ev.surface === 'vitre') {
-    fx.abime('vitre', ev.x, ev.y, ev.z, variante, temps);
-    // la balle traverse la vitre : elle vole en éclats
-    son.vitre(1);
-    son.smash();
-    fx.eclatsVitre(sx, sy);
-    fx.etincelles(sx, sy, 30, c, 180);
-    fx.secousse = 14;
-    fx.flash = 0.7;
-  } else if (ev.surface === 'sol') {
+  if (ev.surface === 'sol') {
     // toujours le sol d'abord : la balle y tape, puis elle part (la scène finale s'ouvre sur ce choc)
     if (!fx.finale.declenchee) fx.finale.declenche(variante, sx, sy, cap);
-    fx.abime('sol', ev.x, ev.y, 0, variante, temps);
+    fx.abime(ev.x, ev.y, variante, temps);
     fx.debris(sx, sy);
     fx.etincelles(sx, sy, 50, c, 170);
     fx.poussiere(sx, sy, 30, '#ffb36a');
     fx.secousse = 12;
     fx.flash = 0.8;
-    // l'éclair fait voler l'écran en éclats : l'écran se fissure
-    if (variante === 4) fx.fissurer(sx, sy);
   }
 }
 

@@ -14,27 +14,18 @@ import type { Balle, Coup, Effet, Equipe, Joueur, Partie } from './types';
  * - VOLCAN : il perfore le court (pas de rebond), traverse la Terre par son centre et ressort de
  *   l'autre côté en geyser de lave ;
  * - ORBITE : la balle rebondit en orbite et fait exploser un satellite (petit ralenti).
- * Les variantes 2 à 4 (comète, phénix, éclair) existent encore dans la physique, mais ne sont plus tirées.
  */
-export type VarianteSuper = 1 | 2 | 3 | 4 | 5 | 6;
+export type VarianteSuper = 1 | 2 | 3;
 
-export const NOMS_SUPER = [
-  '',
-  'METEORE !',
-  'COMETE !',
-  'PHENIX !',
-  'ECLAIR !',
-  'VOLCAN !',
-  'ORBITE !',
-] as const;
+export const NOMS_SUPER = ['', 'METEORE !', 'VOLCAN !', 'ORBITE !'] as const;
 
 /** Les trois animations du super coup : l'impact sur la lune (météore), le volcan, le satellite (orbite). */
-export const VARIANTES_JOUEES: readonly VarianteSuper[] = [1, 5, 6];
+export const VARIANTES_SUPER: readonly VarianteSuper[] = [1, 2, 3];
 
 export function varianteSuper(b: Balle, loin: number, rng?: Aleatoire): VarianteSuper {
-  if (!rng) return loin < 3.5 ? 5 : loin > 6 ? 6 : 1;
+  if (!rng) return loin < 3.5 ? 2 : loin > 6 ? 3 : 1;
   // dans le jeu, le choix est au hasard : chacune des trois animations a la même chance, quelle que soit la situation
-  return VARIANTES_JOUEES[Math.floor(rng() * VARIANTES_JOUEES.length)]!;
+  return VARIANTES_SUPER[Math.floor(rng() * VARIANTES_SUPER.length)]!;
 }
 
 /** Où viser : le côté le plus loin des adversaires. */
@@ -84,30 +75,17 @@ export function lanceSuper(jeu: Partie, s: Joueur, variante: VarianteSuper): Cou
   const eq = s.eq;
   const ty = coinLibre(jeu, eq);
   switch (variante) {
-    case 1: {
-      lanceVite(b, xProf(autre(eq), 3.5 + jeu.rng() * 1.5), ty, 48, 'smash', 0.15);
-      return 'smash';
-    }
     case 2: {
-      lanceVite(b, xProf(autre(eq), 2.2), ty, 46, 'plat', 0.12);
-      return 'plat';
-    }
-    case 3: {
-      // vers le coin le plus proche d'une vitre de côté
-      lanceVite(b, xProf(autre(eq), 3), ty < 5 ? 1.6 : 8.4, 46, 'plat', 0.12);
-      return 'plat';
-    }
-    case 5: {
       // un smash qui plonge : il perfore le sol sans rebondir
       lanceVite(b, xProf(autre(eq), 3.5), ty, 50, 'plat', 0.12);
       return 'plat';
     }
-    case 6: {
+    case 3: {
       lanceVite(b, xProf(autre(eq), 4 + jeu.rng()), ty, 48, 'smash', 0.15);
       return 'smash';
     }
     default: {
-      lanceVite(b, xProf(autre(eq), 3), ty, 50, 'smash', 0.12);
+      lanceVite(b, xProf(autre(eq), 3.5 + jeu.rng() * 1.5), ty, 48, 'smash', 0.15);
       return 'smash';
     }
   }

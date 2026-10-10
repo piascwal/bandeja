@@ -266,7 +266,7 @@ export function decodeInstantane(buf: ArrayBuffer): Instantane | null {
     const sol = r.u8();
     const c = r.u8();
     const vif = Math.min(125, r.u8());
-    const superCoup = Math.min(6, r.u8());
+    const superCoup = Math.min(3, r.u8());
     if (c !== 255 && c >= COUPS.length) return null;
     const stats = {
       gagnants: [r.u8(), r.u8()] as [number, number],

@@ -104,31 +104,20 @@ function passageFilet(b: CorpsBalle, x0: number, y0: number, z0: number, ev?: Su
 }
 
 /**
- * Le premier rebond d'un super coup : la météore et l'éclair s'écrasent et repartent
- * dans l'espace ; la comète file vers la vitre du fond, le phénix vers celle de côté
- * (qu'ils défoncent : voir `mursDuFond` et `mursLateraux`).
+ * Le premier rebond d'un super coup : le volcan perfore le court (la balle s'enfonce et ne se voit
+ * plus) ; la météore et l'orbite s'écrasent et repartent dans l'espace.
  */
 function superRebond(b: CorpsBalle): void {
-  if (b.super === 5) {
-    // le volcan perfore le court : pas de rebond, la balle s'enfonce (elle ne se voit plus)
+  if (b.super === 2) {
     b.vx = 0;
     b.vy = 0;
     b.vz = 0;
     b.z = 0;
     b.dehors = true;
-  } else if (b.super === 1 || b.super === 4 || b.super === 6) {
+  } else {
     b.vz = 45;
     b.vx *= 0.12;
     b.vy *= 0.12;
-  } else if (b.super === 2) {
-    const k = 48 / Math.max(1, Math.hypot(b.vx, b.vy));
-    b.vx *= k;
-    b.vy *= k;
-    b.vz = 14; // elle quitte le sol en chandelle avant de défoncer la vitre
-  } else {
-    b.vy = (b.y < 5 ? -1 : 1) * 36;
-    b.vx *= 0.3;
-    b.vz = 14;
   }
 }
 
@@ -182,16 +171,6 @@ function rebondSol(b: CorpsBalle, ev?: SurContact): void {
   }
 }
 
-/** Un super coup traverse la vitre (qui vole en éclats) : la balle est dehors, elle continue sa course. */
-function perceVitre(b: CorpsBalle, cote: Equipe, ev?: SurContact): boolean {
-  ev?.('vitre', cote, 99);
-  b.dehors = true;
-  // la balle part comme une fusée : elle file vers le ciel
-  b.vz = Math.max(b.vz, 30);
-  ev?.('sortie', cote);
-  return true;
-}
-
 /** Murs des bouts (x = 0 et x = 20) : vitre jusqu'à 3 m, grillage jusqu'à 4 m. */
 function mursDuFond(b: CorpsBalle, ev?: SurContact): boolean {
   if (b.x >= 0 && b.x <= LONG) return false;
@@ -202,8 +181,6 @@ function mursDuFond(b: CorpsBalle, ev?: SurContact): boolean {
     ev?.('sortie', cote);
     return true;
   }
-  // la comète défonce la vitre du fond et sort de la piste
-  if (b.super === 2 && b.vif === 0) return perceVitre(b, cote, ev);
   b.x = cote ? 2 * LONG - b.x : -b.x;
   const v = Math.abs(b.vx);
   if (b.z <= HAUT_VITRE) {
@@ -225,11 +202,6 @@ function mursLateraux(b: CorpsBalle, ev?: SurContact): void {
   if (b.z > HAUT_VITRE && (b.por > 0 || b.super > 0)) {
     b.dehors = true;
     ev?.('sortie', cote);
-    return;
-  }
-  // le phénix défonce la vitre de côté et sort de la piste
-  if (b.super === 3 && b.vif === 0 && (b.x < VITRE_COTE || b.x > LONG - VITRE_COTE)) {
-    perceVitre(b, cote, ev);
     return;
   }
   b.y = b.y < 0 ? -b.y : 2 * LARG - b.y;

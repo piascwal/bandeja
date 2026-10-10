@@ -1,7 +1,6 @@
 import { dessineCommandes } from '@render/commandes';
 import { dessineFinale } from '@render/finale-vue';
 import { dessineParade } from '@render/parade-vue';
-import { dessineFissure } from '@render/fissure';
 import { dessineEchange } from '@render/hud-echange';
 import { dessineBanniere, dessineJauge, dessineTableau } from '@render/hud';
 import { dessineChoix } from '@render/lan-choix';
@@ -175,7 +174,6 @@ export function rendu(app: BandejaApp, t: number): void {
   const attente = ecranUI === 'jeu' || ecranUI === 'pause' ? app.lan.vueAttente() : null;
   if (attente) dessineAttente(v, app.boutons, attente, t);
   if (!rejeu && ecranUI === 'jeu') dessineFinale(v, effets.finale, app.boutons, () => app.passeRalenti());
-  if (effets.fissure) dessineFissure(v, effets.fissure);
   if (effets.flash > 0) {
     g.fillStyle = `rgba(255,255,255,${effets.flash * 0.5})`;
     g.fillRect(0, 0, W, H);

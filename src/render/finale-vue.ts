@@ -10,8 +10,7 @@ import type { Vue } from './vue';
 
 /**
  * Un filtre de particules par-dessus tout l'écran pendant le choc et la montée :
- * braises (ou flocons, plumes, étincelles selon la variante) qui montent, voile
- * coloré, bords qui rougeoient, et pour l'éclair des flashs blancs.
+ * braises qui montent, voile coloré, bords qui rougeoient.
  */
 function filtre(v: Vue, f: FinaleSuper): void {
   const { g, W, H } = v;
@@ -28,18 +27,12 @@ function filtre(v: Vue, f: FinaleSuper): void {
   px(g, W - 4, 0, 4, H, couleur);
   for (let i = 0; i < 110; i++) {
     const vitesse = 50 + h(i * 3 + 1) * 170;
-    const x = h(i * 3) * W + Math.sin(f.t * 3 + i) * (f.variante === 3 ? 10 : 3);
+    const x = h(i * 3) * W + Math.sin(f.t * 3 + i) * 3;
     const y = H + 8 - ((f.t * vitesse + h(i * 3 + 2) * H * 1.2) % (H + 16));
     g.globalAlpha = (0.35 + 0.65 * h(i + f.t * 8 + 9) * (i % 3 === 0 ? 1 : 0.7)) * k;
     const taille = i % 5 === 0 ? 3 : i % 2 ? 2 : 1;
     const c = i % 4 === 0 ? '#ffffff' : i % 4 === 1 ? C.or : couleur;
-    // les plumes du phénix et les flocons de la comète glissent de côté
-    px(g, x, y, f.variante === 2 ? 1 : taille, f.variante === 4 ? 1 : taille + (f.variante === 3 ? 1 : 0), c);
-  }
-  if (f.variante === 4 && Math.floor(f.t * 30) % 6 === 0) {
-    g.globalAlpha = 0.45 * k;
-    g.fillStyle = '#ffffff';
-    g.fillRect(0, 0, W, H);
+    px(g, x, y, taille, taille, c);
   }
   g.globalAlpha = 1;
 }
@@ -80,10 +73,7 @@ function ascension(v: Vue, f: FinaleSuper): void {
   const depart = Math.max(W * 0.25, Math.min(W * 0.75, f.x));
   const pos = (q: number): [number, number] => {
     const montee = q * q * H * 1.25;
-    return [
-      depart + f.cap * 0.58 * montee + Math.sin(q * 3.1) * (f.variante === 3 ? 22 : 0),
-      H * 0.95 - montee,
-    ];
+    return [depart + f.cap * 0.58 * montee, H * 0.95 - montee];
   };
   for (let i = 30; i >= 1; i--) {
     const q = Math.max(0, p - i * 0.012);
@@ -111,8 +101,8 @@ export function dessineFinale(v: Vue, f: FinaleSuper, zones: ZoneBouton[], onPas
   if (!f.actif) return;
   const { g, W, H } = v;
   // le volcan plonge dans la Terre au lieu de monter ; l'orbite monte comme les autres puis tourne autour de la Terre
-  if (f.variante === 5 && f.t >= CHOC_S) volcan(v, f);
-  else if (f.t >= ASCENSION_FIN_S) (f.variante === 6 ? orbite : lune)(v, f);
+  if (f.variante === 2 && f.t >= CHOC_S) volcan(v, f);
+  else if (f.t >= ASCENSION_FIN_S) (f.variante === 3 ? orbite : lune)(v, f);
   else if (f.t >= CHOC_S) ascension(v, f);
   filtre(v, f);
   // la barre noire de cinéma, en haut et en bas

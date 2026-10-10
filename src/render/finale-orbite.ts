@@ -5,29 +5,135 @@ import { px } from './primitives';
 import type { Vue } from './vue';
 
 /**
- * L'ORBITE : la balle rebondit en orbite autour de la Terre à toute vitesse ; un satellite arrive en face ;
- * un petit ralenti montre le choc, la balle le fait exploser.
+ * L'ORBITE : la balle se met en orbite autour de la Terre (vue entière), fait deux tours à toute
+ * vitesse, puis un petit ralenti la montre arriver sur un satellite immobile (géostationnaire) :
+ * explosion en chaîne, anneaux de choc, gerbe de rayons, panneaux solaires qui tournoient.
  */
+const TOURS_FIN = 1.0; // les deux tours (temps depuis le début du plan)
+const CHOC = 1.35; // fin du petit ralenti : le choc
+const A_SAT = Math.PI * 0.3; // le satellite, devant la Terre, en bas à droite
+const A_DEPART = -Math.PI / 2;
+const APPROCHE = 0.5; // ce qu'il reste à parcourir pendant le ralenti (rad)
+const PARCOURS = A_SAT - APPROCHE - A_DEPART + 4 * Math.PI;
+
+const lisse = (x: number): number => {
+  const k = clamp01(x);
+  return k * k * (3 - 2 * k);
+};
+
+/** L'angle de la balle sur l'orbite au temps tau du plan : elle accélère, fait deux tours, puis arrive au ralenti. */
+function angle(tau: number): number {
+  if (tau < TOURS_FIN) {
+    const k = tau / TOURS_FIN;
+    return A_DEPART + PARCOURS * k * k * (2 - k);
+  }
+  if (tau < CHOC) return A_SAT - APPROCHE + APPROCHE * ((tau - TOURS_FIN) / (CHOC - TOURS_FIN));
+  return A_SAT;
+}
+
 export function orbite(v: Vue, f: FinaleSuper): void {
   const { g, W, H } = v;
   const tau = f.t - ASCENSION_FIN_S;
   const fondu = f.t > LUNE_FIN_S ? clamp01(1 - (f.t - LUNE_FIN_S) / (FINALE_FIN_S - LUNE_FIN_S)) : 1;
-  g.globalAlpha = fondu;
+  const age = tau - CHOC;
+  const secousse = age >= 0 ? 8 * (1 - clamp01(age / 0.45)) : 0;
   g.fillStyle = '#02030a';
+  g.globalAlpha = fondu;
   g.fillRect(0, 0, W, H);
-  for (let i = 0; i < 100; i++) {
+  for (let i = 0; i < 110; i++) {
     g.globalAlpha = fondu * (0.35 + 0.65 * h(i + Math.floor(f.t * 4)));
     px(g, h(i) * W, h(i + 77) * H, i % 9 === 0 ? 2 : 1, i % 9 === 0 ? 2 : 1, '#ffffff');
   }
-  g.globalAlpha = fondu;
-  // la Terre : une grosse boule bleue en bas, son atmosphère, des continents
+  g.save();
+  g.translate(
+    (h(Math.floor(f.t * 50)) - 0.5) * secousse * 2,
+    (h(Math.floor(f.t * 50) + 5) - 0.5) * secousse * 2,
+  );
   const cx = W / 2;
-  const cy = H * 1.12;
-  const R = H * 0.78;
+  const cy = H * 0.55;
+  const R = Math.round(H * 0.22);
+  const rx = R * 2.2;
+  const ry = R * 0.8;
+  const couleur = COULEURS_SUPER[3]!;
+  // le rayon de l'orbite : la balle part de la surface et s'éloigne en spirale pendant le premier tour
+  const rayon = (tt: number) => 0.45 + 0.55 * lisse(tt / 0.35);
+  const pos = (a: number, tt: number): [number, number] => [
+    cx + Math.cos(a) * rx * rayon(tt),
+    cy + Math.sin(a) * ry * rayon(tt),
+  ];
+  const aBalle = angle(tau);
+  // la traînée : des points un peu plus tôt sur la trajectoire (derrière la Terre quand ils sont en haut)
+  const trace: { x: number; y: number; k: number; devant: boolean }[] = [];
+  const ralenti = tau >= TOURS_FIN && tau < CHOC + 0.25;
+  for (let i = 30; i >= 0; i--) {
+    const tt = Math.max(0, tau - i * (ralenti ? 0.012 : 0.006));
+    const a = angle(tt);
+    const [x, y] = pos(a, tt);
+    trace.push({ x, y, k: 1 - i / 30, devant: Math.sin(a) >= 0 });
+  }
+  const dessineTrace = (devant: boolean) => {
+    for (const p of trace) {
+      if (p.devant !== devant) continue;
+      g.globalAlpha = fondu * p.k * 0.9;
+      const t = Math.round(1 + p.k * 4);
+      px(g, p.x - t / 2, p.y - t / 2, t, t, p.k > 0.7 ? '#ffffff' : couleur);
+    }
+  };
+  dessineTrace(false);
+  terre(g, cx, cy, R, f.t, fondu, age);
+  // le satellite, immobile, jusqu'au choc
+  const [sx, sy] = pos(A_SAT, 1);
+  if (age < 0) satellite(g, sx, sy, f.t);
+  dessineTrace(true);
+  // la balle
+  // après le choc, la balle file tout droit (tangente à l'orbite), à travers le nuage de l'explosion
+  const tx = -Math.sin(A_SAT) * rx;
+  const ty = Math.cos(A_SAT) * ry;
+  const tn = Math.hypot(tx, ty);
+  const [bx, by] = age < 0 ? pos(aBalle, tau) : [sx + (tx / tn) * age * 320, sy + (ty / tn) * age * 320];
+  if (Math.sin(aBalle) >= 0 || age >= 0) {
+    g.globalAlpha = fondu * 0.5;
+    px(g, bx - 7, by - 7, 14, 14, couleur);
+    g.globalAlpha = fondu;
+    px(g, bx - 3, by - 3, 6, 6, C.contour);
+    px(g, bx - 2, by - 2, 4, 4, C.balle);
+  }
+  if (age >= 0) explosion(g, sx, sy, age, fondu);
+  g.restore();
+  // le petit ralenti : bandes de cinéma épaisses et teinte froide
+  if (ralenti) {
+    const k = clamp01(Math.min(tau - TOURS_FIN, CHOC + 0.25 - tau) / 0.1);
+    g.globalAlpha = 0.85 * k;
+    g.fillStyle = '#000';
+    g.fillRect(0, 0, W, 26);
+    g.fillRect(0, H - 26, W, 26);
+    g.globalAlpha = 0.12 * k;
+    g.fillStyle = '#4a7aff';
+    g.fillRect(0, 26, W, H - 52);
+  }
+  // l'éclair du choc, sur tout l'écran
+  if (age >= 0 && age < 0.14) {
+    g.globalAlpha = (1 - age / 0.14) * fondu;
+    g.fillStyle = age < 0.05 ? '#ffffff' : '#bfe6ff';
+    g.fillRect(0, 0, W, H);
+  }
+  g.globalAlpha = 1;
+}
+
+/** La Terre, entière : mers, continents qui tournent, atmosphère ; l'explosion l'éclaire. */
+function terre(
+  g: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  R: number,
+  t: number,
+  fondu: number,
+  age: number,
+): void {
+  g.globalAlpha = fondu * 0.3;
   g.fillStyle = '#4a8cff';
-  g.globalAlpha = fondu * 0.25;
   g.beginPath();
-  g.arc(cx, cy, R + 7, 0, Math.PI * 2);
+  g.arc(cx, cy, R + 6, 0, Math.PI * 2);
   g.fill();
   g.globalAlpha = fondu;
   g.save();
@@ -35,111 +141,124 @@ export function orbite(v: Vue, f: FinaleSuper): void {
   g.arc(cx, cy, R, 0, Math.PI * 2);
   g.clip();
   g.fillStyle = '#1d4fb0';
-  g.fillRect(0, 0, W, H);
-  const rot = f.t * 14;
-  for (let i = 0; i < 9; i++) {
-    px(
-      g,
-      ((h(i) * W * 1.4 + rot) % (W * 1.2)) - W * 0.1,
-      H * (0.4 + h(i + 20) * 0.5),
-      16 + h(i + 9) * 40,
-      5 + h(i + 3) * 9,
-      '#3e9a4a',
-    );
+  g.fillRect(cx - R, cy - R, R * 2, R * 2);
+  const rot = t * 18;
+  for (let i = 0; i < 8; i++) {
+    const x = cx - R + (((h(i) * R * 3 + rot) % (R * 3)) - R * 0.5);
+    px(g, x, cy - R + h(i + 20) * R * 1.8, 10 + h(i + 9) * 24, 5 + h(i + 3) * 10, '#3e9a4a');
   }
   g.fillStyle = 'rgba(255,255,255,0.35)';
-  for (let i = 0; i < 8; i++)
+  for (let i = 0; i < 6; i++)
     g.fillRect(
-      ((h(i + 70) * W * 1.4 + rot * 1.6) % (W * 1.2)) - W * 0.1,
-      H * (0.38 + h(i + 80) * 0.5),
-      30,
+      cx - R + (((h(i + 70) * R * 3 + rot * 1.6) % (R * 3)) - R * 0.5),
+      cy - R + h(i + 80) * R * 1.8,
+      22,
       3,
     );
+  // l'ombre de la nuit, et la lueur orange de l'explosion
+  g.fillStyle = 'rgba(0,0,20,0.35)';
+  g.beginPath();
+  g.arc(cx - R * 0.5, cy - R * 0.3, R * 1.4, 0, Math.PI * 2);
+  g.arc(cx + R * 0.6, cy + R * 0.2, R * 1.2, 0, Math.PI * 2, true);
+  g.fill();
+  if (age >= 0) {
+    g.globalAlpha = fondu * 0.5 * (1 - clamp01(age / 0.5));
+    g.fillStyle = '#ff9a3a';
+    g.fillRect(cx - R, cy - R, R * 2, R * 2);
+  }
   g.restore();
-  // le temps du plan : vite, puis un petit ralenti autour du choc (s = temps du mouvement)
-  const choc = 0.8;
-  const s = tau < 0.75 ? 0.8 * tau : tau < 1.35 ? 0.6 + 0.333 * (tau - 0.75) : choc + 0.6 * (tau - 1.35);
-  const ralenti = tau >= 0.75 && tau < 1.6;
-  const orb = R + 46;
-  const pos = (a: number): [number, number] => [cx + Math.cos(a) * orb * 1.18, cy - Math.sin(a) * orb];
-  const aBalle = s <= choc ? Math.PI - (Math.PI / 2) * (s / choc) : Math.PI / 2 - (s - choc) * 2.4;
-  const aSat = (Math.PI / 2) * Math.min(1, s / choc);
-  const couleur = COULEURS_SUPER[6]!;
-  // le satellite, jusqu'au choc
-  if (s < choc) {
-    const [sx, sy] = pos(aSat);
-    px(g, sx - 3, sy - 3, 7, 7, '#c8ccd8');
-    px(g, sx - 13, sy - 2, 9, 5, '#2a4fd8'); // panneaux solaires
-    px(g, sx + 5, sy - 2, 9, 5, '#2a4fd8');
-    px(g, sx - 1, sy - 6, 3, 3, '#ffffff');
-    if (Math.floor(f.t * 6) % 2 === 0) px(g, sx, sy - 8, 1, 1, '#ff3b3b');
+  g.globalAlpha = 1;
+}
+
+/** Le satellite : un corps argenté, deux grands panneaux solaires, une antenne, une lumière qui clignote. */
+function satellite(g: CanvasRenderingContext2D, x: number, y: number, t: number): void {
+  px(g, x - 4, y - 4, 9, 9, '#c8ccd8');
+  px(g, x - 4, y - 4, 9, 2, '#ffffff');
+  for (const d of [-1, 1]) {
+    px(g, x + d * 6 - (d < 0 ? 14 : 0), y - 3, 14, 7, '#2a4fd8');
+    for (let k = 0; k < 3; k++) px(g, x + d * 6 - (d < 0 ? 14 : 0) + k * 5, y - 3, 1, 7, '#8fb0ff');
   }
-  // la balle, sa longue traîne le long de l'orbite
-  const taille = s > choc ? 3 : 4;
-  for (let i = 40; i >= 1; i--) {
-    const [tx, ty] = pos(aBalle + i * (ralenti ? 0.012 : 0.03));
-    g.globalAlpha = fondu * (1 - i / 42) * 0.8;
-    px(
-      g,
-      tx - 2,
-      ty - 2,
-      2 + Math.round((1 - i / 40) * taille),
-      2 + Math.round((1 - i / 40) * taille),
-      i < 12 ? '#ffffff' : couleur,
-    );
+  px(g, x, y - 9, 1, 5, '#ffffff');
+  px(g, x - 2, y - 10, 5, 1, '#ffffff');
+  if (Math.floor(t * 6) % 2 === 0) px(g, x + 3, y - 7, 2, 2, '#ff3b3b');
+}
+
+/** L'explosion du satellite : boule de feu, anneaux de choc, rayons, explosions en chaîne, panneaux qui tournoient. */
+function explosion(g: CanvasRenderingContext2D, x: number, y: number, age: number, fondu: number): void {
+  const fin = 1 - clamp01(age / 0.6);
+  // les rayons de la gerbe
+  g.lineWidth = 2;
+  for (let i = 0; i < 16; i++) {
+    const a = (i / 16) * Math.PI * 2 + h(i) * 0.3;
+    const l = 30 + age * (260 + h(i + 5) * 160);
+    g.globalAlpha = fondu * fin * 0.8;
+    g.strokeStyle = i % 2 ? '#ffffff' : '#ffd27a';
+    g.beginPath();
+    g.moveTo(x + Math.cos(a) * 8, y + Math.sin(a) * 8);
+    g.lineTo(x + Math.cos(a) * l, y + Math.sin(a) * l);
+    g.stroke();
   }
-  g.globalAlpha = fondu;
-  if (aBalle > -0.2) {
-    const [bx, by] = pos(aBalle);
-    g.globalAlpha = fondu * 0.5;
-    px(g, bx - 7, by - 7, 14, 14, couleur);
-    g.globalAlpha = fondu;
-    px(g, bx - 3, by - 3, 6, 6, C.contour);
-    px(g, bx - 2, by - 2, 4, 4, C.balle);
+  // quatre anneaux de choc, de couleurs différentes, à des vitesses différentes
+  for (const [v, c] of [
+    [520, '#ffffff'],
+    [380, '#ffd27a'],
+    [260, '#5fd0ff'],
+    [170, '#ff5ab0'],
+  ] as [number, string][]) {
+    g.globalAlpha = fondu * fin;
+    g.strokeStyle = c;
+    g.lineWidth = 3;
+    g.beginPath();
+    g.ellipse(x, y, age * v, age * v * 0.45, 0, 0, Math.PI * 2);
+    g.stroke();
   }
-  // le choc : un éclair, une boule de feu qui gonfle, des débris (panneaux, morceaux de coque) jetés au ralenti
-  if (s >= choc) {
-    const [ex, ey] = pos(Math.PI / 2);
-    const age = tau - 1.35;
-    g.globalAlpha = fondu * clamp01(1 - age / 0.6) * 0.9;
-    for (const [r, c] of [
-      [8 + age * 90, '#ff6a2a'],
-      [5 + age * 55, '#ffd27a'],
-      [3 + age * 25, '#ffffff'],
+  // la boule de feu, qui gonfle et vacille, puis explosions en chaîne autour
+  const boule = (bx: number, by: number, a: number, taille: number) => {
+    if (a < 0 || a > 0.5) return;
+    const r = taille * (0.3 + Math.sqrt(a / 0.5)) * (0.9 + 0.1 * Math.sin(a * 60));
+    for (const [k, c] of [
+      [1, '#ff4a1a'],
+      [0.75, '#ffa028'],
+      [0.5, '#fff2b0'],
+      [0.25, '#ffffff'],
     ] as [number, string][]) {
+      g.globalAlpha = fondu * (1 - a / 0.5);
       g.fillStyle = c;
       g.beginPath();
-      g.arc(ex, ey, r, 0, Math.PI * 2);
+      g.arc(bx, by, r * k, 0, Math.PI * 2);
       g.fill();
     }
-    for (let i = 0; i < 46; i++) {
-      const a = h(i + 600) * Math.PI * 2;
-      const vit = 30 + h(i + 650) * 110;
-      g.globalAlpha = fondu * clamp01(1.2 - age * 1.3);
-      const gros = i < 10;
-      px(
-        g,
-        ex + Math.cos(a) * vit * age,
-        ey + Math.sin(a) * vit * age,
-        gros ? 5 : 2,
-        gros ? 3 : 2,
-        gros ? '#2a4fd8' : i % 2 ? '#c8ccd8' : '#ffd27a',
-      );
-    }
-    if (age < 0.12) {
-      g.globalAlpha = fondu * (1 - age / 0.12) * 0.85;
-      g.fillStyle = '#ffffff';
-      g.fillRect(0, 0, W, H);
-    }
+  };
+  boule(x, y, age, 46);
+  boule(x + 26, y - 14, age - 0.1, 24);
+  boule(x - 30, y + 8, age - 0.18, 22);
+  boule(x + 8, y + 22, age - 0.26, 18);
+  // les deux panneaux solaires, arrachés, qui tournoient
+  for (const d of [-1, 1]) {
+    g.save();
+    g.globalAlpha = fondu * clamp01(1.2 - age);
+    g.translate(x + d * age * 140, y - age * 60 + age * age * 80);
+    g.rotate(age * 14 * d);
+    g.fillStyle = '#2a4fd8';
+    g.fillRect(-8, -4, 16, 8);
+    g.fillStyle = '#8fb0ff';
+    g.fillRect(-8, -4, 16, 1);
+    g.restore();
   }
-  // le petit ralenti : une teinte bleue sur les bords et des barres de cinéma plus épaisses
-  if (ralenti) {
-    const k = clamp01(Math.min(tau - 0.75, 1.6 - tau) / 0.12);
-    g.globalAlpha = 0.28 * k;
-    g.fillStyle = '#0a1a4a';
-    g.fillRect(0, 0, W, 22);
-    g.fillRect(0, H - 22, W, 22);
-    g.globalAlpha = 1;
+  // les débris et les étincelles
+  for (let i = 0; i < 90; i++) {
+    const a = h(i + 600) * Math.PI * 2;
+    const vit = 40 + h(i + 650) * 220;
+    g.globalAlpha = fondu * clamp01(1 - age * (i < 30 ? 1.2 : 2));
+    const gros = i < 18;
+    px(
+      g,
+      x + Math.cos(a) * vit * age,
+      y + Math.sin(a) * vit * age * 0.7,
+      gros ? 3 : 1,
+      gros ? 3 : 1,
+      gros ? '#c8ccd8' : i % 3 ? '#ffd27a' : '#ffffff',
+    );
   }
   g.globalAlpha = 1;
 }

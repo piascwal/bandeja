@@ -20,7 +20,7 @@ function pose(type: Coup, z: number, superCoup = 0): string {
 describe('les poses des coups aériens', () => {
   it('le smash et les super coups décollent : le sprite aux pieds en l’air', () => {
     expect(pose('smash', 2.6)).toBe('smash2');
-    for (const v of [1, 2, 3, 4, 5, 6]) expect(pose('smash', 1.2, v)).toBe('smash2');
+    for (const v of [1, 2, 3]) expect(pose('smash', 1.2, v)).toBe('smash2');
   });
 
   it('la bandeja et la víbora gardent la pose d’armé, les deux pieds au sol', () => {

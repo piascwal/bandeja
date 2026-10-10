@@ -6,20 +6,16 @@ import { C, TRAINEES } from './palette';
 import { px } from './primitives';
 import type { Vue } from './vue';
 
-/** Les quatre super coups : couleurs de la traînée (queue, milieu, tête), épaisseur et couleur du halo. */
+/** Les trois super coups : couleurs de la traînée (queue, milieu, tête), épaisseur et couleur du halo. */
 const STYLES_SUPER: Record<number, { couleurs: [string, string, string]; taille: number; halo: string }> = {
   1: { couleurs: ['#c81e0a', '#ff6a1f', '#fff2b0'], taille: 6, halo: '#ff6a2a' }, // météore : boule de feu
-  2: { couleurs: ['#1d4ed8', '#5fd0ff', '#ffffff'], taille: 5, halo: '#5fd0ff' }, // comète : feu bleu et blanc
-  3: { couleurs: ['#c4165a', '#ff9a2a', '#fff2b0'], taille: 5, halo: '#ff9a2a' }, // phénix : oiseau de feu, des ailes
-  4: { couleurs: ['#ffb200', '#fff23a', '#ffffff'], taille: 4, halo: '#fff23a' }, // éclair : zigzag électrique
-  5: { couleurs: ['#5a0800', '#ff3b12', '#ffd27a'], taille: 6, halo: '#ff3b12' }, // volcan : lave
-  6: { couleurs: ['#2a2fb0', '#9ab8ff', '#ffffff'], taille: 5, halo: '#9ab8ff' }, // orbite : feu bleu pâle
+  2: { couleurs: ['#5a0800', '#ff3b12', '#ffd27a'], taille: 6, halo: '#ff3b12' }, // volcan : lave
+  3: { couleurs: ['#2a2fb0', '#9ab8ff', '#ffffff'], taille: 5, halo: '#9ab8ff' }, // orbite : feu bleu pâle
 };
 
 /**
  * La traînée d'un super coup : une longue queue de feu (large couche sombre,
- * cœur vif, étincelles qui s'échappent) ; le phénix ajoute des ailes de feu,
- * l'éclair zigzague.
+ * cœur vif, étincelles qui s'échappent).
  */
 function traineeSuper(v: Vue, jeu: Partie, variante: number): void {
   const style = STYLES_SUPER[variante]!;
@@ -29,9 +25,8 @@ function traineeSuper(v: Vue, jeu: Partie, variante: number): void {
   b.trace.forEach(([mx, my, mz], i) => {
     const [px0, py0] = K.proj(mx, my, mz);
     const t = (i + 1) / n;
-    const zig = variante === 4 ? (i % 2 ? 3 : -3) : 0;
     const tx = px0;
-    const ty = py0 + zig + Math.round(Math.sin(i * 1.3 + jeu.temps * 30) * (variante === 4 ? 0 : 1.2));
+    const ty = py0 + Math.round(Math.sin(i * 1.3 + jeu.temps * 30) * 1.2);
     const c = t < 0.4 ? style.couleurs[0] : t < 0.8 ? style.couleurs[1] : style.couleurs[2];
     const taille = Math.max(2, Math.round(style.taille * (0.35 + 0.65 * t)));
     // couche large et sombre, puis le cœur de la flamme
@@ -44,12 +39,6 @@ function traineeSuper(v: Vue, jeu: Partie, variante: number): void {
       g.globalAlpha = 1 - t;
       px(g, tx + Math.round(bruitVisuel(i, jeu.temps) * 2), ty - 2 - (i % 4), 1, 1, '#ffffff');
     }
-    if (variante === 3 && i % 3 === 0) {
-      // les ailes du phénix
-      g.globalAlpha = 0.9 * t;
-      px(g, tx - 5 - (i % 2), ty - 3, 3, 1, style.couleurs[1]);
-      px(g, tx + 3 + (i % 2), ty - 3, 3, 1, style.couleurs[1]);
-    }
   });
   g.globalAlpha = 1;
 }
@@ -59,7 +48,7 @@ export function dessineBalle(v: Vue, jeu: Partie): void {
   const { g, K } = v;
   const b = jeu.balle;
   // le volcan a perforé le court : la balle est sous terre
-  if (b.super === 5 && b.dehors) return;
+  if (b.super === 2 && b.dehors) return;
   const [sx, sy] = K.proj(b.x, b.y, b.z);
   const vit = Math.hypot(b.vx, b.vy, b.vz);
   const special = b.coup ? TRAINEES[b.coup] : undefined;
@@ -110,8 +99,6 @@ export function dessineBalle(v: Vue, jeu: Partie): void {
     px(g, x - 5, y - 4, 10, 8, style.halo);
     px(g, x - 4, y - 5, 8, 10, '#ffffff');
     g.globalAlpha = 1;
-    // le fantôme clignote
-    if (variante === 4 && Math.floor(jeu.temps * 20) % 2 === 0) g.globalAlpha = 0.45;
   }
   px(g, x - 2, y - 1, 4, 2, C.contour);
   px(g, x - 1, y - 2, 2, 4, C.contour);

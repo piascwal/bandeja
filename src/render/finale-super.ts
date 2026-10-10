@@ -1,9 +1,11 @@
 /**
  * La fin spectaculaire d'un super coup, côté affichage (chaque écran la joue pour
- * lui-même, en temps réel) : le choc (zoom sur l'impact, terrain ou vitre qui
- * casse), l'ascension (la balle part dans l'espace), le plan sur la lune, puis
- * le bandeau du point. Voir `finale-vue.ts` pour le dessin.
+ * lui-même) : le choc (zoom sur l'impact, terrain qui casse), puis la scène de la
+ * variante (la lune, le volcan ou le satellite), puis le bandeau du point. Voir
+ * `finale-vue.ts` pour le dessin. Les temps ci-dessous sont ceux de la scène, qui
+ * avance à RYTHME_FINALE du temps réel : elle dure FINALE_FIN_S / RYTHME_FINALE s.
  */
+export const RYTHME_FINALE = 0.7;
 export const CHOC_S = 0.55;
 export const ASCENSION_FIN_S = 1.55;
 export const LUNE_FIN_S = 3.45;
@@ -13,7 +15,7 @@ export const BANDEAU_S = 3.5;
 
 export class FinaleSuper {
   variante = 0;
-  /** secondes depuis le choc */
+  /** temps de la scène depuis le choc (voir RYTHME_FINALE) */
   t = 0;
   actif = false;
   /** a été déclenchée pour ce point (même si elle est terminée ou passée) */
@@ -35,7 +37,7 @@ export class FinaleSuper {
 
   maj(dt: number): void {
     if (!this.actif) return;
-    this.t += dt;
+    this.t += dt * RYTHME_FINALE;
     if (this.t >= FINALE_FIN_S) this.actif = false;
   }
 

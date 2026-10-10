@@ -107,7 +107,7 @@ export interface CorpsBalle {
   por: number;
   /** rebond vif : le prochain rebond au sol relance la balle (0 : aucun, 1 : vers la vitre en hauteur, au-delà : hors de la piste) */
   vif: number;
-  /** super coup en vol (0 aucun, 1 météore, 2 comète, 3 phénix, 4 fantôme) : imparable, il gagne le point à son premier rebond */
+  /** super coup en vol (0 aucun, 1 météore, 2 volcan, 3 orbite) : imparable, il gagne le point à son premier rebond */
   super: number;
   /** rebonds au sol depuis la dernière frappe (la physique les compte elle-même, prévision comprise) : les vitres freinent une balle déjà rebondie */
   rebonds: number;

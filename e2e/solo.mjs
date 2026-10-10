@@ -83,8 +83,8 @@ export default async function (env) {
   await attends(150);
   await env.capture(p, 'hud-echange');
 
-  // les quatre super coups, joués pour de bon : en vol (traînée de feu), puis à la sortie (cratère, vitre brisée, écran fissuré)
-  for (const v of [1, 2, 3, 4]) {
+  // les trois super coups, joués pour de bon : en vol (traînée de feu), puis le choc (cratère) et la scène
+  for (const v of [1, 2, 3]) {
     await p.evaluate(async (variante) => {
       const { executeCoup } = await import('/src/core/coups.ts');
       const { xProf } = await import('/src/core/terrain.ts');
@@ -92,12 +92,12 @@ export default async function (env) {
       const h = j.joueurs[0];
       j.phase = 'jeu';
       j.echange = 3;
-      h.x = variante === 3 ? 2 : variante === 4 ? 8.5 : 6;
+      h.x = variante === 3 ? 2 : variante === 2 ? 8.5 : 6;
       h.y = 5;
       Object.assign(j.balle, {
         x: h.x + 0.3,
         y: 5,
-        z: variante === 1 ? 2.5 : 0.9,
+        z: 2.5,
         vx: -3,
         vy: 0,
         vz: 0,

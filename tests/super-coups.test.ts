@@ -5,7 +5,7 @@ import { executeCoup } from '@core/coups';
 import { appliqueCommande } from '@core/humain';
 import { pas } from '@core/partie';
 import { GAIN_JAUGE } from '@core/qualite';
-import { curseurParade, dansZoneParade, NOMS_SUPER, VARIANTES_JOUEES, varianteSuper } from '@core/super-coup';
+import { curseurParade, dansZoneParade, NOMS_SUPER, VARIANTES_SUPER, varianteSuper } from '@core/super-coup';
 import { xProf } from '@core/terrain';
 import type { Balle, Commande } from '@core/types';
 import { partieTest } from './outils';
@@ -169,9 +169,9 @@ describe('le super coup', () => {
       return varianteSuper(jeu.balle, Math.abs(x - 10));
     };
     expect(v({ z: 2.5 }, 6)).toBe(1);
-    expect(v({ z: 2.5 }, 2)).toBe(6);
-    expect(v({ z: 2.5 }, 8.5)).toBe(5);
-    expect(NOMS_SUPER.filter(Boolean)).toHaveLength(6);
+    expect(v({ z: 2.5 }, 2)).toBe(3);
+    expect(v({ z: 2.5 }, 8.5)).toBe(2);
+    expect(NOMS_SUPER.filter(Boolean)).toHaveLength(3);
   });
 
   it('dans le jeu, trois animations seulement (lune, volcan, satellite), chacune avec la même chance', () => {
@@ -182,11 +182,11 @@ describe('le super coup', () => {
     ] as [Partial<Balle>, number][]) {
       const { jeu } = situation(balle, x);
       const rng = graine(5);
-      const vus = [0, 0, 0, 0, 0, 0, 0];
+      const vus = [0, 0, 0, 0];
       const N = 6000;
       for (let i = 0; i < N; i++) vus[varianteSuper(jeu.balle, Math.abs(x - 10), rng)]!++;
-      expect(vus[2]! + vus[3]! + vus[4]!).toBe(0);
-      for (const v of VARIANTES_JOUEES) {
+      expect(vus[0]).toBe(0);
+      for (const v of VARIANTES_SUPER) {
         expect(vus[v]! / N, `variante ${v}`).toBeGreaterThan(1 / 3 - 0.03);
         expect(vus[v]! / N, `variante ${v}`).toBeLessThan(1 / 3 + 0.03);
       }
@@ -196,11 +196,10 @@ describe('le super coup', () => {
   it('chaque variante est imparable et gagne le point, quel que soit le CPU en face', () => {
     for (const [variante, balle, x] of [
       [1, { z: 2.5 }, 6],
-      [2, { z: 0.8, vx: -20 }, 5],
-      [3, { z: 0.8, vx: -4 }, 2],
-      [4, { z: 0.5, vx: -3 }, 8.5],
-      [5, { z: 2.5 }, 8.5],
-      [6, { z: 2.5 }, 2],
+      [2, { z: 2.5 }, 8.5],
+      [3, { z: 2.5 }, 2],
+      [1, { z: 0.8, vx: -20 }, 5],
+      [2, { z: 0.5, vx: -3 }, 8.5],
     ] as [number, Partial<Balle>, number][]) {
       const { jeu, s } = situation(balle, x);
       executeCoup(jeu, s, 'plat', 1, xProf(1, 3), 5, null, { super: variante, precision: 1, charge: 1 });

@@ -49,9 +49,9 @@ export default async function (env) {
 
   await p.evaluate(() => {
     const b = window.bandeja;
-    b.effets.abime('sol', 5, 3, 0, 4);
+    b.effets.abime(5, 3, 1);
     b.effets.debris(b.W / 2, b.H * 0.6);
-    b.effets.finale.declenche(4, b.W / 2, b.H * 0.6, 0.8);
+    b.effets.finale.declenche(1, b.W / 2, b.H * 0.6, 0.8);
   });
   env.verifie(await p.evaluate(() => window.bandeja.effets.finale.actif), 'la scène finale démarre');
   // on photographie les temps clés de la scène en réglant son horloge
@@ -73,14 +73,14 @@ export default async function (env) {
     await env.capture(p, `super-${nom}`);
   }
   env.verifie(
-    await env.attendsQue(p, () => !window.bandeja.effets.finale.actif, undefined, 4000),
+    await env.attendsQue(p, () => !window.bandeja.effets.finale.actif, undefined, 6000),
     'la scène finale se termine',
   );
 
   // les deux scènes qui quittent la lune : le volcan (plongée dans la Terre, geyser) et l'orbite (satellite)
   for (const [variante, temps] of [
-    [5, [0.65, 0.95, 1.15, 1.4, 1.65, 1.9, 2.05, 2.5, 3.1]],
-    [6, [1.2, 1.9, 2.3, 2.7, 3.0, 3.3]],
+    [2, [0.7, 1.1, 1.5, 1.8, 2.0, 2.2, 2.35, 2.6, 3.0]],
+    [3, [1.6, 1.9, 2.3, 2.6, 2.8, 2.9, 2.97, 3.1, 3.3]],
   ]) {
     await p.evaluate((v) => {
       const b = window.bandeja;

@@ -56,9 +56,10 @@ export const PARADE_DUREE_MAX = 1.6;
 export const PARADE_RALENTI = 0.12;
 /**
  * Fin spectaculaire d'un super coup (secondes de simulation) : choc, ascension,
- * plan sur la lune, puis bandeau du point ; le ralenti vient après.
+ * scène de la variante, puis bandeau du point ; le ralenti vient après. La scène dure
+ * environ 5,4 s réelles (`render/finale-super.ts`), soit 4,3 s de simulation.
  */
-export const FINALE_SUPER_S = 4;
+export const FINALE_SUPER_S = 4.6;
 /** Durée de l'annonce entre deux points (s). */
 export const DUREE_POINT = 1.9;
 

@@ -21,7 +21,7 @@ function cratere(v: Vue, d: Decal, a: number): void {
   // le cratère : une ellipse sombre, deux fois (le bord, puis le fond)
   for (const [r, c] of [
     [0.7, `rgba(20,16,30,${0.5 * a})`],
-    [0.4, d.variante === 5 ? `rgba(255,90,26,${0.9 * a})` : `rgba(6,6,16,${0.75 * a})`],
+    [0.4, d.variante === 2 ? `rgba(255,90,26,${0.9 * a})` : `rgba(6,6,16,${0.75 * a})`],
   ] as [number, string][]) {
     g.fillStyle = c;
     g.beginPath();
@@ -69,50 +69,12 @@ function cratere(v: Vue, d: Decal, a: number): void {
   g.globalAlpha = 1;
 }
 
-/** La vitre percée : un trou sombre en étoile, des lignes de rupture, quelques éclats restés accrochés. */
-function trou(v: Vue, d: Decal, a: number): void {
+/** Les cratères des super coups sur la piste, dessinés avant les joueurs. */
+export function dessineDecals(v: Vue, decals: readonly Decal[]): void {
   const { g, K } = v;
-  const alea = graine(d.graine);
-  const [cx, cy] = K.proj(d.x, d.y, d.z);
-  for (let b = 0; b < 16; b++) {
-    const ang = (b / 16) * Math.PI * 2 + alea() * 0.3;
-    const l = 8 + alea() * 14;
-    let x = cx;
-    let y = cy;
-    g.beginPath();
-    g.moveTo(x, y);
-    for (let i = 0; i < 3; i++) {
-      x += Math.cos(ang + (alea() - 0.5) * 0.7) * (l / 3);
-      y += Math.sin(ang + (alea() - 0.5) * 0.7) * (l / 3);
-      g.lineTo(x, y);
-    }
-    g.strokeStyle = `rgba(6,8,22,${0.8 * a})`;
-    g.lineWidth = 2;
-    g.stroke();
-    g.strokeStyle = `rgba(235,248,255,${0.9 * a})`;
-    g.lineWidth = 1;
-    g.stroke();
-  }
-  g.fillStyle = `rgba(4,6,16,${0.85 * a})`;
-  g.beginPath();
-  for (let i = 0; i < 10; i++) {
-    const ang = (i / 10) * Math.PI * 2;
-    const r = 4 + alea() * 4;
-    const px0 = cx + Math.cos(ang) * r;
-    const py0 = cy + Math.sin(ang) * r;
-    if (i === 0) g.moveTo(px0, py0);
-    else g.lineTo(px0, py0);
-  }
-  g.fill();
-}
-
-/** Les dégâts des super coups sur la piste et les vitres, dessinés avant les joueurs. */
-export function dessineDecals(v: Vue, decals: readonly Decal[], kind: Decal['kind']): void {
-  const { g, K } = v;
-  const liste = decals.filter((d) => d.kind === kind);
-  if (!liste.length) return;
+  if (!decals.length) return;
   g.save();
-  if (kind === 'sol') {
+  {
     // le sol cassé reste sur le sol : rien ne déborde sur les vitres, qui sont dessinées par-dessus
     g.beginPath();
     [
@@ -128,10 +90,6 @@ export function dessineDecals(v: Vue, decals: readonly Decal[], kind: Decal['kin
     g.closePath();
     g.clip();
   }
-  for (const d of liste) {
-    const a = Math.min(1, d.vie / 1.5);
-    if (kind === 'sol') cratere(v, d, a);
-    else trou(v, d, a);
-  }
+  for (const d of decals) cratere(v, d, Math.min(1, d.vie / 1.5));
   g.restore();
 }

@@ -336,7 +336,7 @@ export class BandejaApp {
     this.ralenti.journal = this.effets.journal;
     if (this.ecranUI === 'jeu') {
       this.ralenti.suit(this.jeu, dt, this.K.miroir);
-      // le ralenti commence : le cratère et la fissure du super coup ne restent pas affichés après lui
+      // le ralenti commence : le cratère du super coup ne restent pas affichés après lui
       if (this.ralenti.actif && !this.ralentiAvant) this.effets.repare();
       this.ralentiAvant = this.ralenti.actif;
       this.surveilleJauges();

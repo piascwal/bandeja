@@ -399,22 +399,25 @@ voit venir le coup.
 quasi sans erreur, **imparable** (aucun adversaire ne peut toucher la balle) et qui gagne
 le point à son premier rebond. Il est toujours rapide (la balle file au plus vite que le
 filet le permet, puis repart comme un boulet après son rebond), avec une longue traînée de
-feu, et finit en cassant quelque chose. **Trois animations**, tirées au hasard à chances égales
-(`VARIANTES_JOUEES`, `varianteSuper` : 1 sur 3 chacune, quelle que soit la situation) :
+feu, et finit sur une scène. **Trois animations**, tirées au hasard à chances égales
+(`VARIANTES_SUPER`, `varianteSuper` : 1 sur 3 chacune, quelle que soit la situation), toutes jouées
+un peu au ralenti (`RYTHME_FINALE` 0,7 : environ 5,4 s) :
 
-- la **MÉTÉORE** : boule de feu qui s'écrase, repart dans l'espace et finit sur la lune ;
-- le **VOLCAN** : il **perfore le court** (pas de rebond) ; un seul plan continu
+- la **MÉTÉORE** (1) : boule de feu qui s'écrase, repart dans l'espace et finit sur la lune ;
+- le **VOLCAN** (2) : il **perfore le court** (pas de rebond) ; un seul plan continu
   (`render/finale-volcan.ts`) : on recule depuis le court posé en haut de la Terre vue en coupe, la
-  balle descend tout droit en creusant un tunnel (sombre dans la croûte, de lave plus bas), passe le
-  centre (la lave s'accroche à elle), la Terre fait un demi-tour, la balle remonte vers le volcan de
-  l'autre côté et en sort portée par la lave ; on plonge alors sur le volcan en éruption, la balle au
-  sommet du geyser. Trois légendes disent ce qui se passe (« LA BALLE PERFORE LE COURT », « CENTRE
-  DE LA TERRE », « DE L AUTRE COTE... ») ;
-- l'**ORBITE** : la balle rebondit en orbite autour de la Terre à toute vitesse ; un petit ralenti
-  montre la balle percuter un satellite, qui explose (`render/finale-orbite.ts`).
+  balle descend tout droit en creusant un tunnel, passe le centre (la lave s'accroche à elle), la Terre
+  fait un demi-tour ; la caméra se colle alors à la balle qui fonce vers la surface (traits de vitesse,
+  lave dans son sillage, l'image tremble), elle jaillit du volcan dans une explosion (éclair, anneaux
+  de choc, bombes de lave), puis l'éruption (`render/finale-geyser.ts`), la balle au sommet du geyser.
+  Des légendes disent ce qui se passe ;
+- l'**ORBITE** (3) : la Terre entière, la balle se met en orbite et en fait **deux tours** à toute
+  vitesse (elle passe derrière la Terre), puis un petit ralenti la montre arriver sur un **satellite
+  immobile** : explosion en chaîne, quatre anneaux de choc de couleurs, gerbe de rayons, panneaux
+  solaires arrachés qui tournoient, la Terre éclairée, l'image qui tremble ; la balle file tout droit
+  à travers le nuage (`render/finale-orbite.ts`).
 
-La comète, le phénix et l'éclair existent encore dans la physique (et ses tests) mais ne sont plus
-tirés. Le CPU lâche aussi son super coup, rarement (5 % de ses coups quand sa jauge est pleine). Les coups ordinaires
+Le CPU lâche aussi son super coup, rarement (5 % de ses coups quand sa jauge est pleine). Les coups ordinaires
 restent plafonnés à 0,97 de puissance.
 
 **Parade.** Au moment où un super coup part, le jeu passe au ralenti (environ 2 s) pour
@@ -425,16 +428,16 @@ autres voient une petite jauge sous le tableau des scores. Réussi : le super es
 (renvoi normal, la jauge du défenseur gagne 20 %) ; raté, ou trop lent : le super reste
 imparable. Le CPU tente sa chance au hasard. Le curseur est synchronisé dans l'instantané
 (protocole 8) et l'évènement `parade` annonce le résultat. Les dégâts de la piste
-(cratère, vitre brisée) disparaissent quand le jeu reprend sur un nouveau point ; le ralenti du super coup
+(cratère) disparaissent quand le jeu reprend sur un nouveau point ; le ralenti du super coup
 les refait au moment où la balle les fait (`Effets.journal`). Le cratère de la piste est petit : il se
 lit sans cacher le jeu.
 
 **Fin spectaculaire.** La balle d'un super coup **tape toujours le sol d'abord** (jamais
 une vitre), et ce choc ouvre la scène : avant le ralenti, chaque écran joue sa propre scène (`finale-super.ts`, `finale-vue.ts`) : coup de
-zoom sur l'impact, terrain cratérisé ou vitre fissurée (`decals.ts` : le cratère est dessiné sous les vitres et
+zoom sur l'impact, terrain cratérisé (`decals.ts` : le cratère est dessiné sous les vitres et
 coupé aux limites de la piste ; il disparaît quand le ralenti commence),
-filtre de particules sur tout l'écran, puis la balle monte dans le ciel jusqu'à l'espace en gardant le cap pris au rebond (elle penche du côté où elle partait),
-arrive à toute vitesse sur la lune (une grosse boule grise à l'horizon arrondi, criblée d'un ensemble fixe de
+filtre de particules sur tout l'écran, puis (météore et orbite) la balle monte dans le ciel jusqu'à l'espace en gardant le cap pris au rebond (elle penche du côté où elle partait),
+et, pour la météore, arrive à toute vitesse sur la lune (une grosse boule grise à l'horizon arrondi, criblée d'un ensemble fixe de
 cratères) et s'y écrase (éclair, onde de choc, débris) toujours dans le même cratère
 (rien n'est mémorisé d'une partie à l'autre). Le bandeau du point s'affiche alors ; un
 appui passe la scène. Le ralenti d'un super coup est toujours rejoué, après la scène.

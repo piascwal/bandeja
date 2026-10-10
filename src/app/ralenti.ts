@@ -31,15 +31,8 @@ export class Ralenti {
   readonly vue = new VueJoueurs();
   readonly effets = new Effets();
   actif = false;
-  /** les dégâts du point (cratère, vitre brisée) avec leur date : le rejeu les refait au moment où la balle les fait */
-  journal: readonly {
-    t: number;
-    kind: 'sol' | 'vitre';
-    x: number;
-    y: number;
-    z: number;
-    variante: number;
-  }[] = [];
+  /** les dégâts du point (cratères) avec leur date : le rejeu les refait au moment où la balle les fait */
+  journal: readonly { t: number; x: number; y: number; variante: number }[] = [];
   private degats: typeof this.journal = [];
   private prochainDegat = 0;
   /** avancement du rejeu, de 0 à 1 */
@@ -120,7 +113,7 @@ export class Ralenti {
     // le cratère ou la vitre brisée apparaît quand la balle arrive, comme dans le jeu
     while (this.prochainDegat < this.degats.length && this.degats[this.prochainDegat]!.t <= this.position) {
       const d = this.degats[this.prochainDegat++]!;
-      this.effets.abime(d.kind, d.x, d.y, d.z, d.variante);
+      this.effets.abime(d.x, d.y, d.variante);
     }
     const i = Math.max(
       1,
