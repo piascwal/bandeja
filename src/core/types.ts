@@ -5,8 +5,8 @@ export type Equipe = 0 | 1;
 export type Effet = 'plat' | 'lobe' | 'lift' | 'smash' | 'coupe' | 'vibora';
 /** Les coups, tels qu'annoncés à l'écran. */
 export type Coup = 'plat' | 'lobe' | 'coupe' | 'amorti' | 'smash' | 'vibora' | 'bandeja' | 'vitre' | 'cote';
-/** Les boutons (au toucher : ARMER puis un trait, voir `input/geste.ts`, qui choisit entre FRAPPE, AMORTI, LOBE et LOURD) : FRAPPE, LOBE, AMORTI (COUPE au service), SUPER (le SMASH choisit seul entre smash, víbora et bandeja), CHANGE (de joueur). */
-export type Bouton = 'plat' | 'amorti' | 'lobe' | 'smash' | 'change' | 'lourd';
+/** Les boutons (au toucher : un doigt qui se pose arme, le trait qu'il trace choisit entre FRAPPE, AMORTI, LOBE, LOURD et COURBE : voir `input/geste.ts`) : FRAPPE, LOBE, AMORTI (COUPE au service), SUPER (le SMASH choisit seul entre smash, víbora et bandeja), CHANGE (de joueur). */
+export type Bouton = 'plat' | 'amorti' | 'lobe' | 'smash' | 'change' | 'lourd' | 'courbe';
 /** Vitre visée pour un rebond voulu : celle du fond, ou celle de côté (haut / bas de l'écran). */
 export type Mur = 'fond' | 'haut' | 'bas';
 export type TypeService = 'plat' | 'coupe';
@@ -73,6 +73,8 @@ export interface Joueur {
   poseCoup: PoseCoup;
   /** coup demandé à l'avance par le joueur humain */
   intent: { type: Bouton; t: number } | null;
+  /** la zone voulue par le dernier trait (côté de -1 à 1, null : joystick ; profondeur de 0 à 1) : lue et effacée au coup */
+  trait: TraitCoup | null;
   /** puissance accumulée par l'appui anticipé (0 → 1) */
   charge: number;
   /** temps de récupération après un coup */
@@ -156,12 +158,20 @@ export interface Plan extends PointPredit {
   sc: number;
 }
 
+/** Zone voulue par un trait : côté de -1 (haut du terrain à l'écran) à 1, null pour garder la visée du joystick ; profondeur de 0 (court) à 1. */
+export interface TraitCoup {
+  side: number | null;
+  prof: number;
+}
+
 /** Ce que le joueur humain demande à chaque pas (entrées déjà traduites). */
 export interface Commande {
   /** direction à l'écran du joueur, chaque composante entre -1 et 1 */
   dx: number;
   dy: number;
   appuis: Bouton[];
+  /** la zone voulue par le trait qui vient d'être fini (accompagne l'appui du coup choisi) */
+  trait?: TraitCoup;
   /** le doigt tient encore le bouton ARMER : le coup armé n'est pas oublié tant qu'il le tient */
   arme?: boolean;
 }

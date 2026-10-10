@@ -1,5 +1,5 @@
 import { clamp } from '@core/aleatoire';
-import type { Bouton, Commande } from '@core/types';
+import type { Bouton, Commande, TraitCoup } from '@core/types';
 import {
   boutonProche,
   PART_JOYSTICK,
@@ -8,7 +8,7 @@ import {
   type OptionsBoutons,
   type ToucheEcran,
 } from './disposition';
-import { classeGeste, type TypeGeste } from './geste';
+import { analyseTrait, typeDuTrait, type Point, type TypeGeste } from './geste';
 
 export interface PointLogique {
   x: number;
@@ -53,6 +53,8 @@ const TOUCHES_COUPS: Record<string, Bouton> = {
   KeyU: 'change',
   Space: 'smash',
 };
+/** Le trait fini reste à l'écran ce temps-là (s), en s'effaçant. */
+const DUREE_TRAIT_S = 0.55;
 const GAUCHE = ['ArrowLeft', 'KeyA', 'KeyQ'];
 const DROITE = ['ArrowRight', 'KeyD'];
 const HAUT = ['ArrowUp', 'KeyW', 'KeyZ'];
@@ -62,8 +64,12 @@ const BAS = ['ArrowDown', 'KeyS'];
 export class Entrees {
   readonly touches = new Set<string>();
   joy: { id: number; bx: number; by: number; x: number; y: number } | null = null;
-  /** le doigt qui tient ARMER et son trait : d'où il est parti et le coup qu'il dessine (voir `geste.ts`) */
-  trait: { id: number; x0: number; y0: number; type: TypeGeste } | null = null;
+  /** le doigt qui trace : il arme le coup en se posant, le trait choisit le coup quand il se relève (voir `geste.ts`) */
+  trait: { id: number; pts: Point[] } | null = null;
+  /** le dernier trait fini, gardé un instant à l'écran */
+  dernier: { pts: Point[]; fin: number } | null = null;
+  /** la zone du trait qui vient d'être fini, rendue une fois avec l'appui du coup */
+  private zone: TraitCoup | undefined;
   /** bouton tenu par chaque doigt */
   ids = new Map<number, ToucheEcran>();
   private appuis: Bouton[] = [];
@@ -89,6 +95,7 @@ export class Entrees {
   reinitialise(): void {
     this.joy = null;
     this.trait = null;
+    this.dernier = null;
     this.ids.clear();
     this.appuis = [];
     this.touches.clear();
@@ -116,7 +123,9 @@ export class Entrees {
     }
     const appuis = this.appuis;
     this.appuis = [];
-    return { dx, dy, appuis, arme: this.trait !== null };
+    const trait = this.zone;
+    this.zone = undefined;
+    return { dx, dy, appuis, arme: this.trait !== null, ...(trait ? { trait } : {}) };
   }
 
   private surAppui(e: PointerEvent): void {
@@ -149,9 +158,11 @@ export class Entrees {
       if (b) {
         this.appuis.push(b);
         this.ids.set(e.pointerId, b);
-        // ARMER (sauf au service, où c'est PLAT) : ce doigt va tracer le trait qui choisit le coup
-        if (b === 'plat' && !this.h.boutons().service)
-          this.trait = { id: e.pointerId, x0: p.x, y0: p.y, type: 'plat' };
+      } else if (!this.h.boutons().service) {
+        // un doigt qui se pose sur la piste arme le coup (implicitement) et commence le trait
+        this.appuis.push('plat');
+        this.trait = { id: e.pointerId, pts: [{ x: p.x, y: p.y }] };
+        this.dernier = null;
       }
     }
     try {
@@ -164,13 +175,10 @@ export class Entrees {
   private surDeplacement(e: PointerEvent): void {
     const t = this.trait;
     if (t && e.pointerId === t.id) {
-      // le trait change le coup armé à chaque fois qu'il passe un seuil (un appui du nouveau coup remplace le précédent)
       const q = this.h.versLogique(e);
-      const type = classeGeste(q.x - t.x0, q.y - t.y0);
-      if (type !== t.type) {
-        t.type = type;
-        this.appuis.push(type);
-      }
+      const dernier = t.pts[t.pts.length - 1]!;
+      if (Math.hypot(q.x - dernier.x, q.y - dernier.y) >= 2 && t.pts.length < 200)
+        t.pts.push({ x: q.x, y: q.y });
       return;
     }
     if (!this.joy || e.pointerId !== this.joy.id) return;
@@ -190,8 +198,30 @@ export class Entrees {
 
   private relache(e: PointerEvent): void {
     if (this.joy && e.pointerId === this.joy.id) this.joy = null;
-    if (this.trait && e.pointerId === this.trait.id) this.trait = null;
+    if (this.trait && e.pointerId === this.trait.id) this.finTrait(this.trait.pts);
     this.ids.delete(e.pointerId);
+  }
+
+  /** Le doigt se relève : la forme du trait donne le coup (un appui) et la zone visée ; le trait reste un instant à l'écran. */
+  private finTrait(pts: Point[]): void {
+    const g = analyseTrait(pts);
+    this.trait = null;
+    this.appuis.push(g.type);
+    // sans trait, le coup garde la zone du joystick
+    this.zone = g.type === 'plat' ? undefined : { side: g.side, prof: g.prof };
+    if (pts.length > 1) this.dernier = { pts, fin: performance.now() };
+  }
+
+  /** Le trait à dessiner : celui qui se trace (plein) ou le dernier fini (qui s'efface en un instant). */
+  traitAffiche(maintenant: number): { pts: Point[]; type: TypeGeste; opacite: number } | null {
+    if (this.trait && this.trait.pts.length > 1)
+      return { pts: this.trait.pts, type: typeDuTrait(this.trait.pts), opacite: 1 };
+    const d = this.dernier;
+    if (!d) return null;
+    const age = (maintenant - d.fin) / 1000;
+    return age < DUREE_TRAIT_S
+      ? { pts: d.pts, type: typeDuTrait(d.pts), opacite: 1 - age / DUREE_TRAIT_S }
+      : null;
   }
 
   private surTouche(e: KeyboardEvent): void {

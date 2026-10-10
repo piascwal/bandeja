@@ -18,34 +18,35 @@ export interface Rond {
 
 export type ToucheEcran = Bouton;
 
-/** Ce qui change la disposition des boutons : CHANGE n'existe qu'à un seul humain, et le service n'a que deux boutons. */
+/** Ce qui change la disposition des boutons : CHANGE n'existe qu'à un seul humain, SUPER que jauge pleine, et le service n'a que deux boutons. */
 export interface OptionsBoutons {
   change: boolean;
   service: boolean;
+  /** la jauge du super coup est pleine : le bouton SUPER existe */
+  super: boolean;
 }
 
 /** La disposition qui convient à cette partie, pour cet écran. */
-export const optionsBoutons = (jeu: Partie): OptionsBoutons => ({
-  change: changePossible(jeu),
-  service: jeu.phase === 'service' && !!jeu.humain && jeu.serveur === jeu.humain,
-});
+export const optionsBoutons = (jeu: Partie): OptionsBoutons => {
+  const s = jeu.humain;
+  const service = jeu.phase === 'service' && !!s && jeu.serveur === s;
+  return { change: changePossible(jeu), service, super: !!s && !service && jeu.jaugeSmash[s.eq] >= 1 };
+};
 
 /**
- * Les boutons, dans le coin en bas à droite. ARMER (le bouton `plat`, plus gros) est dans le coin : on
- * le tient et on trace un trait pour choisir le coup (voir `geste.ts`). CHANGE est à sa gauche (seul
- * humain face au CPU), SUPER au-dessus (jauge pleine). Sans CHANGE (deux humains), il n'y a rien à
- * sa place. Au service il ne reste que PLAT (dans le coin) et COUPE (au-dessus).
+ * Les boutons, dans le coin en bas à droite. Il n'y a plus de bouton pour armer ni pour choisir le
+ * coup : un doigt posé sur la piste arme, le trait qu'il trace choisit (voir `geste.ts`). Restent
+ * CHANGE dans le coin (seul humain face au CPU), et SUPER au-dessus (jauge pleine). Au service :
+ * PLAT dans le coin et COUPE au-dessus.
  */
 export function zonesBoutons(W: number, H: number, o: OptionsBoutons): Partial<Record<ToucheEcran, Rond>> {
-  const droite = W - 34;
+  const x = W - 34;
   const bas = H - 34;
-  const z: Partial<Record<ToucheEcran, Rond>> = { plat: { x: droite, y: bas, r: o.service ? 13 : 19 } };
-  if (o.service) {
-    z.amorti = { x: droite, y: bas - 30, r: 13 };
-    return z;
-  }
-  if (o.change) z.change = { x: droite - 40, y: bas + 2, r: 13 };
-  z.smash = { x: droite, y: bas - 40, r: 13 };
+  const r = 13;
+  if (o.service) return { plat: { x, y: bas, r }, amorti: { x, y: bas - 30, r } };
+  const z: Partial<Record<ToucheEcran, Rond>> = {};
+  if (o.change) z.change = { x, y: bas, r };
+  if (o.super) z.smash = { x, y: bas - (o.change ? 36 : 0), r };
   return z;
 }
 
@@ -70,5 +71,6 @@ export function boutonProche(
       best = k;
     }
   }
-  return best && dmin < 30 ? best : null;
+  // sur la piste, un doigt qui se pose trace un trait : il faut viser juste les boutons (grande tolérance au service seulement)
+  return best && dmin < (o.service ? 30 : 8) ? best : null;
 }

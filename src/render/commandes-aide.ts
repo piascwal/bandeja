@@ -20,11 +20,12 @@ interface Ligne {
 }
 
 const COUPS: Ligne[] = [
-  { pastille: '#ff5470', touche: 'ARMER', action: 'TENIR, PUIS TRACER UN TRAIT (MEME DOIGT)' },
+  { pastille: '#ff5470', touche: 'DOIGT', action: 'POSE-LE SUR LA PISTE : ARME. TRACE, PUIS RELEVE :' },
   { touche: '', action: 'PAS DE TRAIT : FRAPPE (ARMER TOT = PLUS FORT)' },
   { touche: '', action: 'TOUT PETIT TRAIT : AMORTI' },
   { touche: '', action: 'TRAIT VERS LE HAUT : LOB' },
-  { touche: '', action: 'AUTRE TRAIT : FRAPPE LOURDE, A FOND' },
+  { touche: '', action: 'TRAIT DROIT : FRAPPE LOURDE, VERS OU IL FINIT' },
+  { touche: '', action: 'TRAIT COURBE : COUP A EFFET DANS LE COIN' },
   { pastille: '#9b7bff', touche: 'CHANGE', action: 'SEUL CONTRE LE CPU : PREND LA MAIN SUR LE PARTENAIRE' },
   { pastille: '#ffa24a', touche: 'SUPER', action: 'APPARAIT EN HAUT QUAND LA JAUGE EST PLEINE' },
 ];
@@ -42,7 +43,7 @@ const CLAVIER: Ligne[] = [
 ];
 
 const ASTUCES = [
-  'L APPUI ARME LE COUP : IL PART TOUT SEUL A PORTEE',
+  'LE COUP PART TOUT SEUL A PORTEE, DES QUE LE DOIGT SE RELEVE',
   'LE NOM DU COUP : ROUGE MEDIOCRE, VERT PARFAIT',
   'BEAUX COUPS : LA JAUGE SUPER SE REMPLIT',
   'JAUGE PLEINE : BOUTON SUPER = COUP IMPARABLE',

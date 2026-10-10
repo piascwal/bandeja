@@ -42,21 +42,20 @@ describe('un jeu d’arcade : on touche presque toujours la balle', () => {
 });
 
 describe('les boutons', () => {
-  it('ARMER dans le coin, CHANGE à sa gauche, SUPER au-dessus ; plus de boutons de coup', () => {
-    const solo = zonesBoutons(400, 200, { change: true, service: false });
-    expect(Object.keys(solo).sort()).toEqual(['change', 'plat', 'smash']);
-    const { plat, change, smash } = solo;
-    expect(plat!.r).toBeGreaterThan(change!.r); // ARMER est le plus gros
-    expect(change!.x).toBeLessThan(plat!.x);
-    expect(smash!.x).toBe(plat!.x);
-    expect(smash!.y).toBeLessThan(plat!.y);
-    for (const r of [change, smash]) expect(r!.x + r!.y).toBeLessThan(plat!.x + plat!.y);
-    // à deux humains : pas de CHANGE
-    const multi = zonesBoutons(400, 200, { change: false, service: false });
-    expect(Object.keys(multi).sort()).toEqual(['plat', 'smash']);
-    expect(multi.plat).toEqual(plat);
+  it('plus de bouton pour armer ni choisir le coup : CHANGE dans le coin, SUPER au-dessus (jauge pleine)', () => {
+    const tout = zonesBoutons(400, 200, { change: true, service: false, super: true });
+    expect(Object.keys(tout).sort()).toEqual(['change', 'smash']);
+    for (const r of Object.values(tout)) expect(r!.r).toBeLessThanOrEqual(13);
+    expect(tout.smash!.x).toBe(tout.change!.x);
+    expect(tout.smash!.y).toBeLessThan(tout.change!.y);
+    // à deux humains : pas de CHANGE, SUPER prend le coin ; jauge vide : plus rien (toute la piste est libre pour tracer)
+    expect(zonesBoutons(400, 200, { change: false, service: false, super: true }).smash).toEqual(tout.change);
+    expect(zonesBoutons(400, 200, { change: false, service: false, super: false })).toEqual({});
+    expect(Object.keys(zonesBoutons(400, 200, { change: true, service: false, super: false }))).toEqual([
+      'change',
+    ]);
     // au service : PLAT dans le coin, COUPE au-dessus
-    const serv = zonesBoutons(400, 200, { change: false, service: true });
+    const serv = zonesBoutons(400, 200, { change: true, service: true, super: true });
     expect(Object.keys(serv).sort()).toEqual(['amorti', 'plat']);
     expect(serv.amorti!.y).toBeLessThan(serv.plat!.y);
   });
