@@ -109,7 +109,14 @@ function passageFilet(b: CorpsBalle, x0: number, y0: number, z0: number, ev?: Su
  * (qu'ils défoncent : voir `mursDuFond` et `mursLateraux`).
  */
 function superRebond(b: CorpsBalle): void {
-  if (b.super === 1 || b.super === 4) {
+  if (b.super === 5) {
+    // le volcan perfore le court : pas de rebond, la balle s'enfonce (elle ne se voit plus)
+    b.vx = 0;
+    b.vy = 0;
+    b.vz = 0;
+    b.z = 0;
+    b.dehors = true;
+  } else if (b.super === 1 || b.super === 4 || b.super === 6) {
     b.vz = 45;
     b.vx *= 0.12;
     b.vy *= 0.12;

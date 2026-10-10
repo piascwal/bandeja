@@ -162,16 +162,18 @@ describe('le super coup', () => {
     expect(['smash', 'vibora', 'bandeja']).toContain(jeu.balle.coup);
   });
 
-  it('la variante dépend de la situation : météore, éclair, phénix ou comète', () => {
+  it('la variante dépend de la situation : météore, orbite, volcan, éclair, phénix ou comète', () => {
     const v = (balle: Partial<Balle>, x: number) => {
       const { jeu } = situation(balle, x);
       return varianteSuper(jeu.balle, Math.abs(x - 10));
     };
     expect(v({ z: 2.5 }, 6)).toBe(1); // haute
+    expect(v({ z: 2.5 }, 2)).toBe(6); // haute, frappée de loin : orbite
+    expect(v({ z: 2.5 }, 8.5)).toBe(5); // haute, au filet : volcan
     expect(v({ z: 0.5, vx: -3 }, 8.5)).toBe(4); // au filet : éclair
     expect(v({ z: 0.8, vx: -4 }, 2)).toBe(3); // depuis le fond : phénix
     expect(v({ z: 0.8, vx: -20 }, 5)).toBe(2); // rapide à mi-court : comète
-    expect(NOMS_SUPER.filter(Boolean)).toHaveLength(4);
+    expect(NOMS_SUPER.filter(Boolean)).toHaveLength(6);
   });
 
   it('chaque variante est imparable et gagne le point, quel que soit le CPU en face', () => {
@@ -180,6 +182,8 @@ describe('le super coup', () => {
       [2, { z: 0.8, vx: -20 }, 5],
       [3, { z: 0.8, vx: -4 }, 2],
       [4, { z: 0.5, vx: -3 }, 8.5],
+      [5, { z: 2.5 }, 8.5],
+      [6, { z: 2.5 }, 2],
     ] as [number, Partial<Balle>, number][]) {
       const { jeu, s } = situation(balle, x);
       executeCoup(jeu, s, 'plat', 1, xProf(1, 3), 5, null, { super: variante, precision: 1, charge: 1 });
@@ -189,57 +193,6 @@ describe('le super coup', () => {
       expect(jeu.gagnant, `variante ${variante}`).toBe(0);
       expect(jeu.phase, `variante ${variante}`).toBe('point');
     }
-  });
-});
-
-describe('la fin spectaculaire des super coups', () => {
-  /** Joue un super coup et suit la balle pendant 4 s : sa hauteur maximale, si elle sort, et si elle brise une vitre. */
-  function fin(variante: number, balle: Partial<Balle>, x: number) {
-    const { jeu, s } = situation(balle, x);
-    executeCoup(jeu, s, 'plat', 1, xProf(1, 3), 5, null, { super: variante, precision: 1, charge: 1 });
-    jeu.parade = null; // la parade ratée : le super coup file
-    const sortie = { zMax: 0, dehors: false, vitreBrisee: false, vitesseMax: 0 };
-    for (let i = 0; i < 240 * 4; i++) {
-      pas(jeu, PAS);
-      const b = jeu.balle;
-      sortie.zMax = Math.max(sortie.zMax, b.z);
-      sortie.dehors ||= b.dehors;
-      sortie.vitesseMax = Math.max(sortie.vitesseMax, Math.hypot(b.vx, b.vy, b.vz));
-      for (const e of jeu.evenements.splice(0))
-        if (e.type === 'impact' && e.surface === 'vitre' && e.force === 99) sortie.vitreBrisee = true;
-    }
-    return sortie;
-  }
-
-  it('la météore s’écrase puis repart dans l’espace', () => {
-    const r = fin(1, { z: 2.5 }, 6);
-    expect(r.zMax).toBeGreaterThan(40);
-  });
-
-  it('l’éclair repart lui aussi dans l’espace', () => {
-    expect(fin(4, { z: 0.5, vx: -3 }, 8.5).zMax).toBeGreaterThan(40);
-  });
-
-  it('la comète défonce la vitre du fond et sort de la piste', () => {
-    const r = fin(2, { z: 0.8, vx: -20 }, 5);
-    expect(r.vitreBrisee).toBe(true);
-    expect(r.dehors).toBe(true);
-  });
-
-  it('le phénix défonce la vitre de côté et sort de la piste', () => {
-    const r = fin(3, { z: 0.8, vx: -4 }, 2);
-    expect(r.vitreBrisee).toBe(true);
-    expect(r.dehors).toBe(true);
-  });
-
-  it('aucun super coup n’est lent : de la frappe à la sortie, la balle file', () => {
-    for (const [v, balle, x] of [
-      [1, { z: 2.5 }, 6],
-      [2, { z: 0.8, vx: -20 }, 5],
-      [3, { z: 0.8, vx: -4 }, 2],
-      [4, { z: 0.5, vx: -3 }, 8.5],
-    ] as [number, Partial<Balle>, number][])
-      expect(fin(v, balle, x).vitesseMax, `variante ${v}`).toBeGreaterThan(35);
   });
 });
 

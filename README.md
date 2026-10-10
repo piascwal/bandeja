@@ -399,12 +399,17 @@ voit venir le coup.
 quasi sans erreur, **imparable** (aucun adversaire ne peut toucher la balle) et qui gagne
 le point à son premier rebond. Il est toujours rapide (la balle file au plus vite que le
 filet le permet, puis repart comme un boulet après son rebond), avec une longue traînée de
-feu, et finit en cassant quelque chose. Quatre variantes, choisies selon la situation :
+feu, et finit en cassant quelque chose. Six variantes, choisies selon la situation :
 la **MÉTÉORE** sur une balle haute (boule de feu qui s'écrase, cratère, puis repart dans
 l'espace), la **COMÈTE** à mi-court (feu bleu et blanc, défonce la vitre du fond et sort de
 la piste), le **PHÉNIX** depuis le fond (oiseau de feu aux ailes dorées qui défonce la vitre
 de côté), l'**ÉCLAIR** au filet (zigzag électrique : l'écran se fissure, puis la balle repart
-dans l'espace). Vitre brisée = gerbe d'éclats, écran qui tremble et flashe. Le CPU lâche aussi
+dans l'espace). Deux autres, plus rares : le **VOLCAN**, un smash au filet qui **perfore
+le court** (pas de rebond) et plonge à travers la croûte, le manteau et le noyau en emportant la
+lave, avant de ressortir de l'autre côté de la Terre en geyser de volcan, la balle à son sommet
+(`render/finale-volcan.ts`) ; l'**ORBITE**, une balle haute frappée de loin qui rebondit en orbite
+autour de la Terre à toute vitesse : un petit ralenti montre la balle percuter un satellite, qui
+explose (`render/finale-orbite.ts`). Vitre brisée = gerbe d'éclats, écran qui tremble et flashe. Le CPU lâche aussi
 son super coup, rarement (12 % de ses coups quand sa jauge est pleine). Les coups ordinaires
 restent plafonnés à 0,97 de puissance.
 
@@ -416,7 +421,9 @@ autres voient une petite jauge sous le tableau des scores. Réussi : le super es
 (renvoi normal, la jauge du défenseur gagne 20 %) ; raté, ou trop lent : le super reste
 imparable. Le CPU tente sa chance au hasard. Le curseur est synchronisé dans l'instantané
 (protocole 8) et l'évènement `parade` annonce le résultat. Les dégâts de la piste
-(cratère, vitre brisée) disparaissent quand le jeu reprend sur un nouveau point.
+(cratère, vitre brisée) disparaissent quand le jeu reprend sur un nouveau point ; le ralenti du super coup
+les refait au moment où la balle les fait (`Effets.journal`). Le cratère de la piste est petit : il se
+lit sans cacher le jeu.
 
 **Fin spectaculaire.** La balle d'un super coup **tape toujours le sol d'abord** (jamais
 une vitre), et ce choc ouvre la scène : avant le ralenti, chaque écran joue sa propre scène (`finale-super.ts`, `finale-vue.ts`) : coup de

@@ -1,6 +1,8 @@
 import { ASCENSION_FIN_S, CHOC_S, type FinaleSuper } from './finale-super';
 import { clamp01, h, melange } from './finale-outils';
 import { lune } from './lune';
+import { orbite } from './finale-orbite';
+import { volcan } from './finale-volcan';
 import { C, COULEURS_SUPER } from './palette';
 import { px } from './primitives';
 import type { ZoneBouton } from './ui';
@@ -108,7 +110,9 @@ function ascension(v: Vue, f: FinaleSuper): void {
 export function dessineFinale(v: Vue, f: FinaleSuper, zones: ZoneBouton[], onPasse: () => void): void {
   if (!f.actif) return;
   const { g, W, H } = v;
-  if (f.t >= ASCENSION_FIN_S) lune(v, f);
+  // le volcan plonge dans la Terre au lieu de monter ; l'orbite monte comme les autres puis tourne autour de la Terre
+  if (f.variante === 5 && f.t >= CHOC_S) volcan(v, f);
+  else if (f.t >= ASCENSION_FIN_S) (f.variante === 6 ? orbite : lune)(v, f);
   else if (f.t >= CHOC_S) ascension(v, f);
   filtre(v, f);
   // la barre noire de cinéma, en haut et en bas

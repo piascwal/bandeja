@@ -77,6 +77,28 @@ export default async function (env) {
     'la scène finale se termine',
   );
 
+  // les deux scènes qui quittent la lune : le volcan (plongée dans la Terre, geyser) et l'orbite (satellite)
+  for (const [variante, temps] of [
+    [5, [0.8, 1.3, 1.75, 2.1, 2.5, 3.1]],
+    [6, [1.2, 1.9, 2.3, 2.7, 3.0, 3.3]],
+  ]) {
+    await p.evaluate((v) => {
+      const b = window.bandeja;
+      b.effets.finale.reinitialise();
+      b.effets.finale.declenche(v, b.W / 2, b.H * 0.6, 0.3);
+    }, variante);
+    for (const t of temps) {
+      await p.evaluate((x) => {
+        const f = window.bandeja.effets.finale;
+        f.t = x;
+        f.actif = true;
+      }, t);
+      await attends(60);
+      await env.capture(p, `super-v${variante}-${String(t).replace('.', '_')}`);
+    }
+  }
+  await p.evaluate(() => window.bandeja.effets.finale.reinitialise());
+
   // la course : quatre images de foulée, saisies en plein mouvement
   await p.evaluate(() => {
     const b = window.bandeja;

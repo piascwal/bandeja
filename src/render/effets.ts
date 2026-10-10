@@ -87,6 +87,16 @@ export class Effets {
   }
 
   /** Les dégâts de la piste (cratères, vitres brisées, écran fissuré) disparaissent. */
+  /** Les dégâts de ce point avec leur date, pour le ralenti (vidé quand le jeu reprend sur un nouveau point). */
+  readonly journal: {
+    t: number;
+    kind: 'sol' | 'vitre';
+    x: number;
+    y: number;
+    z: number;
+    variante: number;
+  }[] = [];
+
   repare(): void {
     this.decals = [];
     this.fissure = null;
@@ -94,7 +104,9 @@ export class Effets {
   }
 
   /** Le terrain ou la vitre est abîmé(e) à cet endroit. */
-  abime(kind: 'sol' | 'vitre', x: number, y: number, z: number, variante: number): void {
+  abime(kind: 'sol' | 'vitre', x: number, y: number, z: number, variante: number, t?: number): void {
+    // le ralenti rejoue ces dégâts au moment où la balle les fait : on garde leur date (`temps` de la partie)
+    if (t !== undefined) this.journal.push({ t, kind, x, y, z, variante });
     this.decals.push({ kind, x, y, z, variante, graine: Math.floor(Math.random() * 1e9), vie: 60 });
   }
 

@@ -14,14 +14,14 @@ function graine(a: number): () => number {
   };
 }
 
-/** Le terrain cassé : un cratère sombre, des fissures qui rayonnent sur la piste, des éclats clairs au bord. */
+/** Le terrain cassé (petit : il se lit sans cacher le jeu) : un cratère sombre, des fissures qui rayonnent sur la piste, des éclats clairs au bord. */
 function cratere(v: Vue, d: Decal, a: number): void {
   const { g, K } = v;
   const alea = graine(d.graine);
   // le cratère : une ellipse sombre, deux fois (le bord, puis le fond)
   for (const [r, c] of [
-    [1.5, `rgba(20,16,30,${0.5 * a})`],
-    [0.9, `rgba(6,6,16,${0.75 * a})`],
+    [0.7, `rgba(20,16,30,${0.5 * a})`],
+    [0.4, d.variante === 5 ? `rgba(255,90,26,${0.9 * a})` : `rgba(6,6,16,${0.75 * a})`],
   ] as [number, string][]) {
     g.fillStyle = c;
     g.beginPath();
@@ -35,17 +35,17 @@ function cratere(v: Vue, d: Decal, a: number): void {
     g.fill();
   }
   // les fissures : des lignes brisées qui partent du cratère
-  for (let b = 0; b < 12; b++) {
-    let ang = (b / 12) * Math.PI * 2 + alea() * 0.4;
+  for (let b = 0; b < 8; b++) {
+    let ang = (b / 8) * Math.PI * 2 + alea() * 0.4;
     let x = d.x;
     let y = d.y;
     g.beginPath();
     const [x0, y0] = K.proj(x, y, 0);
     g.moveTo(x0, y0);
-    const n = 3 + Math.floor(alea() * 3);
+    const n = 2 + Math.floor(alea() * 2);
     for (let i = 0; i < n; i++) {
       ang += (alea() - 0.5) * 0.9;
-      const l = 0.5 + alea() * 0.7;
+      const l = 0.25 + alea() * 0.35;
       x += Math.cos(ang) * l * 1.2;
       y += Math.sin(ang) * l * 0.8;
       const [sx, sy] = K.proj(x, y, 0);
@@ -59,9 +59,9 @@ function cratere(v: Vue, d: Decal, a: number): void {
     g.stroke();
   }
   // des éclats clairs jetés autour
-  for (let i = 0; i < 14; i++) {
+  for (let i = 0; i < 8; i++) {
     const ang = alea() * Math.PI * 2;
-    const r = 1 + alea() * 1.6;
+    const r = 0.5 + alea() * 0.8;
     const [sx, sy] = K.proj(d.x + Math.cos(ang) * r * 1.2, d.y + Math.sin(ang) * r * 0.8, 0);
     g.globalAlpha = a;
     px(g, sx, sy, 2, 1, i % 2 ? '#d9c9a8' : '#6b5a48');

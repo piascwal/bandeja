@@ -329,7 +329,11 @@ export class BandejaApp {
     joueEvenements(this.jeu, evs, this.effets, this.son, this.K);
     lan.diffuseApres(evs);
     // le terrain est réparé quand le jeu reprend sur un nouveau point
-    if (this.jeu.phase === 'service') this.effets.repare();
+    if (this.jeu.phase === 'service') {
+      this.effets.repare();
+      this.effets.journal.length = 0;
+    }
+    this.ralenti.journal = this.effets.journal;
     if (this.ecranUI === 'jeu') {
       this.ralenti.suit(this.jeu, dt, this.K.miroir);
       // le ralenti commence : le cratère et la fissure du super coup ne restent pas affichés après lui

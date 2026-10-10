@@ -12,6 +12,8 @@ const STYLES_SUPER: Record<number, { couleurs: [string, string, string]; taille:
   2: { couleurs: ['#1d4ed8', '#5fd0ff', '#ffffff'], taille: 5, halo: '#5fd0ff' }, // comète : feu bleu et blanc
   3: { couleurs: ['#c4165a', '#ff9a2a', '#fff2b0'], taille: 5, halo: '#ff9a2a' }, // phénix : oiseau de feu, des ailes
   4: { couleurs: ['#ffb200', '#fff23a', '#ffffff'], taille: 4, halo: '#fff23a' }, // éclair : zigzag électrique
+  5: { couleurs: ['#5a0800', '#ff3b12', '#ffd27a'], taille: 6, halo: '#ff3b12' }, // volcan : lave
+  6: { couleurs: ['#2a2fb0', '#9ab8ff', '#ffffff'], taille: 5, halo: '#9ab8ff' }, // orbite : feu bleu pâle
 };
 
 /**
@@ -56,6 +58,8 @@ function traineeSuper(v: Vue, jeu: Partie, variante: number): void {
 export function dessineBalle(v: Vue, jeu: Partie): void {
   const { g, K } = v;
   const b = jeu.balle;
+  // le volcan a perforé le court : la balle est sous terre
+  if (b.super === 5 && b.dehors) return;
   const [sx, sy] = K.proj(b.x, b.y, b.z);
   const vit = Math.hypot(b.vx, b.vy, b.vz);
   const special = b.coup ? TRAINEES[b.coup] : undefined;
