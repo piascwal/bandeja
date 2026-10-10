@@ -1,7 +1,7 @@
 import { clamp, gauss } from './aleatoire';
 import { lance } from './balle';
 import { ACCEL_ECHANGE, ACCEL_MAX, HAUT_MAX, HAUT_SMASH, MIL, PORTEE } from './constants';
-import { contreVitre } from './contre-vitre';
+import { contreVitre, placementVitre, vitreBrute } from './contre-vitre';
 import { typeDePor } from './por';
 import { GAIN_JAUGE, GAIN_VITRE, niveauDe, qualite, situationDe } from './qualite';
 import { lanceSuper, ouvreParade, type VarianteSuper } from './super-coup';
@@ -110,6 +110,8 @@ export interface OptionsCoup {
   charge?: number;
   /** variante du super coup (1 → 4) */
   super?: number;
+  /** renvoi de vitre voulu par le joueur : dirigé si le coup est bien joué (vert), faussé s'il est moyen, brut s'il est raté */
+  vitreLibre?: boolean;
 }
 
 /**
@@ -145,9 +147,11 @@ export function executeCoup(
   if (prime) p += PRIME_AVANTAGE;
   // la qualité du coup, d'après la situation de jeu
   const precision = opts?.precision ?? clamp(1 - Math.hypot(b.x - s.x, b.y - s.y) / (PORTEE * 1.3), 0, 1);
+  const libre = !!mur && !!opts?.vitreLibre;
   const situation = situationDe(b, s, precision, opts?.charge ?? p, jeu.posture[autre(eq)] === 'filet');
+  if (libre) situation.vitre = placementVitre(b, s, mur);
   const brut = qualite(opts?.intention ?? type, situation).score;
-  const score = variante ? 1 : clamp(brut * (subi ? 0.75 : 1) * (prime ? 1.1 : 1), 0, 1);
+  const score = variante ? 1 : clamp(brut * (subi && !libre ? 0.75 : 1) * (prime ? 1.1 : 1), 0, 1);
   const niveau = variante ? 5 : niveauDe(score);
   p = variante ? 1 : Math.min(p, P_MAX) * (0.55 + 0.45 * score);
   const rng = jeu.rng;
@@ -156,7 +160,13 @@ export function executeCoup(
   const haut = b.z > HAUT_SMASH && (type === 'smash' || type === 'bandeja' || type === 'vibora');
   // rebond voulu contre sa propre vitre (du fond ou de côté) : sinon coup direct
   if (mur) {
-    if (contreVitre(b, eq, ty, mur, rng)) type = mur === 'fond' ? 'vitre' : 'cote';
+    const cote = mur === 'fond' ? 'vitre' : 'cote';
+    if (libre) {
+      // le joueur a choisi sa vitre : bien joué (vert) elle part chez l'adversaire, moyen elle part de travers, raté elle revient
+      if (!(niveau >= 3 && contreVitre(b, eq, ty, mur, rng, niveau >= 4 ? 0 : 0.14)))
+        vitreBrute(b, eq, mur, rng);
+      type = cote;
+    } else if (contreVitre(b, eq, ty, mur, rng)) type = cote;
     else if (type === 'vitre') {
       type = 'lobe';
       tx = xProf(autre(eq), PROF.lobe!);

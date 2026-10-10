@@ -93,7 +93,11 @@ export function appliqueCommande(jeu: Partie, s: Joueur, cmd: Commande, dt: numb
     // le coup attend que la balle soit tout près (ou qu'elle s'éloigne) : c'est le bon timing qui lui donne sa qualité
     // (jamais d'attente si la balle va rebondir une deuxième fois : on ne la rate pas)
     const perdue = b.sol >= 1 && b.z < 0.5 && b.vz < 0;
-    const attend = d > DISTANCE_IDEALE && d <= s.dBalle && !perdue;
+    // visée vers une vitre : on attend que la balle soit assez basse (pas de renvoi de vitre sur une balle de smash)
+    const tropHaute =
+      s.intent.type === 'plat' && b.z > HAUT_SMASH && murVise(directionVisee(s), s.eq) !== null;
+    if (tropHaute) s.intent.t = Math.min(s.intent.t, OUBLI_APPUI - 0.05);
+    const attend = tropHaute || (d > DISTANCE_IDEALE && d <= s.dBalle && !perdue);
     s.dBalle = d;
     if (!attend) coupHumain(jeu, s);
   } else s.dBalle = 99;
@@ -131,8 +135,8 @@ export function coupPrevu(jeu: Partie, s: Joueur, bouton: Bouton, charge: number
   const haut = jeu.balle.z > HAUT_SMASH;
   switch (bouton) {
     case 'plat':
-      // balle dans le dos près d'une vitre (lob profond) ou joueur collé à elle : FRAPPE la renvoie dans la vitre qu'on vise
-      switch (murVise(jeu.balle, s, directionVisee(s))) {
+      // joystick poussé vers une vitre : FRAPPE la renvoie, dans toutes les situations (voir `murVise`)
+      switch (murVise(directionVisee(s), s.eq)) {
         case 'fond':
           return 'vitre';
         case 'haut':
@@ -174,14 +178,15 @@ function coupHumain(jeu: Partie, s: Joueur): void {
   const variante =
     bouton === 'smash' && jeu.jaugeSmash[s.eq] >= 1 ? varianteSuper(b, Math.abs(s.x - MIL)) : 0;
   const prevu = coupPrevu(jeu, s, bouton, s.charge);
-  // la vitre de côté est un plat dont le rebond voulu est cherché (sans élan possible, c'est un coup direct)
-  const type = prevu === 'cote' ? 'plat' : prevu;
-  const mur = prevu === 'vitre' ? 'fond' : prevu === 'cote' ? murVise(b, s, directionVisee(s)) : null;
+  // le joueur a poussé son joystick vers une vitre : son coup part dessus (bien dirigé s'il est bien placé, sinon de travers)
+  const mur = variante || bouton !== 'plat' ? null : murVise(directionVisee(s), s.eq);
+  const type = mur ? 'vitre' : prevu;
   const p = 0.25 + 0.75 * s.charge;
   const { tx, ty } = cibleCoup(s, type);
   executeCoup(jeu, s, type, p, tx + alea(jeu.rng, -0.2, 0.2), ty, mur, {
     precision: precisionContact(jeu, s),
     intention: type,
+    vitreLibre: mur !== null,
     charge: s.charge,
     super: variante,
   });

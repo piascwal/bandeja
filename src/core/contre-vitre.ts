@@ -1,6 +1,6 @@
-import type { Aleatoire } from './aleatoire';
+import { alea, clamp, gauss, type Aleatoire } from './aleatoire';
 import { physique, type SurContact } from './balle';
-import { LARG, MIL, PAS } from './constants';
+import { LARG, MIL, PAS, VITESSE, VITRE_COTE } from './constants';
 import { dir, fond } from './terrain';
 import type { Balle, CorpsBalle, Equipe, Joueur, Mur } from './types';
 
@@ -11,7 +11,14 @@ import type { Balle, CorpsBalle, Equipe, Joueur, Mur } from './types';
  * l'adversaire ; s'il n'y en a aucun, la balle n'est pas touchée et on
  * renvoie false.
  */
-export function contreVitre(b: CorpsBalle, eq: Equipe, ty: number, mur: Mur, rng: Aleatoire): boolean {
+export function contreVitre(
+  b: CorpsBalle,
+  eq: Equipe,
+  ty: number,
+  mur: Mur,
+  rng: Aleatoire,
+  erreur = 0,
+): boolean {
   const z0 = Math.max(0.3, b.z);
   let best: { sc: number; vx: number; vy: number; vz: number } | null = null;
   for (const [vx, vy, vz] of essais(b, eq, ty, mur)) {
@@ -23,10 +30,12 @@ export function contreVitre(b: CorpsBalle, eq: Equipe, ty: number, mur: Mur, rng
     if (!best || sc < best.sc) best = { sc, vx, vy, vz };
   }
   if (!best) return false;
+  // un renvoi moyen n'est pas millimétré : l'élan trouvé est faussé (la balle peut retomber chez soi ou filer dehors)
+  const f = (): number => 1 + gauss(rng) * erreur;
   b.z = z0;
-  b.vx = best.vx;
-  b.vy = best.vy;
-  b.vz = best.vz;
+  b.vx = best.vx * f();
+  b.vy = best.vy * f();
+  b.vz = best.vz * f();
   b.spin = 'plat';
   b.roule = false;
   b.portres = false;
@@ -34,35 +43,58 @@ export function contreVitre(b: CorpsBalle, eq: Equipe, ty: number, mur: Mur, rng
   return true;
 }
 
-/** La balle est entre le joueur et la vitre (ou à côté de lui) et assez près d'elle : on peut la lui renvoyer. */
-const pres = (balle: number, joueur: number, limite: number): boolean =>
-  balle < Math.min(joueur + 0.3, limite);
-
-/** Vitre du fond : un lob profond est passé derrière le joueur, ou il est collé à elle et la balle monte tout près. */
-const fondJouable = (b: Balle, s: Joueur): boolean =>
-  pres(Math.abs(b.x - fond(s.eq)), Math.abs(s.x - fond(s.eq)), 3);
-
-/** La vitre de côté la plus proche, si la balle est entre elle et le joueur (ou à son niveau). */
-function coteJouable(b: Balle, s: Joueur): Mur | null {
-  const mur: Mur = b.y < LARG / 2 ? 'haut' : 'bas';
-  const dist = (y: number): number => (mur === 'haut' ? y : LARG - y);
-  return pres(dist(b.y), dist(s.y), 2.4) ? mur : null;
-}
-
-/** Le joueur est-il à portée d'une vitre pour y renvoyer la balle (fond ou côté), à n'importe quelle hauteur ? */
-export const vitreJouable = (b: Balle, s: Joueur): boolean => fondJouable(b, s) || coteJouable(b, s) !== null;
+/** Le joystick doit être poussé presque à fond (norme) vers une vitre, dans un cône d'environ 40° autour d'elle. */
+export const SEUIL_VITRE = 0.8;
+const COS_CONE = 0.75;
 
 /**
- * La vitre que le joueur renvoie, d'après sa visée (le joystick au moment du coup) : vers
- * l'arrière, le fond ; vers un côté, la vitre de ce côté. C'est à lui de la choisir, même
- * sur une balle de smash (c'est alors une feinte) : joystick au repos, vers le filet ou vers
- * une vitre qui n'est pas à portée, le coup reste ordinaire (null).
+ * La vitre que le joueur veut jouer, d'après son joystick au moment du coup : poussé vers
+ * l'arrière, la vitre du fond ; vers un côté, la vitre de ce côté ; sinon rien (coup ordinaire).
+ * Aucune autre condition : on peut viser sa vitre dans toutes les situations, la qualité du
+ * renvoi (voir `placementVitre`) dit ce qu'il donne.
  */
-export function murVise(b: Balle, s: Joueur, v: { x: number; y: number }): Mur | null {
-  const lateral = Math.abs(v.y) > 0.4 ? (v.y < 0 ? 'haut' : 'bas') : null;
-  const arriere = v.x * dir(s.eq) < -0.4;
-  if (lateral && coteJouable(b, s) === lateral) return lateral;
-  return arriere && fondJouable(b, s) ? 'fond' : null;
+export function murVise(v: { x: number; y: number }, eq: Equipe): Mur | null {
+  const n = Math.hypot(v.x, v.y);
+  if (n < SEUIL_VITRE) return null;
+  if ((v.x / n) * dir(eq) < -COS_CONE) return 'fond';
+  if (v.y / n < -COS_CONE) return 'haut';
+  return v.y / n > COS_CONE ? 'bas' : null;
+}
+
+/**
+ * Le joueur est-il bien placé pour renvoyer la balle dans cette vitre ? De 0 à 1 : la balle est
+ * entre lui et la vitre (il est « en dessous », elle lui passe dans le dos), elle en est proche, et
+ * c'est bien de la vitre (pas du grillage).
+ */
+export function placementVitre(b: Balle, s: Joueur, mur: Mur): number {
+  const dist = (x: number, y: number): number =>
+    mur === 'fond' ? Math.abs(x - fond(s.eq)) : mur === 'haut' ? y : LARG - y;
+  const balle = dist(b.x, b.y);
+  const joueur = dist(s.x, s.y);
+  const derriere = clamp(joueur - balle + 0.3, 0, 1);
+  const proche = clamp(1 - (balle - 1) / 3, 0, 1);
+  // la vitre de côté ne couvre que le bout de la piste : plus loin, c'est le grillage, qui ne rend rien
+  const vitre = mur === 'fond' || Math.abs(b.x - fond(s.eq)) < VITRE_COTE ? 1 : 0.3;
+  return (0.5 * derriere + 0.5 * proche) * vitre;
+}
+
+/** Un renvoi raté : la balle part droit sur la vitre sans être dirigée, et revient comme elle peut (souvent chez soi). */
+export function vitreBrute(b: CorpsBalle, eq: Equipe, mur: Mur, rng: Aleatoire): void {
+  const d = dir(eq);
+  const v = alea(rng, 6, 12);
+  b.z = Math.max(0.3, b.z);
+  if (mur === 'fond') {
+    b.vx = -d * v;
+    b.vy = gauss(rng) * 2.5;
+  } else {
+    b.vx = d * alea(rng, -2, 3);
+    b.vy = (mur === 'haut' ? -1 : 1) * v;
+  }
+  b.vz = alea(rng, 1.5, 5);
+  b.spin = 'plat';
+  b.roule = false;
+  b.portres = false;
+  b.por = 0;
 }
 
 /** Les élans essayés : vers le fond, ou vers la vitre de côté. */
@@ -110,7 +142,8 @@ function simule(x: number, y: number, z: number, vx: number, vy: number, vz: num
     else if (t === 'sol') res = { ok: cote !== eq && touche, x: c.x, y: c.y };
     else res = { ok: false, x: c.x, y: c.y };
   };
-  for (let i = 0; i < 500 && !res; i++) physique(c, PAS, ev);
+  // exactement le pas du jeu (deux demi-pas par pas, voir `pas`) : le rebond de vitre dépend de la position précise de la balle
+  for (let i = 0; i < 1000 && !res; i++) physique(c, (PAS * VITESSE) / 2, ev);
   const r = res as { ok: boolean; x: number; y: number } | null;
   return r && r.ok ? r : null;
 }

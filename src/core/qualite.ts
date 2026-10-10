@@ -31,6 +31,8 @@ export interface Situation {
   charge: number;
   /** les adversaires sont au filet (un lob les prend à revers) plutôt qu'au fond (un amorti les prend de court) */
   filetAdverse: boolean;
+  /** renvoi de vitre voulu par le joueur : 0 → 1, sa place par rapport à la balle et à la vitre (voir `placementVitre`) */
+  vitre?: number;
 }
 
 export function situationDe(
@@ -65,6 +67,9 @@ const HAUTEURS: Record<Coup, [number, number, number, number]> = {
   cote: [0.6, 0.6, 0.4, 0.2],
 };
 
+/** Aisance d'un renvoi de vitre voulu par le joueur : plus exigeant sur la place, mais un beau renvoi vaut un coup vert. */
+const HAUTEURS_VITRE_LIBRE: [number, number, number, number] = [1, 0.9, 0.55, 0.3];
+
 const classeHauteur = (z: number): 0 | 1 | 2 | 3 => (z < 0.6 ? 0 : z < 1.5 ? 1 : z < HAUT_SMASH ? 2 : 3);
 
 /** Les coups qui demandent de la puissance : la charge compte pour eux, pas pour les coups de finesse. */
@@ -78,7 +83,9 @@ const COUPS_PUISSANTS: ReadonlySet<Coup> = new Set(['plat', 'smash', 'bandeja', 
 export function affinite(type: Coup, sit: Situation): number {
   // une balle lente est plus facile à jouer, mais une balle rapide ne rend pas un bon coup « mauvais » : elle le rend un peu moins beau
   const facile = clamp(1 - (sit.vitesse - 8) / 20, 0.1, 1);
-  let a = HAUTEURS[type][classeHauteur(sit.z)] * (0.72 + 0.28 * facile);
+  const libre = sit.vitre !== undefined && (type === 'vitre' || type === 'cote');
+  let a = (libre ? HAUTEURS_VITRE_LIBRE : HAUTEURS[type])[classeHauteur(sit.z)] * (0.72 + 0.28 * facile);
+  if (libre) a *= 0.25 + 0.75 * sit.vitre!;
   // où l'on se trouve
   if (type === 'smash' && sit.loin < 4) a += 0.12;
   else if (type === 'amorti') a += sit.loin < 5 ? 0.12 : -0.3;
