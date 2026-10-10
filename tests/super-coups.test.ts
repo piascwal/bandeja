@@ -5,7 +5,7 @@ import { executeCoup } from '@core/coups';
 import { appliqueCommande } from '@core/humain';
 import { pas } from '@core/partie';
 import { GAIN_JAUGE } from '@core/qualite';
-import { curseurParade, dansZoneParade, NOMS_SUPER, varianteSuper } from '@core/super-coup';
+import { curseurParade, dansZoneParade, NOMS_SUPER, VARIANTES_JOUEES, varianteSuper } from '@core/super-coup';
 import { xProf } from '@core/terrain';
 import type { Balle, Commande } from '@core/types';
 import { partieTest } from './outils';
@@ -163,21 +163,18 @@ describe('le super coup', () => {
     expect(['smash', 'vibora', 'bandeja']).toContain(jeu.balle.coup);
   });
 
-  it('la variante dépend de la situation : météore, orbite, volcan, éclair, phénix ou comète', () => {
+  it('sans hasard, la situation donne la variante : volcan au filet, orbite de loin, météore entre les deux', () => {
     const v = (balle: Partial<Balle>, x: number) => {
       const { jeu } = situation(balle, x);
       return varianteSuper(jeu.balle, Math.abs(x - 10));
     };
-    expect(v({ z: 2.5 }, 6)).toBe(1); // haute
-    expect(v({ z: 2.5 }, 2)).toBe(6); // haute, frappée de loin : orbite
-    expect(v({ z: 2.5 }, 8.5)).toBe(5); // haute, au filet : volcan
-    expect(v({ z: 0.5, vx: -3 }, 8.5)).toBe(4); // au filet : éclair
-    expect(v({ z: 0.8, vx: -4 }, 2)).toBe(3); // depuis le fond : phénix
-    expect(v({ z: 0.8, vx: -20 }, 5)).toBe(2); // rapide à mi-court : comète
+    expect(v({ z: 2.5 }, 6)).toBe(1);
+    expect(v({ z: 2.5 }, 2)).toBe(6);
+    expect(v({ z: 2.5 }, 8.5)).toBe(5);
     expect(NOMS_SUPER.filter(Boolean)).toHaveLength(6);
   });
 
-  it('dans le jeu, le choix est au hasard : chaque variante a la même chance, quelle que soit la situation', () => {
+  it('dans le jeu, trois animations seulement (lune, volcan, satellite), chacune avec la même chance', () => {
     for (const [balle, x] of [
       [{ z: 0.8, vx: -20 }, 5],
       [{ z: 2.5 }, 8.5],
@@ -188,9 +185,10 @@ describe('le super coup', () => {
       const vus = [0, 0, 0, 0, 0, 0, 0];
       const N = 6000;
       for (let i = 0; i < N; i++) vus[varianteSuper(jeu.balle, Math.abs(x - 10), rng)]!++;
-      for (let v = 1; v <= 6; v++) {
-        expect(vus[v]! / N, `variante ${v}`).toBeGreaterThan(1 / 6 - 0.03);
-        expect(vus[v]! / N, `variante ${v}`).toBeLessThan(1 / 6 + 0.03);
+      expect(vus[2]! + vus[3]! + vus[4]!).toBe(0);
+      for (const v of VARIANTES_JOUEES) {
+        expect(vus[v]! / N, `variante ${v}`).toBeGreaterThan(1 / 3 - 0.03);
+        expect(vus[v]! / N, `variante ${v}`).toBeLessThan(1 / 3 + 0.03);
       }
     }
   });

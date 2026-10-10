@@ -1,38 +1,42 @@
-import { ASCENSION_FIN_S, CHOC_S, FINALE_FIN_S, LUNE_FIN_S, type FinaleSuper } from './finale-super';
+import { CHOC_S, FINALE_FIN_S, LUNE_FIN_S, type FinaleSuper } from './finale-super';
 import { clamp01, h, melange } from './finale-outils';
 import { C, COULEURS_SUPER } from './palette';
+import { texte } from './police';
 import { px } from './primitives';
 import type { Vue } from './vue';
 
-/** Les couches de la Terre, de la surface au noyau : couleur et profondeur (0 → 1) où elle commence. */
+/**
+ * Le VOLCAN, en un seul plan continu pour qu'on suive le chemin de la balle :
+ * 1. on recule depuis le court, posé en haut de la Terre vue en coupe (croûte, manteau, noyau) ;
+ * 2. la balle descend tout droit vers le centre en creusant un tunnel, la lave s'accroche à elle ;
+ * 3. passé le centre, la Terre tourne d'un demi-tour : la balle remonte vers l'autre côté, où est le volcan ;
+ * 4. on plonge sur le volcan, qui entre en éruption : un geyser de lave, la balle à son sommet.
+ */
+const RECUL_FIN = 0.9;
+const DEPART = 0.8;
+const ARRIVEE = 1.95;
+const TOUR_DEBUT = 1.2;
+const TOUR_FIN = 1.8;
+const ZOOM_FIN = 2.2;
+const DEBUT_GEYSER = ZOOM_FIN;
+
+/** Les couches de la Terre en coupe : rayon relatif et couleur. */
 const COUCHES: [number, string][] = [
-  [0, '#4a3524'], // croûte
-  [0.16, '#8a3a1a'], // manteau
-  [0.5, '#e0551a'], // manteau profond, rougeoyant
-  [0.72, '#ffa028'], // noyau externe : lave
-  [0.9, '#fff2b0'], // noyau interne
-  [1.4, '#ffffff'],
+  [1, '#5a4030'], // croûte
+  [0.9, '#a03c18'], // manteau
+  [0.68, '#e0551a'], // manteau profond
+  [0.45, '#ffa028'], // noyau externe
+  [0.22, '#fff2b0'], // noyau interne
 ];
 
-function couche(profondeur: number): string {
-  for (let i = COUCHES.length - 1; i >= 0; i--) {
-    const [d, c] = COUCHES[i]!;
-    if (profondeur >= d) {
-      const [d2, c2] = COUCHES[i + 1] ?? [d + 1, c];
-      return melange(c, c2, clamp01((profondeur - d) / (d2 - d)));
-    }
-  }
-  return COUCHES[0]![1];
-}
+const lisse = (x: number): number => {
+  const k = clamp01(x);
+  return k * k * (3 - 2 * k);
+};
 
-/**
- * Le VOLCAN : la balle perfore le court, plonge à travers la croûte, le manteau et le noyau (la lave
- * s'accroche à elle), puis ressort de l'autre côté de la Terre : un geyser de volcan, la balle à son sommet.
- */
 export function volcan(v: Vue, f: FinaleSuper): void {
   const { g, W, H } = v;
-  const entree = clamp01((f.t - CHOC_S) / 0.15);
-  if (f.t < ASCENSION_FIN_S + 0.25) plongee(v, f, entree);
+  if (f.t < ZOOM_FIN) coupe(v, f);
   else geyser(v, f);
   g.globalAlpha = 1;
   // la fin se fond au noir
@@ -44,81 +48,144 @@ export function volcan(v: Vue, f: FinaleSuper): void {
   }
 }
 
-/** La plongée : la coupe de la Terre défile vers le haut, de plus en plus chaude, la balle emporte la lave. */
-function plongee(v: Vue, f: FinaleSuper, entree: number): void {
+/** La Terre en coupe : le court en haut, le volcan en bas ; la balle la traverse, puis la Terre se retourne. */
+function coupe(v: Vue, f: FinaleSuper): void {
   const { g, W, H } = v;
-  const p = clamp01((f.t - CHOC_S) / (ASCENSION_FIN_S - CHOC_S));
-  const defilement = p * p * H * 2.4 + p * H * 0.6;
+  const t = f.t;
+  const entree = clamp01((t - CHOC_S) / 0.12);
   g.globalAlpha = entree;
-  for (let y = 0; y < H; y += 4) {
-    const profondeur = (y + defilement) / (H * 4.2);
-    g.fillStyle = couche(profondeur);
-    g.fillRect(0, y, W, 4);
+  g.fillStyle = '#02030a';
+  g.fillRect(0, 0, W, H);
+  for (let i = 0; i < 80; i++)
+    px(g, h(i) * W, h(i + 77) * H, i % 9 === 0 ? 2 : 1, i % 9 === 0 ? 2 : 1, '#ffffff');
+  const cx = W / 2;
+  const cy = H / 2 + 6;
+  const R = Math.round(H * 0.38);
+  // la caméra : on part tout près du court (en haut), on recule ; à la fin on plonge sur le volcan (en haut aussi)
+  const zoom =
+    t < RECUL_FIN
+      ? 7 - 6 * lisse((t - CHOC_S) / (RECUL_FIN - CHOC_S))
+      : t > ARRIVEE
+        ? 1 + 3.5 * lisse((t - ARRIVEE) / (ZOOM_FIN - ARRIVEE))
+        : 1;
+  const tour = Math.PI * lisse((t - TOUR_DEBUT) / (TOUR_FIN - TOUR_DEBUT));
+  // la balle sur le diamètre, du haut (le court) au bas (le volcan), dans le repère de la Terre
+  const s = lisse((t - DEPART) / (ARRIVEE - DEPART));
+  const yb = -R + 2 * R * s;
+  // à la fin, le volcan (au sommet après le demi-tour) descend vers le bas de l'écran pendant qu'on plonge sur lui,
+  // pour arriver cadré comme le plan de l'éruption qui suit
+  const fin = lisse((t - ARRIVEE) / (ZOOM_FIN - ARRIVEE));
+  const ancreY = cy - R - 10 * fin;
+  g.save();
+  g.translate(cx, ancreY + (H * 0.62 - ancreY) * fin);
+  g.scale(zoom, zoom);
+  g.translate(-cx, -ancreY);
+  g.translate(cx, cy);
+  g.rotate(tour);
+  // l'atmosphère, puis les couches
+  g.globalAlpha = entree * 0.25;
+  g.fillStyle = '#6aa8ff';
+  g.beginPath();
+  g.arc(0, 0, R + 6, 0, Math.PI * 2);
+  g.fill();
+  g.globalAlpha = entree;
+  for (const [r, c] of COUCHES) {
+    g.fillStyle = c;
+    g.beginPath();
+    g.arc(0, 0, R * r, 0, Math.PI * 2);
+    g.fill();
   }
-  // des cailloux dans la croûte, des bulles de magma plus bas
-  for (let i = 0; i < 70; i++) {
-    const wy = h(i + 5) * H * 2.6;
-    const y = ((wy - defilement) % (H * 2.6)) + (wy - defilement < 0 ? H * 2.6 : 0);
-    if (y < 0 || y > H) continue;
-    const profondeur = (y + defilement) / (H * 4.2);
-    const x = h(i) * W;
-    if (profondeur < 0.5) px(g, x, y, 2 + (i % 3), 2, i % 2 ? '#2a1a10' : '#6b5038');
-    else {
-      g.globalAlpha = entree * 0.7;
-      px(g, x, y, 3 + (i % 4), 3 + (i % 4), profondeur > 0.8 ? '#ffffff' : '#ffd27a');
-      g.globalAlpha = entree;
+  // le noyau bat
+  g.globalAlpha = entree * (0.35 + 0.25 * Math.sin(t * 9));
+  g.fillStyle = '#ffffff';
+  g.beginPath();
+  g.arc(0, 0, R * 0.14, 0, Math.PI * 2);
+  g.fill();
+  g.globalAlpha = entree;
+  // la surface : mers et terres, sur le bord
+  g.lineWidth = 3;
+  g.strokeStyle = '#1d4fb0';
+  g.beginPath();
+  g.arc(0, 0, R - 1, 0, Math.PI * 2);
+  g.stroke();
+  for (let i = 0; i < 10; i++) {
+    const a = h(i + 30) * Math.PI * 2;
+    g.strokeStyle = '#3e9a4a';
+    g.beginPath();
+    g.arc(0, 0, R - 1, a, a + 0.15 + h(i) * 0.3);
+    g.stroke();
+  }
+  // le court, en haut ; le volcan, en bas (pointe vers l'extérieur)
+  px(g, -7, -R - 3, 14, 4, '#2a6bd8');
+  px(g, -7, -R - 3, 14, 1, '#ffffff');
+  px(g, -1, -R - 4, 1, 5, '#ffffff');
+  g.fillStyle = '#2a1e18';
+  g.beginPath();
+  g.moveTo(-16, R - 2);
+  g.lineTo(16, R - 2);
+  g.lineTo(5, R + 13);
+  g.lineTo(-5, R + 13);
+  g.closePath();
+  g.fill();
+  px(g, -4, R + 11, 8, 2, s >= 1 ? '#ffb24a' : '#5a1a10');
+  // le tunnel creusé par la balle : sombre dans la croûte, de la lave plus bas
+  for (let y = -R; y < yb; y += 2) {
+    const r = Math.abs(y) / R;
+    px(g, -1, y, 3, 2, r > 0.9 ? '#120c08' : r > 0.45 ? '#ff6a1a' : '#fff2b0');
+  }
+  // la balle, et la lave qu'elle emporte depuis le noyau
+  if (s > 0 && s < 1) {
+    const lave = 2 + 6 * clamp01((s - 0.4) / 0.25);
+    g.globalAlpha = entree * 0.85;
+    g.fillStyle = '#ff8a1a';
+    g.beginPath();
+    g.arc(0, yb, lave, 0, Math.PI * 2);
+    g.fill();
+    g.globalAlpha = entree;
+    px(g, -2, yb - 2, 5, 5, C.contour);
+    px(g, -1, yb - 1, 3, 3, C.balle);
+  }
+  // le volcan s'éveille : la balle en sort, de la lave jaillit
+  if (s >= 1) {
+    for (let i = 0; i < 16; i++) {
+      const tt = (t - ARRIVEE + h(i) * 0.2) % 0.6;
+      g.globalAlpha = clamp01(1 - tt / 0.6);
+      px(
+        g,
+        (h(i + 5) - 0.5) * 10 * tt * 6,
+        R + 13 + tt * 40 * (0.6 + h(i + 9)),
+        2,
+        2,
+        i % 2 ? '#ffb24a' : '#fff2b0',
+      );
     }
+    // la balle ressort du cratère et monte, portée par la lave
+    const sortie = R + 14 + (t - ARRIVEE) * 140;
+    g.globalAlpha = 1;
+    px(g, -3, R + 13, 6, sortie - R - 13, '#ff8a1a');
+    g.globalAlpha = 1;
+    px(g, -2, sortie - 2, 5, 5, C.contour);
+    px(g, -1, sortie - 1, 3, 3, C.balle);
   }
-  // la balle, au centre, avec sa traîne de feu qui remonte
-  const bx = W / 2;
-  const by = H * 0.42;
-  const lave = 5 + 22 * clamp01((p - 0.35) / 0.65);
-  for (let i = 24; i >= 1; i--) {
-    g.globalAlpha = entree * (1 - i / 26) * 0.8;
-    const t = 1 - i / 24;
-    px(
-      g,
-      bx - 3 + Math.sin(i * 0.9 + f.t * 20) * 3,
-      by - i * 5,
-      3 + t * 5,
-      4,
-      t < 0.5 ? '#ff6a2a' : '#ffd27a',
-    );
-  }
-  // la lave du centre qu'elle emporte avec elle : une masse qui grossit autour de la balle, des gouttes qui s'en détachent
-  g.globalAlpha = entree * 0.9;
-  g.fillStyle = '#ff8a1a';
-  g.beginPath();
-  g.ellipse(bx, by + 4, lave, lave * 1.25, 0, 0, Math.PI * 2);
-  g.fill();
-  g.fillStyle = '#ffd27a';
-  g.beginPath();
-  g.ellipse(bx, by + 2, lave * 0.65, lave * 0.8, 0, 0, Math.PI * 2);
-  g.fill();
-  for (let i = 0; i < 18; i++) {
-    const a = h(i + 90) * Math.PI * 2;
-    const r = lave + 4 + ((f.t * 40 + i * 7) % 18);
-    g.globalAlpha = entree * (0.5 + 0.5 * h(i + 3));
-    px(g, bx + Math.cos(a) * r, by + Math.sin(a) * r * 1.2, 2, 3, i % 2 ? '#ff6a2a' : '#fff2b0');
-  }
-  g.globalAlpha = entree;
-  px(g, bx - 4, by - 4, 8, 8, C.contour);
-  px(g, bx - 3, by - 3, 6, 6, C.balle);
-  // la traversée du noyau : tout blanchit, puis le flash de la sortie
-  const noyau = clamp01((f.t - (ASCENSION_FIN_S - 0.2)) / 0.45);
-  if (noyau > 0) {
-    g.globalAlpha = noyau;
-    g.fillStyle = '#fffbe0';
-    g.fillRect(0, 0, W, H);
-  }
-  g.globalAlpha = 1;
+  g.restore();
+  // ce qui se passe, écrit en clair au bon moment
+  const legende = (txt: string, a: number, b: number) => {
+    if (t < a || t > b) return;
+    g.globalAlpha = clamp01(Math.min(t - a, b - t) / 0.12);
+    texte(g, txt, cx, H - 24, '#ffd27a', 1, 'c');
+    g.globalAlpha = 1;
+  };
+  legende('LA BALLE PERFORE LE COURT', RECUL_FIN - 0.15, 1.15);
+  legende('CENTRE DE LA TERRE', 1.2, 1.55);
+  legende('DE L AUTRE COTE...', 1.6, ZOOM_FIN);
 }
 
 /** De l'autre côté de la Terre : un volcan entre en éruption, un geyser de lave monte, la balle à son sommet. */
 function geyser(v: Vue, f: FinaleSuper): void {
   const { g, W, H } = v;
-  const age = f.t - (ASCENSION_FIN_S + 0.25);
-  const fondu = 1 - clamp01(age / 0.35); // le blanc du noyau se dissipe
+  const age = f.t - DEBUT_GEYSER;
+  // on arrive du zoom sur le volcan : un voile clair qui se dissipe
+  const fondu = 0.6 * (1 - clamp01(age / 0.3));
   // le ciel de l'autre côté : une aube pourpre et orange
   for (let y = 0; y < H; y += 6) {
     g.fillStyle = melange('#2a1450', '#ff9a4a', clamp01(y / (H * 0.8)) ** 1.5);

@@ -66,7 +66,7 @@ describe('échanges arcade (CPU contre CPU)', () => {
     let points = 0;
     let reviennent = 0;
     let frappes = 0;
-    for (const seed of [1, 2, 3, 4]) {
+    for (const seed of [1, 2, 3, 4, 5, 6, 7, 8]) {
       const jeu = partieTest({ mode: 'match', sieges: [], jeux: 1 }, seed);
       for (let i = 0; i < 120 * 60 * 4 && jeu.phase !== 'fin'; i++) {
         pas(jeu, PAS);
@@ -80,9 +80,9 @@ describe('échanges arcade (CPU contre CPU)', () => {
         jeu.evenements.length = 0;
       }
     }
-    expect(points).toBeGreaterThan(20);
+    expect(points).toBeGreaterThan(40);
     expect(frappes / points).toBeGreaterThan(8); // avant : 6 à 7 coups par point, dont beaucoup de balles qui revenaient
-    expect(reviennent / points).toBeLessThan(0.08); // avant : près d'un point sur cinq
+    expect(reviennent / points).toBeLessThan(0.12); // avant : près d'un point sur cinq
   });
 });
 

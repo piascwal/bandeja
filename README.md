@@ -399,18 +399,22 @@ voit venir le coup.
 quasi sans erreur, **imparable** (aucun adversaire ne peut toucher la balle) et qui gagne
 le point à son premier rebond. Il est toujours rapide (la balle file au plus vite que le
 filet le permet, puis repart comme un boulet après son rebond), avec une longue traînée de
-feu, et finit en cassant quelque chose. Six variantes, tirées au hasard à chances égales :
-la **MÉTÉORE** sur une balle haute (boule de feu qui s'écrase, cratère, puis repart dans
-l'espace), la **COMÈTE** à mi-court (feu bleu et blanc, défonce la vitre du fond et sort de
-la piste), le **PHÉNIX** depuis le fond (oiseau de feu aux ailes dorées qui défonce la vitre
-de côté), l'**ÉCLAIR** au filet (zigzag électrique : l'écran se fissure, puis la balle repart
-dans l'espace). Deux autres : le **VOLCAN**, un smash au filet qui **perfore
-le court** (pas de rebond) et plonge à travers la croûte, le manteau et le noyau en emportant la
-lave, avant de ressortir de l'autre côté de la Terre en geyser de volcan, la balle à son sommet
-(`render/finale-volcan.ts`) ; l'**ORBITE**, une balle haute frappée de loin qui rebondit en orbite
-autour de la Terre à toute vitesse : un petit ralenti montre la balle percuter un satellite, qui
-explose (`render/finale-orbite.ts`). Le choix est **au hasard, à chances égales** (`varianteSuper` : 1 sur 6 pour chaque animation, quelle que soit la situation ; sans hasard, comme dans les tests, la situation donne la variante la plus naturelle). Vitre brisée = gerbe d'éclats, écran qui tremble et flashe. Le CPU lâche aussi
-son super coup, rarement (12 % de ses coups quand sa jauge est pleine). Les coups ordinaires
+feu, et finit en cassant quelque chose. **Trois animations**, tirées au hasard à chances égales
+(`VARIANTES_JOUEES`, `varianteSuper` : 1 sur 3 chacune, quelle que soit la situation) :
+
+- la **MÉTÉORE** : boule de feu qui s'écrase, repart dans l'espace et finit sur la lune ;
+- le **VOLCAN** : il **perfore le court** (pas de rebond) ; un seul plan continu
+  (`render/finale-volcan.ts`) : on recule depuis le court posé en haut de la Terre vue en coupe, la
+  balle descend tout droit en creusant un tunnel (sombre dans la croûte, de lave plus bas), passe le
+  centre (la lave s'accroche à elle), la Terre fait un demi-tour, la balle remonte vers le volcan de
+  l'autre côté et en sort portée par la lave ; on plonge alors sur le volcan en éruption, la balle au
+  sommet du geyser. Trois légendes disent ce qui se passe (« LA BALLE PERFORE LE COURT », « CENTRE
+  DE LA TERRE », « DE L AUTRE COTE... ») ;
+- l'**ORBITE** : la balle rebondit en orbite autour de la Terre à toute vitesse ; un petit ralenti
+  montre la balle percuter un satellite, qui explose (`render/finale-orbite.ts`).
+
+La comète, le phénix et l'éclair existent encore dans la physique (et ses tests) mais ne sont plus
+tirés. Le CPU lâche aussi son super coup, rarement (5 % de ses coups quand sa jauge est pleine). Les coups ordinaires
 restent plafonnés à 0,97 de puissance.
 
 **Parade.** Au moment où un super coup part, le jeu passe au ralenti (environ 2 s) pour

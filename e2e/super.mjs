@@ -79,7 +79,7 @@ export default async function (env) {
 
   // les deux scènes qui quittent la lune : le volcan (plongée dans la Terre, geyser) et l'orbite (satellite)
   for (const [variante, temps] of [
-    [5, [0.8, 1.3, 1.75, 2.1, 2.5, 3.1]],
+    [5, [0.65, 0.95, 1.15, 1.4, 1.65, 1.9, 2.05, 2.5, 3.1]],
     [6, [1.2, 1.9, 2.3, 2.7, 3.0, 3.3]],
   ]) {
     await p.evaluate((v) => {

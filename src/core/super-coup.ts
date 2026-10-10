@@ -9,8 +9,12 @@ import type { Balle, Coup, Effet, Equipe, Joueur, Partie } from './types';
  * Les super coups : jauge pleine, le bouton SMASH déclenche une frappe
  * monstrueuse, qui gagne forcément le point (la balle est imparable : aucun
  * adversaire ne peut la toucher, et le point est compté à son premier rebond).
- * Six variantes, tirées au hasard (chacune a la même chance ; sans hasard, la situation donne la plus naturelle), et toujours spectaculaires :
- * la balle traîne le feu, puis sort de la piste en cassant quelque chose.
+ * Trois animations, tirées au hasard à chances égales :
+ * - MÉTÉORE : un smash de feu qui s'écrase puis repart dans l'espace et finit sur la lune ;
+ * - VOLCAN : il perfore le court (pas de rebond), traverse la Terre par son centre et ressort de
+ *   l'autre côté en geyser de lave ;
+ * - ORBITE : la balle rebondit en orbite et fait exploser un satellite (petit ralenti).
+ * Les variantes 2 à 4 (comète, phénix, éclair) existent encore dans la physique, mais ne sont plus tirées.
  */
 export type VarianteSuper = 1 | 2 | 3 | 4 | 5 | 6;
 
@@ -24,22 +28,13 @@ export const NOMS_SUPER = [
   'ORBITE !',
 ] as const;
 
-/**
- * Laquelle selon la situation :
- * - MÉTÉORE, une balle haute à mi-court : un smash de feu qui s'écrase puis repart dans l'espace ;
- * - ÉCLAIR, au filet : un tir en zigzag qui fait voler l'écran en éclats ;
- * - PHÉNIX, depuis le fond : un oiseau de feu qui défonce la vitre de côté ;
- * - COMÈTE, sinon : un boulet qui défonce la vitre du fond ;
- * - VOLCAN, un smash au filet : il perfore le court (pas de rebond), plonge au centre de la Terre
- *   et ressort de l'autre côté en geyser de lave ;
- * - ORBITE, une balle haute frappée de loin : elle rebondit en orbite et fait exploser un satellite.
- */
+/** Les trois animations du super coup : l'impact sur la lune (météore), le volcan, le satellite (orbite). */
+export const VARIANTES_JOUEES: readonly VarianteSuper[] = [1, 5, 6];
+
 export function varianteSuper(b: Balle, loin: number, rng?: Aleatoire): VarianteSuper {
-  const naturelle: VarianteSuper =
-    b.z > 1.9 ? (loin > 6 ? 6 : loin < 3.5 ? 5 : 1) : loin < 3.5 ? 4 : loin > 6 ? 3 : 2;
-  if (!rng) return naturelle;
-  // dans le jeu, le choix est au hasard : chaque variante (donc chaque animation) a la même chance, quelle que soit la situation
-  return (1 + Math.floor(rng() * 6)) as VarianteSuper;
+  if (!rng) return loin < 3.5 ? 5 : loin > 6 ? 6 : 1;
+  // dans le jeu, le choix est au hasard : chacune des trois animations a la même chance, quelle que soit la situation
+  return VARIANTES_JOUEES[Math.floor(rng() * VARIANTES_JOUEES.length)]!;
 }
 
 /** Où viser : le côté le plus loin des adversaires. */
