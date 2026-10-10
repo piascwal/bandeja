@@ -2,6 +2,7 @@ import { TYPES_SERV } from '@core/humain';
 import type { Bouton, Joueur, Partie } from '@core/types';
 import { clamp } from '@core/aleatoire';
 import { optionsBoutons, RAYON_JOY, zonesBoutons, type Rond } from '@input/disposition';
+import { NOMS_GESTE, SEUIL_LONG, SEUIL_TRAIT, type TypeGeste } from '@input/geste';
 import { C } from './palette';
 import { micro, texte } from './police';
 import { anneau, disque, px } from './primitives';
@@ -12,6 +13,8 @@ export interface EtatTactile {
   tactile: boolean;
   joy: { bx: number; by: number; x: number; y: number } | null;
   actifs: Set<string>;
+  /** le doigt qui tient ARMER et son trait en cours */
+  trait: { x0: number; y0: number; type: TypeGeste } | null;
 }
 
 /** Les boutons absents de la disposition (voir `zonesBoutons`) ne sont pas dessinés. */
@@ -25,13 +28,15 @@ const COUL: Record<Bouton, [string, string]> = {
   lobe: ['#3fb4e8', '#2a8fc4'],
   smash: ['#ffa24a', '#d9741c'],
   change: ['#9b7bff', '#6f4fd8'],
+  lourd: ['#ff5470', '#e03a58'],
 };
 const LIB_JEU: Record<Bouton, string> = {
-  plat: 'FRAPPE',
+  plat: 'ARMER',
   amorti: 'AMORTI',
   lobe: 'LOBE',
   smash: 'SMASH',
   change: 'CHANGE',
+  lourd: 'FORT',
 };
 const LIB_SERVICE: Record<Bouton, string> = {
   plat: 'PLAT',
@@ -39,6 +44,7 @@ const LIB_SERVICE: Record<Bouton, string> = {
   lobe: '',
   smash: '',
   change: 'CHANGE',
+  lourd: 'FORT',
 };
 
 function rond(v: Vue, z: Rond, app: boolean, haut: string, bas: string, nom: string, clair = false): void {
@@ -66,7 +72,9 @@ export function dessineCommandes(v: Vue, jeu: Partie, t: EtatTactile): void {
     // le bouton du haut n'existe que pour le super coup : absent tant que la jauge n'est pas pleine
     if (!rd || (k === 'smash' && !superPret)) continue;
     const or = k === 'smash';
-    const lib = or ? 'SUPER' : service ? LIB_SERVICE[k] : LIB_JEU[k];
+    // pendant le trait, le guide donne le coup choisi ; CHANGE s'efface pour lui laisser la place
+    if (t.trait && k === 'change') continue;
+    const lib = or ? 'SUPER' : service ? LIB_SERVICE[k] : k === 'plat' && t.trait ? ' ' : LIB_JEU[k];
     const app = t.actifs.has(k);
     const choisi = estChoisi(jeu, s, k);
     const voile =
@@ -84,6 +92,33 @@ export function dessineCommandes(v: Vue, jeu: Partie, t: EtatTactile): void {
     v.g.globalAlpha = 1;
   }
   if (superPret && z.smash) animeSuper(v, z.smash, jeu.temps, kSuper);
+  if (!service) {
+    if (t.trait) guideTrait(v, t.trait);
+    else if (jeu.temps < 25)
+      texte(
+        v.g,
+        'ARMER PUIS TRAIT : HAUT LOB - COURT AMORTI - AUTRE FORT',
+        v.W - 6,
+        v.H - 9,
+        C.blanc,
+        1,
+        'd',
+      );
+  }
+}
+
+/** Le guide du trait, autour de là où le doigt a touché ARMER : le coup que dessine le trait en cours est en or. */
+function guideTrait(v: Vue, tr: { x0: number; y0: number; type: TypeGeste }): void {
+  const { g } = v;
+  g.globalAlpha = 0.55;
+  anneau(g, tr.x0, tr.y0, SEUIL_TRAIT, C.blanc, 1, 1);
+  anneau(g, tr.x0, tr.y0, SEUIL_LONG, C.blanc, 1, 1);
+  g.globalAlpha = 1;
+  const lib = (type: TypeGeste, x: number, y: number) =>
+    texte(g, NOMS_GESTE[type], x, y, tr.type === type ? C.or : C.grisBleu, 1, 'c');
+  lib('lobe', tr.x0, tr.y0 - SEUIL_LONG - 10);
+  lib('lourd', tr.x0 - SEUIL_LONG - 22, tr.y0 - 3);
+  lib('amorti', tr.x0 - SEUIL_LONG - 22, tr.y0 + 14);
 }
 
 /** Le bouton SUPER : halo qui bat, ondes qui s'en échappent, étincelles qui tournent autour. */
@@ -107,7 +142,8 @@ function animeSuper(v: Vue, z: Rond, t: number, voile: number): void {
 
 /** Le coup armé (ou le service choisi) est entouré. */
 function estChoisi(jeu: Partie, s: Joueur, k: Bouton): boolean {
-  if (s.intent && s.intent.type === k) return true;
+  // ARMER est entouré dès qu'un coup est armé, quel que soit le coup que dessine le trait
+  if (s.intent && (s.intent.type === k || (k === 'plat' && jeu.phase !== 'service'))) return true;
   return !!jeu.jauge && jeu.serveur === s && TYPES_SERV[k] === jeu.jauge.type;
 }
 
