@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { graine } from '@core/aleatoire';
 import { PARADE_RALENTI, PAS, VITESSE } from '@core/constants';
 import { executeCoup } from '@core/coups';
 import { appliqueCommande } from '@core/humain';
@@ -174,6 +175,20 @@ describe('le super coup', () => {
     expect(v({ z: 0.8, vx: -4 }, 2)).toBe(3); // depuis le fond : phénix
     expect(v({ z: 0.8, vx: -20 }, 5)).toBe(2); // rapide à mi-court : comète
     expect(NOMS_SUPER.filter(Boolean)).toHaveLength(6);
+  });
+
+  it('avec le hasard, toutes les variantes sortent, la situation donnant la plus probable', () => {
+    const { jeu } = situation({ z: 0.8, vx: -20 }, 5); // à mi-court : comète
+    const rng = graine(5);
+    const vus = new Map<number, number>();
+    for (let i = 0; i < 600; i++) {
+      const v = varianteSuper(jeu.balle, 5, rng);
+      vus.set(v, (vus.get(v) ?? 0) + 1);
+    }
+    for (const v of [1, 2, 3, 4, 5, 6]) expect(vus.get(v) ?? 0, `variante ${v}`).toBeGreaterThan(20);
+    expect(vus.get(2)!).toBeGreaterThan(vus.get(1)!); // la comète, naturelle ici, sort le plus souvent
+    // volcan et orbite : près de la moitié des super coups, plus seulement la lune
+    expect(((vus.get(5) ?? 0) + (vus.get(6) ?? 0)) / 600).toBeGreaterThan(0.35);
   });
 
   it('chaque variante est imparable et gagne le point, quel que soit le CPU en face', () => {

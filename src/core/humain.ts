@@ -184,7 +184,7 @@ function coupHumain(jeu: Partie, s: Joueur): void {
   const bouton = s.intent!.type;
   // jauge pleine : SMASH déclenche un super coup, dont la variante dépend de la situation
   const variante =
-    bouton === 'smash' && jeu.jaugeSmash[s.eq] >= 1 ? varianteSuper(b, Math.abs(s.x - MIL)) : 0;
+    bouton === 'smash' && jeu.jaugeSmash[s.eq] >= 1 ? varianteSuper(b, Math.abs(s.x - MIL), jeu.rng) : 0;
   const prevu = coupPrevu(jeu, s, bouton, s.charge);
   // le joueur a poussé son joystick vers une vitre : son coup part dessus (bien dirigé s'il est bien placé, sinon de travers)
   const mur = variante || bouton !== 'plat' ? null : murVise(directionVisee(s), s.eq);

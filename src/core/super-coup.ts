@@ -1,3 +1,4 @@
+import type { Aleatoire } from './aleatoire';
 import { gravite, lance } from './balle';
 import { MIL, PARADE_DUREE_MAX, PERIODE_PARADE, ZONE_PARADE } from './constants';
 import { equipe } from './joueurs';
@@ -33,11 +34,20 @@ export const NOMS_SUPER = [
  *   et ressort de l'autre côté en geyser de lave ;
  * - ORBITE, une balle haute frappée de loin : elle rebondit en orbite et fait exploser un satellite.
  */
-export function varianteSuper(b: Balle, loin: number): VarianteSuper {
-  if (b.z > 1.9) return loin > 6 ? 6 : loin < 3.5 ? 5 : 1;
-  if (loin < 3.5) return 4;
-  if (loin > 6) return 3;
-  return 2;
+export function varianteSuper(b: Balle, loin: number, rng?: Aleatoire): VarianteSuper {
+  const naturelle: VarianteSuper =
+    b.z > 1.9 ? (loin > 6 ? 6 : loin < 3.5 ? 5 : 1) : loin < 3.5 ? 4 : loin > 6 ? 3 : 2;
+  if (!rng) return naturelle;
+  // la situation donne la variante la plus probable, mais toutes peuvent sortir : sinon on ne verrait que la
+  // même scène (la lune) à chaque super coup, les balles hautes étant rares. Poids : volcan et orbite plus que les autres, pour qu'on les voie.
+  const poids = [0, 1, 1, 1, 1, 3, 3];
+  poids[naturelle] = (poids[naturelle] ?? 0) + 3;
+  let tirage = rng() * poids.reduce((a, c) => a + c, 0);
+  for (let v = 1; v <= 6; v++) {
+    tirage -= poids[v]!;
+    if (tirage < 0) return v as VarianteSuper;
+  }
+  return naturelle;
 }
 
 /** Où viser : le côté le plus loin des adversaires. */

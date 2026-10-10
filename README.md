@@ -404,12 +404,12 @@ la **MÉTÉORE** sur une balle haute (boule de feu qui s'écrase, cratère, puis
 l'espace), la **COMÈTE** à mi-court (feu bleu et blanc, défonce la vitre du fond et sort de
 la piste), le **PHÉNIX** depuis le fond (oiseau de feu aux ailes dorées qui défonce la vitre
 de côté), l'**ÉCLAIR** au filet (zigzag électrique : l'écran se fissure, puis la balle repart
-dans l'espace). Deux autres, plus rares : le **VOLCAN**, un smash au filet qui **perfore
+dans l'espace). Deux autres : le **VOLCAN**, un smash au filet qui **perfore
 le court** (pas de rebond) et plonge à travers la croûte, le manteau et le noyau en emportant la
 lave, avant de ressortir de l'autre côté de la Terre en geyser de volcan, la balle à son sommet
 (`render/finale-volcan.ts`) ; l'**ORBITE**, une balle haute frappée de loin qui rebondit en orbite
 autour de la Terre à toute vitesse : un petit ralenti montre la balle percuter un satellite, qui
-explose (`render/finale-orbite.ts`). Vitre brisée = gerbe d'éclats, écran qui tremble et flashe. Le CPU lâche aussi
+explose (`render/finale-orbite.ts`). La situation donne la variante la plus probable, mais toutes peuvent sortir (`varianteSuper`, poids : situation +3, volcan et orbite 3, les autres 1) : sinon la lune, seule scène des balles qui s'envolent, reviendrait à chaque fois. Vitre brisée = gerbe d'éclats, écran qui tremble et flashe. Le CPU lâche aussi
 son super coup, rarement (12 % de ses coups quand sa jauge est pleine). Les coups ordinaires
 restent plafonnés à 0,97 de puissance.
 
