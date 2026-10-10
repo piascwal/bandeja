@@ -286,32 +286,24 @@ Pour changer l'icône : remplacer `assets/icone-app.jpg` (carrée), puis
 
 ## Commandes du jeu
 
-|               | Tactile                                          | Clavier                    |
-| ------------- | ------------------------------------------------ | -------------------------- |
-| Se déplacer   | joystick (moitié gauche)                         | flèches / ZQSD / WASD      |
-| Armer         | bouton rouge ARMER, dans le coin en bas à droite | K (FRAPPE)                 |
-| Lob           | ARMER puis un trait vers le haut                 | L                          |
-| Amorti        | ARMER puis un tout petit trait                   | J                          |
-| Frappe lourde | ARMER puis un trait normal, pas vers le haut     | —                          |
-| Change        | bouton violet, à gauche d'ARMER (seul)           | U                          |
-| Super coup    | bouton doré, au-dessus d'ARMER, jauge pleine     | I ou Espace (jauge pleine) |
-| Pause         | ⏸ en haut à droite                               | Échap / P                  |
+|             | Tactile                                           | Clavier                    |
+| ----------- | ------------------------------------------------- | -------------------------- |
+| Se déplacer | joystick (moitié gauche)                          | flèches / ZQSD / WASD      |
+| Frappe      | bouton rouge, dans le coin en bas à droite        | K                          |
+| Change      | bouton violet, à gauche de FRAPPE (seul)          | U                          |
+| Lobe        | bouton bleu, au-dessus de FRAPPE                  | L                          |
+| Amorti      | bouton turquoise, au-dessus de CHANGE             | J                          |
+| Super coup  | bouton doré, tout en haut, seulement jauge pleine | I ou Espace (jauge pleine) |
+| Pause       | ⏸ en haut à droite                                | Échap / P                  |
 
-**Le geste tactile** (`input/geste.ts`). On tient ARMER avec le pouce droit, puis le même doigt trace un
-trait qui choisit le coup, jusqu'à l'impact : **pas de trait** (moins de 6 px) = FRAPPE (plus on arme
-tôt, plus c'est fort) ; **un tout petit trait** (moins de 26 px) = AMORTI ; **un trait vers le haut**
-(à moins de 45° de la verticale) = LOB ; **tout autre trait** = frappe **lourde**, armée presque à
-fond (`CHARGE_LOURD` 0,9). Un guide s'affiche autour du doigt, le coup choisi en or. Tant que le
-doigt tient ARMER, le coup armé n'est pas oublié (`Commande.arme`, transmis aux invités : protocole 11) ; relâché, il est oublié au bout de 0,7 s. Le joystick, au moment du coup, choisit toujours la
-vitre (voir plus bas). Il n'y a plus de boutons FRAPPE, LOBE ni AMORTI au toucher ; au service, PLAT
-et COUPE restent.
-
-Les boutons occupent le coin en bas à droite (`zonesBoutons`) : ARMER (le plus gros) dans le coin,
-CHANGE à sa gauche, SUPER au-dessus. **CHANGE** n'existe que pour un seul humain face au CPU
-(`changePossible`) : en plein point il prend la main sur son partenaire (`changeDeJoueur`), et
-l'ancien joueur repasse au CPU ; une onde violette signale le nouveau joueur. À deux humains
-(coéquipiers, adversaires ou réseau), le bouton n'apparaît pas. Quand la balle passe près d'un
-bouton, celui-ci devient transparent (mais reste visible), pour ne pas cacher le jeu.
+Les boutons occupent le coin en bas à droite (`zonesBoutons`) : FRAPPE dans le coin, CHANGE à sa gauche,
+LOBE au-dessus de FRAPPE, AMORTI au-dessus de CHANGE, SUPER au-dessus de LOBE. **CHANGE** n'existe que
+pour un seul humain face au CPU (`changePossible`) : en plein point il prend la main sur son
+partenaire (`changeDeJoueur`), et l'ancien joueur repasse au CPU ; une onde violette signale le
+nouveau joueur. À deux humains (coéquipiers, adversaires ou réseau), le bouton n'apparaît pas et les
+autres sont décalés vers le bas : AMORTI prend la place de CHANGE, LOBE reste juste au-dessus de
+FRAPPE. Au service il ne reste que PLAT (dans le coin) et COUPE (au-dessus). Quand la balle passe près
+d'un bouton, celui-ci devient transparent (mais reste visible), pour ne pas cacher le jeu.
 
 **Arcade, pas simulation.** Il n'y a plus de course : le joueur est plus rapide
 que le CPU et la portée est généreuse. En option (Réglages › _Aide au

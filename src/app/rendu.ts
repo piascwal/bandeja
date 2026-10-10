@@ -90,7 +90,6 @@ export function rendu(app: BandejaApp, t: number): void {
         tactile: e.tactile,
         joy,
         actifs: new Set(e.ids.values()),
-        trait: e.trait,
       });
   } else if (ecranUI === 'menu') {
     const actions = {

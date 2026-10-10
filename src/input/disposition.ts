@@ -31,21 +31,28 @@ export const optionsBoutons = (jeu: Partie): OptionsBoutons => ({
 });
 
 /**
- * Les boutons, dans le coin en bas à droite. ARMER (le bouton `plat`, plus gros) est dans le coin : on
- * le tient et on trace un trait pour choisir le coup (voir `geste.ts`). CHANGE est à sa gauche (seul
- * humain face au CPU), SUPER au-dessus (jauge pleine). Sans CHANGE (deux humains), il n'y a rien à
- * sa place. Au service il ne reste que PLAT (dans le coin) et COUPE (au-dessus).
+ * Les boutons dans le coin en bas à droite, sur deux colonnes. FRAPPE est dans le coin, CHANGE à sa
+ * gauche (seul humain face au CPU), LOBE au-dessus de FRAPPE, AMORTI au-dessus de CHANGE, et SUPER
+ * (le SMASH choisit seul entre smash, víbora et bandeja) tout en haut, au-dessus de LOBE. Sans CHANGE
+ * (deux humains), AMORTI descend prendre sa place à gauche de FRAPPE. Au service il ne reste que
+ * PLAT (dans le coin) et COUPE (au-dessus), CHANGE restant à gauche.
  */
 export function zonesBoutons(W: number, H: number, o: OptionsBoutons): Partial<Record<ToucheEcran, Rond>> {
-  const droite = W - 34;
-  const bas = H - 34;
-  const z: Partial<Record<ToucheEcran, Rond>> = { plat: { x: droite, y: bas, r: o.service ? 13 : 19 } };
+  const r = 13;
+  const d = 28;
+  const droite = W - 30;
+  const gauche = droite - d;
+  const bas = H - 32;
+  const case_ = (x: number, rang: number): Rond => ({ x, y: bas - rang * d, r });
+  const z: Partial<Record<ToucheEcran, Rond>> = { plat: case_(droite, 0) };
+  if (o.change) z.change = case_(gauche, 0);
   if (o.service) {
-    z.amorti = { x: droite, y: bas - 30, r: 13 };
+    z.amorti = case_(droite, 1);
     return z;
   }
-  if (o.change) z.change = { x: droite - 40, y: bas + 2, r: 13 };
-  z.smash = { x: droite, y: bas - 40, r: 13 };
+  z.lobe = case_(droite, 1);
+  z.amorti = o.change ? case_(gauche, 1) : case_(gauche, 0);
+  z.smash = case_(droite, 2);
   return z;
 }
 

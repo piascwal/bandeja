@@ -8,7 +8,6 @@ import {
   type OptionsBoutons,
   type ToucheEcran,
 } from './disposition';
-import { classeGeste, type TypeGeste } from './geste';
 
 export interface PointLogique {
   x: number;
@@ -62,8 +61,6 @@ const BAS = ['ArrowDown', 'KeyS'];
 export class Entrees {
   readonly touches = new Set<string>();
   joy: { id: number; bx: number; by: number; x: number; y: number } | null = null;
-  /** le doigt qui tient ARMER et son trait : d'où il est parti et le coup qu'il dessine (voir `geste.ts`) */
-  trait: { id: number; x0: number; y0: number; type: TypeGeste } | null = null;
   /** bouton tenu par chaque doigt */
   ids = new Map<number, ToucheEcran>();
   private appuis: Bouton[] = [];
@@ -88,7 +85,6 @@ export class Entrees {
   /** Oublie tous les doigts et touches (pause, changement d'écran). */
   reinitialise(): void {
     this.joy = null;
-    this.trait = null;
     this.ids.clear();
     this.appuis = [];
     this.touches.clear();
@@ -116,7 +112,7 @@ export class Entrees {
     }
     const appuis = this.appuis;
     this.appuis = [];
-    return { dx, dy, appuis, arme: this.trait !== null };
+    return { dx, dy, appuis };
   }
 
   private surAppui(e: PointerEvent): void {
@@ -149,9 +145,6 @@ export class Entrees {
       if (b) {
         this.appuis.push(b);
         this.ids.set(e.pointerId, b);
-        // ARMER (sauf au service, où c'est PLAT) : ce doigt va tracer le trait qui choisit le coup
-        if (b === 'plat' && !this.h.boutons().service)
-          this.trait = { id: e.pointerId, x0: p.x, y0: p.y, type: 'plat' };
       }
     }
     try {
@@ -162,17 +155,6 @@ export class Entrees {
   }
 
   private surDeplacement(e: PointerEvent): void {
-    const t = this.trait;
-    if (t && e.pointerId === t.id) {
-      // le trait change le coup armé à chaque fois qu'il passe un seuil (un appui du nouveau coup remplace le précédent)
-      const q = this.h.versLogique(e);
-      const type = classeGeste(q.x - t.x0, q.y - t.y0);
-      if (type !== t.type) {
-        t.type = type;
-        this.appuis.push(type);
-      }
-      return;
-    }
     if (!this.joy || e.pointerId !== this.joy.id) return;
     const p = this.h.versLogique(e);
     this.joy.x = p.x;
@@ -190,7 +172,6 @@ export class Entrees {
 
   private relache(e: PointerEvent): void {
     if (this.joy && e.pointerId === this.joy.id) this.joy = null;
-    if (this.trait && e.pointerId === this.trait.id) this.trait = null;
     this.ids.delete(e.pointerId);
   }
 

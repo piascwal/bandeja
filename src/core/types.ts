@@ -5,8 +5,8 @@ export type Equipe = 0 | 1;
 export type Effet = 'plat' | 'lobe' | 'lift' | 'smash' | 'coupe' | 'vibora';
 /** Les coups, tels qu'annoncés à l'écran. */
 export type Coup = 'plat' | 'lobe' | 'coupe' | 'amorti' | 'smash' | 'vibora' | 'bandeja' | 'vitre' | 'cote';
-/** Les boutons (au toucher : ARMER puis un trait, voir `input/geste.ts`, qui choisit entre FRAPPE, AMORTI, LOBE et LOURD) : FRAPPE, LOBE, AMORTI (COUPE au service), SUPER (le SMASH choisit seul entre smash, víbora et bandeja), CHANGE (de joueur). */
-export type Bouton = 'plat' | 'amorti' | 'lobe' | 'smash' | 'change' | 'lourd';
+/** Les boutons : FRAPPE, LOBE, AMORTI (COUPE au service), SUPER (le SMASH choisit seul entre smash, víbora et bandeja), CHANGE (de joueur). */
+export type Bouton = 'plat' | 'amorti' | 'lobe' | 'smash' | 'change';
 /** Vitre visée pour un rebond voulu : celle du fond, ou celle de côté (haut / bas de l'écran). */
 export type Mur = 'fond' | 'haut' | 'bas';
 export type TypeService = 'plat' | 'coupe';
@@ -162,8 +162,6 @@ export interface Commande {
   dx: number;
   dy: number;
   appuis: Bouton[];
-  /** le doigt tient encore le bouton ARMER : le coup armé n'est pas oublié tant qu'il le tient */
-  arme?: boolean;
 }
 
 /**

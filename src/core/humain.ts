@@ -16,8 +16,6 @@ export const TYPES_SERV: Partial<Record<Bouton, TypeService>> = { plat: 'plat', 
 const DUREE_CHARGE = 0.6;
 /** Un appui reste en attente de la balle ce temps-là : il faut se placer d'abord, puis déclencher au bon moment. */
 const OUBLI_APPUI = 0.7;
-/** Charge d'une frappe lourde (le trait normal du geste) : presque à fond dès le départ. */
-const CHARGE_LOURD = 0.9;
 /** Portée de la raquette d'un humain : il faut être bien placé, la balle n'est pas rattrapée de partout. */
 export const BONUS_PORTEE = 1;
 /** Après le relâchement du joystick, sa dernière direction compte encore ce temps-là (s). */
@@ -90,10 +88,6 @@ export function appliqueCommande(jeu: Partie, s: Joueur, cmd: Commande, dt: numb
   if (s.intent) {
     s.intent.t += dt;
     s.charge = Math.min(1, s.charge + dt / DUREE_CHARGE);
-    // le trait « lourd » est une frappe à fond
-    if (s.intent.type === 'lourd') s.charge = Math.max(s.charge, CHARGE_LOURD);
-    // tant que le doigt tient ARMER, le coup armé n'est pas oublié
-    if (cmd.arme) s.intent.t = Math.min(s.intent.t, OUBLI_APPUI - 0.05);
     if (s.intent.t > OUBLI_APPUI) {
       s.intent = null;
       s.charge = 0;
@@ -107,9 +101,7 @@ export function appliqueCommande(jeu: Partie, s: Joueur, cmd: Commande, dt: numb
     const perdue = b.sol >= 1 && b.z < 0.5 && b.vz < 0;
     // visée vers une vitre : on attend que la balle soit assez basse (pas de renvoi de vitre sur une balle de smash)
     const tropHaute =
-      (s.intent.type === 'plat' || s.intent.type === 'lourd') &&
-      b.z > HAUT_SMASH &&
-      murVise(directionVisee(s), s.eq) !== null;
+      s.intent.type === 'plat' && b.z > HAUT_SMASH && murVise(directionVisee(s), s.eq) !== null;
     if (tropHaute) s.intent.t = Math.min(s.intent.t, OUBLI_APPUI - 0.05);
     const attend = tropHaute || (d > DISTANCE_IDEALE && d <= s.dBalle && !perdue);
     s.dBalle = d;
@@ -148,7 +140,6 @@ export function coupPrevu(jeu: Partie, s: Joueur, bouton: Bouton, charge: number
   const p = 0.25 + 0.75 * charge;
   const haut = jeu.balle.z > HAUT_SMASH;
   switch (bouton) {
-    case 'lourd':
     case 'plat':
       // joystick poussé vers une vitre : FRAPPE la renvoie, dans toutes les situations (voir `murVise`)
       switch (murVise(directionVisee(s), s.eq)) {
@@ -196,7 +187,7 @@ function coupHumain(jeu: Partie, s: Joueur): void {
     bouton === 'smash' && jeu.jaugeSmash[s.eq] >= 1 ? varianteSuper(b, Math.abs(s.x - MIL)) : 0;
   const prevu = coupPrevu(jeu, s, bouton, s.charge);
   // le joueur a poussé son joystick vers une vitre : son coup part dessus (bien dirigé s'il est bien placé, sinon de travers)
-  const mur = variante || (bouton !== 'plat' && bouton !== 'lourd') ? null : murVise(directionVisee(s), s.eq);
+  const mur = variante || bouton !== 'plat' ? null : murVise(directionVisee(s), s.eq);
   const type = mur ? 'vitre' : prevu;
   const p = 0.25 + 0.75 * s.charge;
   const { tx, ty } = cibleCoup(s, type);

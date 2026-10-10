@@ -43,51 +43,6 @@ export default async function (env) {
   });
   env.verifie(zones.W > 0, 'écran dessiné');
   await env.capture(p, 'jeu-commandes');
-  // le geste tactile : ARMER tenu, puis un trait choisit le coup (haut = lob, court = amorti, autre = fort)
-  const doigt = (type, lx, ly) =>
-    p.evaluate(
-      ({ type, lx, ly }) => {
-        const c = document.querySelector('canvas');
-        const r = c.getBoundingClientRect();
-        const { W, H } = window.bandeja;
-        c.dispatchEvent(
-          new PointerEvent(type, {
-            clientX: r.left + (lx / W) * r.width,
-            clientY: r.top + (ly / H) * r.height,
-            pointerId: 7,
-            pointerType: 'touch',
-            bubbles: true,
-          }),
-        );
-        return H;
-      },
-      { type, lx, ly },
-    );
-  await p.evaluate(() => {
-    window.bandeja.entrees.tactile = true;
-    window.bandeja.jeu.phase = 'jeu';
-    window.bandeja.jeu.balle.camp = 1;
-  });
-  const { W: LW, H: LH } = await p.evaluate(() => ({ W: window.bandeja.W, H: window.bandeja.H }));
-  const ox = LW - 34;
-  const oy = LH - 34;
-  const intent = () => p.evaluate(() => window.bandeja.jeu.humain.intent?.type ?? null);
-  await doigt('pointerdown', ox, oy);
-  await attends(120);
-  env.verifie((await intent()) === 'plat', 'ARMER tenu sans trait : FRAPPE');
-  await doigt('pointermove', ox, oy - 14);
-  await attends(120);
-  env.verifie((await intent()) === 'amorti', 'un tout petit trait : AMORTI');
-  await doigt('pointermove', ox, oy - 45);
-  await attends(120);
-  env.verifie((await intent()) === 'lobe', 'un trait vers le haut : LOB');
-  await env.capture(p, 'geste-lob');
-  await doigt('pointermove', ox - 50, oy - 4);
-  await attends(120);
-  env.verifie((await intent()) === 'lourd', 'un trait normal : FRAPPE LOURDE');
-  await env.capture(p, 'geste-fort');
-  await doigt('pointerup', ox - 50, oy - 4);
-  await attends(100);
   // CHANGE (touche U) : en plein point, on prend la main sur le partenaire, l'ancien joueur repasse au CPU
   const avant = await p.evaluate(() => {
     const j = window.bandeja.jeu;

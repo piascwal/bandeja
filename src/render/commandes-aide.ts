@@ -20,12 +20,10 @@ interface Ligne {
 }
 
 const COUPS: Ligne[] = [
-  { pastille: '#ff5470', touche: 'ARMER', action: 'TENIR, PUIS TRACER UN TRAIT (MEME DOIGT)' },
-  { touche: '', action: 'PAS DE TRAIT : FRAPPE (ARMER TOT = PLUS FORT)' },
-  { touche: '', action: 'TOUT PETIT TRAIT : AMORTI' },
-  { touche: '', action: 'TRAIT VERS LE HAUT : LOB' },
-  { touche: '', action: 'AUTRE TRAIT : FRAPPE LOURDE, A FOND' },
-  { pastille: '#9b7bff', touche: 'CHANGE', action: 'SEUL CONTRE LE CPU : PREND LA MAIN SUR LE PARTENAIRE' },
+  { pastille: '#ff5470', touche: 'FRAPPE', action: 'COUP DE BASE - AERIEN SUR BALLE HAUTE' },
+  { pastille: '#9b7bff', touche: 'CHANGE', action: 'A GAUCHE DE FRAPPE : PREND LA MAIN SUR LE PARTENAIRE' },
+  { pastille: '#3fb4e8', touche: 'LOBE', action: 'BALLE HAUTE PAR-DESSUS LES ADVERSAIRES' },
+  { pastille: '#2fd0c6', touche: 'AMORTI', action: 'BALLE COURTE JUSTE DERRIERE LE FILET' },
   { pastille: '#ffa24a', touche: 'SUPER', action: 'APPARAIT EN HAUT QUAND LA JAUGE EST PLEINE' },
 ];
 
@@ -48,7 +46,6 @@ const ASTUCES = [
   'JAUGE PLEINE : BOUTON SUPER = COUP IMPARABLE',
   'JOYSTICK : COTE ET PROFONDEUR (LOSANGE = CIBLE)',
   'FRAPPE SUR BALLE HAUTE : COUP AERIEN AUTOMATIQUE',
-  'JOYSTICK VERS UNE VITRE AU MOMENT DU COUP : RENVOI DE VITRE',
   'SERVICE : ZONE OR AU MILIEU DU VERT = ACE',
 ];
 
