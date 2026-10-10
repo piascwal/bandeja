@@ -1,4 +1,4 @@
-import { JAUGE_PARFAITE, LIB_PTS } from '@core/constants';
+import { JAUGE_PARFAITE, LIB_PTS, ZONE_ACE } from '@core/constants';
 import { jaugeVal } from '@core/service';
 import type { Partie } from '@core/types';
 import { zonePause } from '@input/disposition';
@@ -81,6 +81,7 @@ export function dessineJauge(v: Vue, jeu: Partie): void {
     ancienne: (dt) => jaugeVal(jt - dt),
     segments: SEGMENTS.map(([a, b, c]) => ({ a, b, c })),
     zone: [JAUGE_PARFAITE.min, JAUGE_PARFAITE.max],
+    or: [ZONE_ACE.min, ZONE_ACE.max],
     temps: jeu.temps,
     titre: 'SERVICE',
   });

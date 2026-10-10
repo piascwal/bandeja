@@ -1,6 +1,6 @@
 import { alea, clamp, gauss } from './aleatoire';
 import { lance, nouvelleBalle } from './balle';
-import { JAUGE_PARFAITE, MIL, PERIODE_JAUGE, SERV } from './constants';
+import { ACE_PROBA, JAUGE_PARFAITE, MIL, PERIODE_JAUGE, SERV, ZONE_ACE } from './constants';
 import { equipe, partenaire } from './joueurs';
 import { autre, dir, xProf } from './terrain';
 import type { Joueur, Partie, TypeService } from './types';
@@ -137,7 +137,10 @@ export function servir(jeu: Partie, s: Joueur, type: TypeService, gv: number, vi
     err += (gv - JAUGE_PARFAITE.max) * 2.5;
     m += (gv - JAUGE_PARFAITE.max) * 11;
   }
-  const v = VITESSE_SERVICE[type] + 6 * gv;
+  // zone or, au milieu du vert : un service quasi parfait, rapide et précis, que personne ne touche (ace)
+  const ace = gv >= ZONE_ACE.min && gv <= ZONE_ACE.max && jeu.rng() < ACE_PROBA;
+  if (ace) err = 0.03;
+  const v = (VITESSE_SERVICE[type] + 6 * gv) * (ace ? 1.25 : 1);
   const tx = MIL + d * (m + gauss(jeu.rng) * err);
   const ty = c.y + gauss(jeu.rng) * err * 0.8;
   lance(b, tx, ty, v, type, gv < 0.22 ? -0.35 : 0.1);
@@ -147,6 +150,7 @@ export function servir(jeu: Partie, s: Joueur, type: TypeService, gv: number, vi
   b.camp = autre(eq);
   b.sol = 0;
   b.service = true;
+  b.ace = ace;
   b.filet = false;
   jeu.phase = 'jeu';
   jeu.tPhase = 0;

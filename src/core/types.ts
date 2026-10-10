@@ -5,8 +5,8 @@ export type Equipe = 0 | 1;
 export type Effet = 'plat' | 'lobe' | 'lift' | 'smash' | 'coupe' | 'vibora';
 /** Les coups, tels qu'annoncés à l'écran. */
 export type Coup = 'plat' | 'lobe' | 'coupe' | 'amorti' | 'smash' | 'vibora' | 'bandeja' | 'vitre' | 'cote';
-/** Les quatre boutons du losange : le SMASH choisit seul entre smash, víbora et bandeja. */
-export type Bouton = 'plat' | 'amorti' | 'lobe' | 'smash';
+/** Les boutons : FRAPPE, LOBE, AMORTI (COUPE au service), SUPER (le SMASH choisit seul entre smash, víbora et bandeja), CHANGE (de joueur). */
+export type Bouton = 'plat' | 'amorti' | 'lobe' | 'smash' | 'change';
 /** Vitre visée pour un rebond voulu : celle du fond, ou celle de côté (haut / bas de l'écran). */
 export type Mur = 'fond' | 'haut' | 'bas';
 export type TypeService = 'plat' | 'coupe';
@@ -124,6 +124,8 @@ export interface Balle extends CorpsBalle {
   coup: Coup | null;
   /** a rebondi contre une vitre du camp qui doit jouer */
   mur: boolean;
+  /** service imparable (zone or de la jauge) : personne ne peut le toucher, il gagne le point à son rebond dans le carré */
+  ace: boolean;
   /** dernières positions (m), pour la traînée */
   trace: [number, number, number][];
 }
@@ -238,6 +240,8 @@ export interface Partie {
   dureePoint: number;
   temps: number;
   tFrappe: number;
+  /** instant (`temps`) du dernier changement de joueur commandé (pour le signaler à l'écran) */
+  tChange: number;
   gagnant: Equipe;
   serveur: Joueur;
   receveur: Joueur;

@@ -42,10 +42,31 @@ describe('un jeu d’arcade : on touche presque toujours la balle', () => {
 });
 
 describe('les boutons', () => {
-  it('quatre petits boutons, sans COURIR ni bouton aérien', () => {
-    const z = zonesBoutons(400, 200);
-    expect(Object.keys(z).sort()).toEqual(['amorti', 'lobe', 'plat', 'smash']);
-    for (const r of Object.values(z)) expect(r.r).toBeLessThanOrEqual(13);
+  it('FRAPPE dans le coin, CHANGE à sa gauche, LOBE au-dessus, AMORTI au-dessus de CHANGE', () => {
+    const solo = zonesBoutons(400, 200, { change: true, service: false });
+    expect(Object.keys(solo).sort()).toEqual(['amorti', 'change', 'lobe', 'plat', 'smash']);
+    for (const r of Object.values(solo)) expect(r!.r).toBeLessThanOrEqual(13);
+    const { plat, change, lobe, amorti, smash } = solo;
+    expect(change!.y).toBe(plat!.y);
+    expect(change!.x).toBeLessThan(plat!.x);
+    expect(lobe!.x).toBe(plat!.x);
+    expect(lobe!.y).toBeLessThan(plat!.y);
+    expect(amorti!.x).toBe(change!.x);
+    expect(amorti!.y).toBe(lobe!.y);
+    expect(smash!.x).toBe(lobe!.x);
+    expect(smash!.y).toBeLessThan(lobe!.y);
+    // le coin : FRAPPE est le bouton le plus en bas à droite
+    for (const r of [change, lobe, amorti, smash]) expect(r!.x + r!.y).toBeLessThan(plat!.x + plat!.y);
+    // à plusieurs : pas de CHANGE, AMORTI descend à gauche de FRAPPE, LOBE reste au-dessus
+    const multi = zonesBoutons(400, 200, { change: false, service: false });
+    expect(multi.change).toBeUndefined();
+    expect(multi.amorti).toEqual(change);
+    expect(multi.lobe!.y).toBeLessThan(multi.plat!.y);
+    expect(multi.lobe!.x).toBe(multi.plat!.x);
+    // au service : PLAT dans le coin, COUPE au-dessus
+    const serv = zonesBoutons(400, 200, { change: false, service: true });
+    expect(Object.keys(serv).sort()).toEqual(['amorti', 'plat']);
+    expect(serv.amorti).toEqual(multi.lobe);
   });
 
   it('FRAPPE peu chargé est un coup coupé, chargé un coup plat', () => {

@@ -5,6 +5,7 @@ import { executeCoup, frappable, PROF } from './coups';
 import { murVise } from './contre-vitre';
 import { jaugeVal, servir } from './service';
 import { arreteParade, varianteSuper } from './super-coup';
+import { partenaire } from './joueurs';
 import { autre, dir, xProf } from './terrain';
 import type { Bouton, Commande, Coup, Joueur, Partie, TypeService } from './types';
 
@@ -66,6 +67,11 @@ export function appliqueCommande(jeu: Partie, s: Joueur, cmd: Commande, dt: numb
   // on peut appuyer en avance : le coup part dès que la balle est à portée,
   // et plus on a appuyé tôt, plus il est puissant
   for (const a of cmd.appuis) {
+    // CHANGE : on prend la main sur le partenaire, ce joueur repasse au CPU
+    if (a === 'change') {
+      if (changeDeJoueur(jeu, s)) return;
+      continue;
+    }
     // SUPER alors que la balle est dans notre camp : la scène se fige, le joueur court et s'envole vers elle pour lancer le gros coup
     if (a === 'smash' && peutApprocher(jeu, s)) {
       lanceApproche(jeu, s);
@@ -148,6 +154,8 @@ export function coupPrevu(jeu: Partie, s: Joueur, bouton: Bouton, charge: number
       return charge < 0.5 ? 'coupe' : 'plat';
     case 'smash':
       return haut ? coupAerien(s, p) : 'plat';
+    case 'change':
+      return 'plat';
     default:
       return bouton;
   }
@@ -190,6 +198,39 @@ function coupHumain(jeu: Partie, s: Joueur): void {
     charge: s.charge,
     super: variante,
   });
+}
+
+/**
+ * CHANGE n'existe que pour un seul humain face au CPU : avec deux joueurs réels, chacun garde le sien.
+ * Le joueur non choisi est piloté par le CPU.
+ */
+export function changePossible(jeu: Partie): boolean {
+  const s = jeu.humain;
+  return jeu.humains.length === 1 && !!s && jeu.humains[0] === s && !partenaire(jeu, s).humain;
+}
+
+/** Passe la main au partenaire pendant un point : l'ancien joueur redevient CPU. Renvoie vrai si c'est fait. */
+export function changeDeJoueur(jeu: Partie, s: Joueur): boolean {
+  if (jeu.phase !== 'jeu' || jeu.parade || jeu.approche || jeu.humain !== s || !changePossible(jeu))
+    return false;
+  const p = partenaire(jeu, s);
+  s.humain = false;
+  s.err = s.niv.err;
+  s.intent = null;
+  s.charge = 0;
+  s.ex = 0;
+  s.ey = 0;
+  p.humain = true;
+  p.err = 0.3;
+  p.intent = null;
+  p.charge = 0;
+  p.dBalle = 99;
+  p.ex = 0;
+  p.ey = 0;
+  jeu.humains = [p];
+  jeu.humain = p;
+  jeu.tChange = jeu.temps;
+  return true;
 }
 
 /**

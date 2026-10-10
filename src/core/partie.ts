@@ -75,6 +75,7 @@ export function nouvellePartie(o: OptionsPartie): Partie {
     dureePoint: DUREE_POINT,
     temps: 0,
     tFrappe: 0,
+    tChange: -99,
     gagnant: 0,
     serveur: ordre[0]!,
     receveur: ordre[1]!,

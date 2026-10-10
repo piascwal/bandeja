@@ -51,7 +51,7 @@ export function frappable(jeu: Partie, s: Joueur, mul = 1): boolean {
   if (jeu.phase !== 'jeu' || b.dehors || b.roule) return false;
   if (b.camp !== s.eq || b.sol >= 2 || s.cd > 0) return false;
   if (b.service && b.sol === 0) return false; // le service doit rebondir
-  if (b.super > 0) return false; // un super coup est imparable
+  if (b.super > 0 || b.ace) return false; // un super coup et un ace sont imparables
   if (b.x < MIL !== (s.eq === 0)) return false;
   if (b.z > HAUT_MAX) return false;
   return Math.hypot(b.x - s.x, b.y - s.y) <= PORTEE * mul;

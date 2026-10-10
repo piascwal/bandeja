@@ -2,6 +2,7 @@ import { MoteurSon } from '@audio/son';
 import { JEUX, NIVEAUX, PAS } from '@core/constants';
 import { nouvellePartie, pas } from '@core/partie';
 import type { Partie } from '@core/types';
+import { optionsBoutons } from '@input/disposition';
 import { Entrees, type PointLogique } from '@input/entrees';
 import type { OngletCommandes } from '@render/commandes-aide';
 import { construitDecor, type Decor } from '@render/decor';
@@ -87,6 +88,7 @@ export class BandejaApp {
       versLogique: (e) => this.versLogique(e),
       portrait: () => this.portrait,
       enJeu: () => this.ecranUI === 'jeu' && !this.ralenti.actif && !this.effets.finale.actif,
+      boutons: () => optionsBoutons(this.jeu),
       parade: () => this.jeu.parade !== null && this.jeu.parade.eq === this.jeu.humain?.eq,
       geste: () => {
         this.son.init();

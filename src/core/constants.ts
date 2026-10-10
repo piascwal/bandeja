@@ -95,5 +95,8 @@ export const RESTIT: Record<Effet, readonly [number, number]> = {
 
 /** Jauge de service : en dessous, trop faible ; au-dessus, trop fort ; entre, parfait. */
 export const JAUGE_PARFAITE = { min: 0.62, max: 0.82 } as const;
+/** Zone or, au milieu du vert : un service lâché là est un ace presque à coup sûr (`ACE_PROBA`). */
+export const ZONE_ACE = { min: 0.695, max: 0.745 } as const;
+export const ACE_PROBA = 0.85;
 /** Période d'un aller (ou d'un retour) de la jauge de service (s). */
 export const PERIODE_JAUGE = 0.65;

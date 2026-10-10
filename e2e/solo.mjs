@@ -43,6 +43,34 @@ export default async function (env) {
   });
   env.verifie(zones.W > 0, 'écran dessiné');
   await env.capture(p, 'jeu-commandes');
+  // CHANGE (touche U) : en plein point, on prend la main sur le partenaire, l'ancien joueur repasse au CPU
+  const avant = await p.evaluate(() => {
+    const j = window.bandeja.jeu;
+    j.phase = 'jeu';
+    return j.humain.id;
+  });
+  await p.keyboard.press('KeyU');
+  await attends(150);
+  const apres = await p.evaluate(() => ({
+    id: window.bandeja.jeu.humain.id,
+    ancien: window.bandeja.jeu.joueurs[0].humain,
+    n: window.bandeja.jeu.humains.length,
+  }));
+  env.verifie(
+    apres.id !== avant && apres.n === 1,
+    `CHANGE donne la main au partenaire (${avant} -> ${apres.id})`,
+  );
+  await env.capture(p, 'change');
+  // le service : la jauge avec sa zone or (ace) au milieu du vert, et seulement PLAT et COUPE
+  await p.evaluate(() => {
+    const j = window.bandeja.jeu;
+    j.phase = 'service';
+    j.serveur = j.humain;
+    j.pret = true;
+    j.jauge = { type: 'plat', t: 0.4 };
+  });
+  await attends(150);
+  await env.capture(p, 'service-jauge-or');
   // le compteur d'échange et les jauges de smash s'affichent sous le tableau
   await p.evaluate(() => {
     const j = window.bandeja.jeu;

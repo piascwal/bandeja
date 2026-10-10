@@ -21,6 +21,7 @@ export function nouvelleBalle(): Balle {
     por: 0,
     vif: 0,
     super: 0,
+    ace: false,
     eqF: 0,
     camp: 1,
     sol: 0,

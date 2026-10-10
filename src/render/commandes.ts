@@ -1,6 +1,7 @@
 import { TYPES_SERV } from '@core/humain';
 import type { Bouton, Joueur, Partie } from '@core/types';
-import { RAYON_JOY, zonesBoutons, type Rond } from '@input/disposition';
+import { clamp } from '@core/aleatoire';
+import { optionsBoutons, RAYON_JOY, zonesBoutons, type Rond } from '@input/disposition';
 import { C } from './palette';
 import { micro, texte } from './police';
 import { anneau, disque, px } from './primitives';
@@ -13,15 +14,32 @@ export interface EtatTactile {
   actifs: Set<string>;
 }
 
-const LOSANGE: Bouton[] = ['plat', 'amorti', 'lobe', 'smash'];
+/** Les boutons absents de la disposition (voir `zonesBoutons`) ne sont pas dessinés. */
+const ORDRE: Bouton[] = ['change', 'plat', 'lobe', 'amorti', 'smash'];
+/** Une balle plus proche d'un bouton que cette distance (px) le rend transparent : il gêne moins, on le voit encore. */
+const DISTANCE_VOILE = 70;
+const ALPHA_VOILE = 0.22;
 const COUL: Record<Bouton, [string, string]> = {
   plat: ['#ff5470', '#e03a58'],
   amorti: ['#2fd0c6', '#1a9d96'],
   lobe: ['#3fb4e8', '#2a8fc4'],
   smash: ['#ffa24a', '#d9741c'],
+  change: ['#9b7bff', '#6f4fd8'],
 };
-const LIB_JEU: Record<Bouton, string> = { plat: 'FRAPPE', amorti: 'AMORTI', lobe: 'LOBE', smash: 'SMASH' };
-const LIB_SERVICE: Record<Bouton, string> = { plat: 'PLAT', amorti: 'COUPE', lobe: '', smash: '' };
+const LIB_JEU: Record<Bouton, string> = {
+  plat: 'FRAPPE',
+  amorti: 'AMORTI',
+  lobe: 'LOBE',
+  smash: 'SMASH',
+  change: 'CHANGE',
+};
+const LIB_SERVICE: Record<Bouton, string> = {
+  plat: 'PLAT',
+  amorti: 'COUPE',
+  lobe: '',
+  smash: '',
+  change: 'CHANGE',
+};
 
 function rond(v: Vue, z: Rond, app: boolean, haut: string, bas: string, nom: string, clair = false): void {
   const { g } = v;
@@ -37,41 +55,51 @@ export function dessineCommandes(v: Vue, jeu: Partie, t: EtatTactile): void {
   const s = jeu.humain;
   if (!s || !t.tactile) return;
   dessineJoystick(v, jeu, t);
-  const z = zonesBoutons(v.W, v.H);
+  const z = zonesBoutons(v.W, v.H, optionsBoutons(jeu));
   const service = jeu.phase === 'service' && jeu.serveur === s;
   const superPret = !service && jeu.jaugeSmash[s.eq] >= 1;
-  for (const k of LOSANGE) {
+  // la balle, à l'écran : les boutons près d'elle s'effacent (sans disparaître) pour ne pas cacher le jeu
+  const [bx, by] = v.K.proj(jeu.balle.x, jeu.balle.y, jeu.balle.z);
+  let kSuper = 1;
+  for (const k of ORDRE) {
+    const rd = z[k];
     // le bouton du haut n'existe que pour le super coup : absent tant que la jauge n'est pas pleine
-    if (k === 'smash' && !superPret) continue;
+    if (!rd || (k === 'smash' && !superPret)) continue;
     const or = k === 'smash';
     const lib = or ? 'SUPER' : service ? LIB_SERVICE[k] : LIB_JEU[k];
     const app = t.actifs.has(k);
     const choisi = estChoisi(jeu, s, k);
-    v.g.globalAlpha = service && !lib ? 0.25 : or || app || choisi ? 1 : 0.7;
+    const voile =
+      ALPHA_VOILE +
+      (1 - ALPHA_VOILE) * clamp((Math.hypot(bx - rd.x, by - rd.y) - rd.r) / DISTANCE_VOILE, 0, 1);
+    // CHANGE ne sert qu'en cours de point
+    const inactif = k === 'change' && jeu.phase !== 'jeu';
+    v.g.globalAlpha = (inactif ? 0.25 : or || app || choisi ? 1 : 0.7) * voile;
+    if (or) kSuper = voile;
     // jauge pleine : le bouton SUPER apparaît, doré et animé, c'est lui qui lance le super coup
-    if (or) rond(v, z[k], app, '#fff2b0', '#e0a41c', lib, true);
-    else rond(v, z[k], app, COUL[k][0], COUL[k][1], lib || ' ');
-    if (choisi && s.intent) anneau(v.g, z[k].x, z[k].y, z[k].r + 2, C.or, s.charge, 2);
-    else if (choisi) anneau(v.g, z[k].x, z[k].y, z[k].r + 2, C.blanc, 1, 1);
+    if (or) rond(v, rd, app, '#fff2b0', '#e0a41c', lib, true);
+    else rond(v, rd, app, COUL[k][0], COUL[k][1], lib || ' ');
+    if (choisi && s.intent) anneau(v.g, rd.x, rd.y, rd.r + 2, C.or, s.charge, 2);
+    else if (choisi) anneau(v.g, rd.x, rd.y, rd.r + 2, C.blanc, 1, 1);
     v.g.globalAlpha = 1;
   }
-  if (superPret) animeSuper(v, z.smash, jeu.temps);
+  if (superPret && z.smash) animeSuper(v, z.smash, jeu.temps, kSuper);
 }
 
 /** Le bouton SUPER : halo qui bat, ondes qui s'en échappent, étincelles qui tournent autour. */
-function animeSuper(v: Vue, z: Rond, t: number): void {
+function animeSuper(v: Vue, z: Rond, t: number, voile: number): void {
   const { g } = v;
   const pouls = 0.5 + 0.5 * Math.sin(t * 12);
-  g.globalAlpha = 0.5 + 0.5 * pouls;
+  g.globalAlpha = (0.5 + 0.5 * pouls) * voile;
   anneau(g, z.x, z.y, z.r + 3 + pouls * 2, '#ffffff', 1, 2);
   for (let k = 0; k < 2; k++) {
     const onde = (t * 1.6 + k * 0.5) % 1;
-    g.globalAlpha = 1 - onde;
+    g.globalAlpha = (1 - onde) * voile;
     anneau(g, z.x, z.y, z.r + 2 + onde * 14, C.or, 1, 1);
   }
   for (let k = 0; k < 8; k++) {
     const a = t * 4 + (k / 8) * Math.PI * 2;
-    g.globalAlpha = 0.6 + 0.4 * Math.sin(t * 20 + k);
+    g.globalAlpha = (0.6 + 0.4 * Math.sin(t * 20 + k)) * voile;
     px(g, z.x + Math.cos(a) * (z.r + 6), z.y + Math.sin(a) * (z.r + 6), 2, 2, k % 2 ? '#ffffff' : C.or);
   }
   g.globalAlpha = 1;

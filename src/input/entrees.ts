@@ -1,6 +1,13 @@
 import { clamp } from '@core/aleatoire';
 import type { Bouton, Commande } from '@core/types';
-import { boutonProche, PART_JOYSTICK, RAYON_JOY, zonePause, type ToucheEcran } from './disposition';
+import {
+  boutonProche,
+  PART_JOYSTICK,
+  RAYON_JOY,
+  zonePause,
+  type OptionsBoutons,
+  type ToucheEcran,
+} from './disposition';
 
 export interface PointLogique {
   x: number;
@@ -16,6 +23,8 @@ export interface HotesEntrees {
   portrait(): boolean;
   /** un match se joue (ni menu, ni pause, ni fin) */
   enJeu(): boolean;
+  /** la disposition des boutons de cette partie (CHANGE présent ou non, service) */
+  boutons(): OptionsBoutons;
   /** la parade d'un super coup attend un appui de cet écran : n'importe quel toucher l'arrête */
   parade(): boolean;
   /**
@@ -34,12 +43,13 @@ export interface HotesEntrees {
   appuiInterface(p: PointLogique): void;
 }
 
-/** Au clavier, le même losange : K FRAPPE, J AMORTI, L LOBE, I SMASH (Espace aussi). */
+/** Au clavier, les mêmes boutons : K FRAPPE, J AMORTI, L LOBE, I SUPER (Espace aussi), U CHANGE. */
 const TOUCHES_COUPS: Record<string, Bouton> = {
   KeyK: 'plat',
   KeyJ: 'amorti',
   KeyL: 'lobe',
   KeyI: 'smash',
+  KeyU: 'change',
   Space: 'smash',
 };
 const GAUCHE = ['ArrowLeft', 'KeyA', 'KeyQ'];
@@ -131,7 +141,7 @@ export class Entrees {
       const by = clamp(p.y, RAYON_JOY + 30, H - RAYON_JOY - 4);
       this.joy = { id: e.pointerId, bx, by, x: p.x, y: p.y };
     } else {
-      const b = boutonProche(W, H, p.x, p.y);
+      const b = boutonProche(W, H, p.x, p.y, this.h.boutons());
       if (b) {
         this.appuis.push(b);
         this.ids.set(e.pointerId, b);

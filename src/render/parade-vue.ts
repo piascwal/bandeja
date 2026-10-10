@@ -2,7 +2,7 @@ import { PARADE_DUREE_MAX, ZONE_PARADE } from '@core/constants';
 import type { Partie } from '@core/types';
 import { curseurParade } from '@core/super-coup';
 import { dessineCurseur } from './curseur';
-import { zonesBoutons } from '@input/disposition';
+import { optionsBoutons, zonesBoutons } from '@input/disposition';
 import { C } from './palette';
 import { texte } from './police';
 import { anneau, disque, px } from './primitives';
@@ -67,7 +67,7 @@ export function dessineParade(v: Vue, jeu: Partie, t: number): void {
     return;
   }
   // à la place des boutons d'action : la jauge au-dessus d'un gros bouton STOP
-  const z = zonesBoutons(W, H).plat;
+  const z = zonesBoutons(W, H, optionsBoutons(jeu)).plat!;
   const bx = z.x - 6;
   const by = z.y - 18;
   const w = Math.min(120, W * 0.35);

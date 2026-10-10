@@ -50,6 +50,10 @@ function regleSol(jeu: Partie, cote: Equipe): void {
     return;
   }
   if (b.service && b.sol === 1) {
+    if (b.ace && dansCarre(jeu)) {
+      gagne(jeu, b.eqF, 'ACE !');
+      return;
+    }
     if (!dansCarre(jeu)) {
       fauteService(jeu, 'FAUTE');
       return;

@@ -21,8 +21,9 @@ interface Ligne {
 
 const COUPS: Ligne[] = [
   { pastille: '#ff5470', touche: 'FRAPPE', action: 'COUP DE BASE - AERIEN SUR BALLE HAUTE' },
-  { pastille: '#2fd0c6', touche: 'AMORTI', action: 'BALLE COURTE JUSTE DERRIERE LE FILET' },
+  { pastille: '#9b7bff', touche: 'CHANGE', action: 'A GAUCHE DE FRAPPE : PREND LA MAIN SUR LE PARTENAIRE' },
   { pastille: '#3fb4e8', touche: 'LOBE', action: 'BALLE HAUTE PAR-DESSUS LES ADVERSAIRES' },
+  { pastille: '#2fd0c6', touche: 'AMORTI', action: 'BALLE COURTE JUSTE DERRIERE LE FILET' },
   { pastille: '#ffa24a', touche: 'SUPER', action: 'APPARAIT EN HAUT QUAND LA JAUGE EST PLEINE' },
 ];
 
@@ -31,8 +32,9 @@ const TACTILE: Ligne[] = [{ touche: 'JOYSTICK', action: 'MOITIE GAUCHE : SE DEPL
 const CLAVIER: Ligne[] = [
   { touche: 'FLECHES', action: 'SE DEPLACER ET VISER - OU ZQSD / WASD' },
   { pastille: '#ff5470', touche: 'K', action: 'FRAPPE' },
-  { pastille: '#2fd0c6', touche: 'J', action: 'AMORTI' },
+  { pastille: '#9b7bff', touche: 'U', action: 'CHANGE DE JOUEUR (SEUL CONTRE LE CPU)' },
   { pastille: '#3fb4e8', touche: 'L', action: 'LOBE' },
+  { pastille: '#2fd0c6', touche: 'J', action: 'AMORTI' },
   { pastille: '#ffa24a', touche: 'I', action: 'SUPER COUP, JAUGE PLEINE (OU ESPACE)' },
   { touche: 'ECHAP', action: 'PAUSE' },
 ];
@@ -44,6 +46,7 @@ const ASTUCES = [
   'JAUGE PLEINE : BOUTON SUPER = COUP IMPARABLE',
   'JOYSTICK : COTE ET PROFONDEUR (LOSANGE = CIBLE)',
   'FRAPPE SUR BALLE HAUTE : COUP AERIEN AUTOMATIQUE',
+  'SERVICE : ZONE OR AU MILIEU DU VERT = ACE',
 ];
 
 /** Les commandes, dans leur propre écran (tactile ou clavier, au choix par onglet). */

@@ -131,6 +131,17 @@ function anneauJoueur(v: Vue, jeu: Partie, hum: Joueur): void {
     const a = (k / 22) * Math.PI * 2 + jeu.temps * 2;
     if (k % 2 === 0 || ok) px(v.g, sx + Math.cos(a) * 10, sy + Math.sin(a) * 3.5, 1, 1, c);
   }
+  // CHANGE : une onde violette signale le joueur dont on vient de prendre la main
+  const age = jeu.temps - jeu.tChange;
+  if (age >= 0 && age < 0.7) {
+    const k = age / 0.7;
+    v.g.globalAlpha = 1 - k;
+    for (let i = 0; i < 28; i++) {
+      const a = (i / 28) * Math.PI * 2;
+      px(v.g, sx + Math.cos(a) * (10 + k * 22), sy + Math.sin(a) * (3.5 + k * 8), 2, 2, '#b79bff');
+    }
+    v.g.globalAlpha = 1;
+  }
 }
 
 /** Une flèche au-dessus de votre tête, la jauge de puissance et la vitre visée. */

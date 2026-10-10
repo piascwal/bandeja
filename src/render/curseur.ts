@@ -20,6 +20,8 @@ export interface OptionsCurseur {
   segments: SegmentCurseur[];
   /** la zone à viser (le vert) */
   zone: [number, number];
+  /** une zone or, très fine, au milieu du vert (l'ace du service) */
+  or?: [number, number];
   temps: number;
   titre?: string;
   /** vrai : la barre bat plus fort (parade d'un super coup) */
@@ -78,6 +80,16 @@ export function dessineCurseur(g: CanvasRenderingContext2D, o: OptionsCurseur): 
     px(g, zx + p * zw, y + 1 + ((k * 3) % Math.max(1, h - 3)), 2, 2, '#ffffff');
   }
   g.globalAlpha = 1;
+  if (o.or) {
+    // la zone or : un filet doré qui scintille, plus vif que le vert qui l'entoure
+    const ox = Math.round(x + w * o.or[0]);
+    const ow = Math.max(2, Math.round(w * (o.or[1] - o.or[0])));
+    px(g, ox - 1, y - 2, ow + 2, h + 4, '#fff2b0');
+    px(g, ox, y - 1, ow, h + 2, '#ffc92b');
+    g.globalAlpha = 0.5 + 0.5 * pouls;
+    px(g, ox, y - 1, ow, Math.max(1, Math.floor(h * 0.3)), '#ffffff');
+    g.globalAlpha = 1;
+  }
   px(g, zx - 1, y - 1, 1, h + 2, '#b5ffd0');
   px(g, zx + zw, y - 1, 1, h + 2, '#b5ffd0');
   for (let t = 1; t < 10; t++) px(g, x + Math.round((t / 10) * w), y + h - 2, 1, 2, 'rgba(7,9,20,0.55)');
