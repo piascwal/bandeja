@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { physique } from '@core/balle';
-import { ACCEL_MAX, HAUT_SMASH, PAS } from '@core/constants';
+import { ACCEL_LIMITE, HAUT_SMASH, PAS } from '@core/constants';
 import { accelerationEchange, executeCoup } from '@core/coups';
 import { xProf } from '@core/terrain';
 import { appliqueCommande, cibleCoup, coupAerien, coupPrevu, directionVisee } from '@core/humain';
@@ -205,11 +205,15 @@ describe('le jeu de vitre du padel', () => {
     expect(Math.hypot(hum.x - 8, hum.y - 2)).toBeLessThan(0.01);
   });
 
-  it('la balle accélère au fil de l’échange, avec un plafond', () => {
+  it('la balle accélère au fil de l’échange, sans plafond de jeu', () => {
     expect(accelerationEchange(0)).toBe(1);
     expect(accelerationEchange(2)).toBe(1);
     expect(accelerationEchange(10)).toBeGreaterThan(accelerationEchange(5));
-    expect(accelerationEchange(500)).toBeCloseTo(1 + ACCEL_MAX);
+    // pas de plafond à ×1,5 ni ×2 : ça continue de monter
+    expect(accelerationEchange(30)).toBeGreaterThan(2.5);
+    expect(accelerationEchange(40)).toBeGreaterThan(accelerationEchange(30));
+    // seule une borne technique très haute
+    expect(accelerationEchange(5000)).toBeCloseTo(1 + ACCEL_LIMITE);
   });
 });
 

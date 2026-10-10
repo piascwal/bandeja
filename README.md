@@ -312,7 +312,7 @@ conduit tout seul quand le joystick est au repos ; en réseau, c'est le réglage
 de l'hôte qui vaut pour tous.
 
 **Vitesse visible.** Le compteur affiche « ECHANGE n » puis « VITESSE X1.7 » avec une
-jauge (×1,0 au service, jusqu'à ×1,9), et la balle elle-même a un halo qui grandit et
+jauge (×1,0 au service, sans plafond ; la jauge est pleine à ×2), et la balle elle-même a un halo qui grandit et
 chauffe (jaune, orange, rouge) avec une traînée qui apparaît plus tôt.
 
 **Quand part le coup ?** Il faut d'abord se placer, puis déclencher au bon moment. L'appui
@@ -338,8 +338,9 @@ au-dessus de 4,5 m) ; l'approche s'annule après 1,3 s.
 la pose de préparation (`smash1`, pieds au sol) ; seuls le smash et les coups SUPER utilisent
 la pose pieds en l'air (`smash2`).
 
-**La balle accélère** de 6 % à chaque coup après le deuxième, jusqu'à +90 %
-(`ACCEL_*` dans `core/constants.ts`), sauf le lob et l'amorti. Un compteur
+**La balle accélère** de 6 % à chaque coup après le deuxième, **sans plafond** : plus on joue,
+plus elle va vite (`ACCEL_ECHANGE` dans `core/constants.ts` ; `ACCEL_LIMITE`, ×5, n'est qu'une borne
+technique pour la physique, jamais atteinte), sauf le lob et l'amorti. Un compteur
 « ECHANGE n » sous le tableau des scores chauffe de couleur (blanc, or, orange,
 rouge) et affiche le bonus de vitesse de la balle.
 
@@ -476,7 +477,7 @@ balle rebondie repart au plus à 5,5 m/s vers le filet et monte au plus à 7,5 m
 balles non rebondies (le renvoi voulu contre sa propre vitre, les super coups) gardent leur vitesse.
 La víbora donne un coup de côté moins fort au rebond (0,9 m/s) et « meurt » dans son coin. L'erreur
 d'un coup ordinaire ne sort plus la balle du terrain (`MARGE_FOND` 0,9 m, `MARGE_COTE` 0,5 m). La
-balle accélère moins au fil de l'échange (+50 % au plus, au lieu de +90 %), et le CPU lâche moins
+balle accélère toujours (sans plafond), et le CPU lâche moins
 son super coup (5 % au lieu de 12 %) et n'a un ace que rarement (`ACE_PROBA_CPU`, 8 %). En CPU
 contre CPU : 14 à 23 coups par point (6 à 7 avant), « ELLE REVIENT ! » presque disparu (un point
 sur cinq avant).
@@ -503,7 +504,7 @@ profondeur (vers le filet : plus long ; vers sa vitre : plus court). Au
 neutre, la balle part en croisé.
 
 Au service, PLAT ou COUPE lance la jauge, un second appui sert ; le vert de la jauge est le service
-parfait. Au milieu du vert, une **zone or** très fine (`ZONE_ACE`, un quart du vert environ) donne un
+parfait. Au milieu du vert, une **zone or** très fine (`ZONE_ACE`, 0,035 de la jauge, un sixième du vert ; le curseur balaie la jauge en 0,42 s, `PERIODE_JAUGE`) donne un
 **ace** quatre fois sur cinq (`ACE_PROBA`) : service plus rapide et précis, que personne ne peut
 toucher (`Balle.ace`) ; il gagne le point à son rebond dans le carré (« ACE ! »).
 

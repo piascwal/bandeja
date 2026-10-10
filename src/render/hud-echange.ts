@@ -1,4 +1,4 @@
-import { ACCEL_MAX } from '@core/constants';
+import { ACCEL_JAUGE } from '@core/constants';
 import { accelerationEchange } from '@core/coups';
 import type { Partie } from '@core/types';
 import { C } from './palette';
@@ -99,10 +99,11 @@ export function dessineEchange(v: Vue, jeu: Partie): void {
   const wj = 52;
   jaugeSuper(g, cx - 84 - 14 - wj, 5, wj, jeu.jaugeSmash[1], jeu.temps, true);
   jaugeSuper(g, cx + 84 + 14, 5, wj, jeu.jaugeSmash[0], jeu.temps, false);
-  // le compteur d'échange, au centre : le nombre de coups, puis la vitesse de la balle (×1,0 au service, jusqu'à ×1,9)
+  // le compteur d'échange, au centre : le nombre de coups, puis la vitesse de la balle (×1,0 au service, sans plafond)
   if (jeu.phase !== 'jeu' || jeu.echange < 3) return;
   const facteur = accelerationEchange(jeu.echange);
-  const niveau = (facteur - 1) / ACCEL_MAX;
+  // la jauge se remplit jusqu'à ×2 ; au-delà la vitesse continue de monter, le chiffre aussi
+  const niveau = Math.min(1, (facteur - 1) / ACCEL_JAUGE);
   const couleur = couleurEchange(jeu.echange);
   const pulse = jeu.echange >= 12 && Math.floor(jeu.temps * 8) % 2 === 0;
   texte(g, `ECHANGE ${jeu.echange}`, cx, y - 1, pulse ? '#ffffff' : couleur, 1, 'c');

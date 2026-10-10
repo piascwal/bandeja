@@ -35,10 +35,14 @@ export const VITRE_COTE = 4;
 export const DUREE_MAX_ECHANGE = 9;
 /**
  * La balle accélère au fil de l'échange : +ACCEL_ECHANGE par coup après le
- * deuxième, jusqu'à +ACCEL_MAX, sauf pour le lob et l'amorti (qui restent lents).
+ * deuxième, sans plafond de jeu (plus on joue, plus ça monte), sauf pour le lob et
+ * l'amorti (qui restent lents). ACCEL_LIMITE n'est qu'une borne technique (la physique
+ * à pas fixe n'aime pas les vitesses folles), jamais atteinte en pratique : il faudrait
+ * plus de soixante coups. ACCEL_JAUGE : la vitesse (en plus) où la jauge de l'écran est pleine.
  */
 export const ACCEL_ECHANGE = 0.06;
-export const ACCEL_MAX = 0.5;
+export const ACCEL_LIMITE = 4;
+export const ACCEL_JAUGE = 1;
 /**
  * Parade d'un super coup : le jeu se fige, un curseur balaie une jauge et le camp
  * qui subit doit l'arrêter dans la zone verte (plus étroite et plus rapide qu'au
@@ -96,8 +100,8 @@ export const RESTIT: Record<Effet, readonly [number, number]> = {
 /** Jauge de service : en dessous, trop faible ; au-dessus, trop fort ; entre, parfait. */
 export const JAUGE_PARFAITE = { min: 0.62, max: 0.82 } as const;
 /** Zone or, au milieu du vert : un service lâché là est un ace presque à coup sûr (`ACE_PROBA`). */
-export const ZONE_ACE = { min: 0.695, max: 0.745 } as const;
+export const ZONE_ACE = { min: 0.7025, max: 0.7375 } as const;
 export const ACE_PROBA = 0.85;
 export const ACE_PROBA_CPU = 0.08;
 /** Période d'un aller (ou d'un retour) de la jauge de service (s). */
-export const PERIODE_JAUGE = 0.65;
+export const PERIODE_JAUGE = 0.42;

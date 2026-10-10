@@ -1,6 +1,6 @@
 import { clamp, gauss } from './aleatoire';
 import { lance } from './balle';
-import { ACCEL_ECHANGE, ACCEL_MAX, HAUT_MAX, HAUT_SMASH, LARG, MIL, PORTEE } from './constants';
+import { ACCEL_ECHANGE, ACCEL_LIMITE, HAUT_MAX, HAUT_SMASH, LARG, MIL, PORTEE } from './constants';
 import { contreVitre, placementVitre, vitreBrute } from './contre-vitre';
 import { typeDePor } from './por';
 import { GAIN_JAUGE, GAIN_VITRE, niveauDe, qualite, situationDe } from './qualite';
@@ -83,7 +83,7 @@ function trajectoire(type: Coup, p: number, dist: number): { v: number; spin: Ef
 
 /** Facteur de vitesse de la balle après `echange` coups depuis le service. */
 export const accelerationEchange = (echange: number): number =>
-  1 + Math.min(ACCEL_MAX, ACCEL_ECHANGE * Math.max(0, echange - 2));
+  1 + Math.min(ACCEL_LIMITE, ACCEL_ECHANGE * Math.max(0, echange - 2));
 
 /**
  * Rebond vif d'un coup fort ou coupé (voir `Balle.vif`) : plus on charge, plus
