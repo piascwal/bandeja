@@ -1,5 +1,5 @@
 import { physique, type SurContact } from './balle';
-import { BONUS_HUMAIN, HAUT_MAX, HAUT_SMASH, LARG, LONG, MIL, PORTEE, VMAX } from './constants';
+import { BONUS_HUMAIN, HAUT_MAX, HAUT_SMASH, LARG, LONG, MIL, PAS, PORTEE, VITESSE, VMAX } from './constants';
 import { equipe } from './joueurs';
 import { autre } from './terrain';
 import type { Balle, Equipe, Joueur, Partie, Plan, PointPredit, Prediction } from './types';
@@ -48,11 +48,14 @@ export function predit(b0: Balle, eq: Equipe): Prediction {
     }
   };
   const pts: PointPredit[] = [];
-  const dt = 1 / 60;
-  for (let i = 1; i <= 220; i++) {
+  // exactement le pas du jeu (deux demi-pas par pas de simulation, voir `pas`) : le rebond de vitre dépend de la
+  // position précise de la balle, et la croix au sol doit tomber là où la balle arrivera vraiment
+  const dt = PAS * VITESSE;
+  for (let i = 1; i <= 550; i++) {
     physique(b, dt / 2, ev);
     if (!fin) physique(b, dt / 2, ev);
     if (fin) break;
+    if (i % 2 === 1) continue; // un point tous les deux pas
     const cote = eq === 0 ? b.x > 0.15 && b.x < MIL - 0.3 : b.x > MIL + 0.3 && b.x < LONG - 0.15;
     const ok =
       cote && b.y > 0.2 && b.y < LARG - 0.2 && b.z >= 0.1 && b.z <= HAUT_MAX && !(b0.service && sol === 0);

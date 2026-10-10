@@ -482,6 +482,13 @@ son super coup (5 % au lieu de 12 %) et n'a un ace que rarement (`ACE_PROBA_CPU`
 contre CPU : 14 à 23 coups par point (6 à 7 avant), « ELLE REVIENT ! » presque disparu (un point
 sur cinq avant).
 
+**La croix dit vrai** (`prevision.ts`). La prévision de la balle, d'où vient la croix au sol, joue exactement
+le pas du jeu (deux demi-pas de `PAS` × `VITESSE`, comme `pas`). Avant, elle avançait par pas de 1/60 s :
+le rebond contre une vitre dépend de la position précise de la balle, il ne tombait pas pareil dans la
+prévision et dans le jeu, et la balle arrivait à plus d'un mètre de la croix une fois sur seize (le joueur
+bien placé ne la touchait pas). Maintenant l'écart médian est de 5 cm, et moins de 2 % dépassent 50 cm
+(`tests/simulation.test.ts`).
+
 **Repère au sol.** Après le premier rebond de la balle (donc aussi quand elle revient de la
 vitre), une croix au sol marque l'endroit où se placer pour la jouer : clignotante si c'est
 vous qui devez la prendre, discrète sinon.

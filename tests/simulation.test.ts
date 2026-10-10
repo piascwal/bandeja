@@ -85,3 +85,37 @@ describe('échanges arcade (CPU contre CPU)', () => {
     expect(reviennent / points).toBeLessThan(0.08); // avant : près d'un point sur cinq
   });
 });
+
+describe('la croix au sol dit vrai', () => {
+  it('la prévision de la balle (donc la croix) tombe là où elle arrive, même avec les rebonds de vitre', () => {
+    const erreurs: number[] = [];
+    for (const seed of [1, 2, 3]) {
+      const jeu = partieTest({ mode: 'match', sieges: [], jeux: 1 }, seed);
+      let derniere: unknown = null;
+      const attendues: { t1: number; echange: number; x: number; y: number }[] = [];
+      for (let i = 0; i < 120 * 60 * 2 && jeu.phase !== 'fin'; i++) {
+        pas(jeu, PAS);
+        jeu.evenements.length = 0;
+        if (jeu.phase !== 'jeu') continue;
+        const P = jeu.pred;
+        if (P && P !== derniere) {
+          derniere = P;
+          // où la balle sera une seconde plus tard, d'après la prévision faite une fois qu'elle a rebondi
+          const q = P.pts.find((p) => p.t >= 1);
+          if (jeu.balle.sol >= 1 && !jeu.balle.dehors && q)
+            attendues.push({ t1: jeu.temps + q.t, echange: jeu.echange, x: q.x, y: q.y });
+        }
+        for (let k = attendues.length - 1; k >= 0; k--) {
+          const a = attendues[k]!;
+          if (jeu.temps < a.t1) continue;
+          if (jeu.echange === a.echange && jeu.balle.sol <= 2 && !jeu.balle.dehors)
+            erreurs.push(Math.hypot(jeu.balle.x - a.x, jeu.balle.y - a.y));
+          attendues.splice(k, 1);
+        }
+      }
+    }
+    expect(erreurs.length).toBeGreaterThan(100);
+    // avant : une prévision sur seize se trompait de plus d'un mètre (le rebond de vitre ne tombait pas pareil)
+    expect(erreurs.filter((e) => e > 0.5).length / erreurs.length).toBeLessThan(0.02);
+  });
+});
