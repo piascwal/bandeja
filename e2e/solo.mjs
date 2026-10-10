@@ -69,62 +69,25 @@ export default async function (env) {
     window.bandeja.jeu.balle.camp = 1;
   });
   const { W: LW, H: LH } = await p.evaluate(() => ({ W: window.bandeja.W, H: window.bandeja.H }));
+  const ox = LW - 34;
+  const oy = LH - 34;
   const intent = () => p.evaluate(() => window.bandeja.jeu.humain.intent?.type ?? null);
-  const arme = () => p.evaluate(() => window.bandeja.entrees.trait !== null);
-  /** Un trait : le doigt se pose, suit les points, puis se relève (ou non). */
-  const reprise = () =>
-    p.evaluate(() => {
-      const j = window.bandeja.jeu;
-      j.phase = 'jeu';
-      j.tPhase = 0;
-      j.humain.intent = null;
-      Object.assign(j.balle, { x: 15, y: 5, z: 4, vx: 0, vy: 0, vz: 0, camp: 1, sol: 0, super: 0 });
-    });
-  const trace = async (points, relache = true) => {
-    await reprise();
-    await doigt('pointerdown', points[0][0], points[0][1]);
-    for (const [x, y] of points.slice(1)) await doigt('pointermove', x, y);
-    await attends(120);
-    if (relache) await doigt('pointerup', ...points[points.length - 1]);
-  };
-  const x0 = LW * 0.72;
-  const y0 = LH * 0.55;
-  // un doigt posé sur la piste arme (sans bouton), rien ne part tant qu'il est posé
-  await reprise();
-  await doigt('pointerdown', x0, y0);
-  await attends(150);
-  env.verifie((await intent()) === 'plat' && (await arme()), 'poser le doigt arme le coup, sans bouton');
-  await doigt('pointerup', x0, y0);
-  await attends(60);
-  // un trait courbe (creusé vers le haut) : COURBE ; on le voit à l'écran pendant qu'on le trace
-  const arc = Array.from({ length: 14 }, (_, i) => {
-    const t = i / 13;
-    return [x0 - 90 * t, y0 - 28 * 4 * t * (1 - t)];
-  });
-  await trace(arc, false);
-  await env.capture(p, 'trait-courbe');
-  await doigt('pointerup', ...arc[arc.length - 1]);
-  await attends(60);
-  env.verifie((await intent()) === 'courbe', 'un trait courbe : COURBE');
-  await env.capture(p, 'trait-fondu');
-  await attends(900);
-  // un trait vers le haut : LOB ; un tout petit trait : AMORTI ; un trait droit : FORT
-  await trace(Array.from({ length: 8 }, (_, i) => [x0 + 4 * i * 0.2, y0 - 9 * i]));
-  await attends(40);
-  env.verifie((await intent()) === 'lobe', 'un trait vers le haut : LOB');
-  await attends(600);
-  await trace([
-    [x0, y0],
-    [x0 - 8, y0 - 3],
-    [x0 - 14, y0 - 6],
-  ]);
-  await attends(40);
+  await doigt('pointerdown', ox, oy);
+  await attends(120);
+  env.verifie((await intent()) === 'plat', 'ARMER tenu sans trait : FRAPPE');
+  await doigt('pointermove', ox, oy - 14);
+  await attends(120);
   env.verifie((await intent()) === 'amorti', 'un tout petit trait : AMORTI');
-  await attends(600);
-  await trace(Array.from({ length: 10 }, (_, i) => [x0 - 9 * i, y0 - i]));
-  await attends(40);
-  env.verifie((await intent()) === 'lourd', 'un trait droit : FORT');
-  await attends(600);
+  await doigt('pointermove', ox, oy - 45);
+  await attends(120);
+  env.verifie((await intent()) === 'lobe', 'un trait vers le haut : LOB');
+  await env.capture(p, 'geste-lob');
+  await doigt('pointermove', ox - 50, oy - 4);
+  await attends(120);
+  env.verifie((await intent()) === 'lourd', 'un trait normal : FRAPPE LOURDE');
+  await env.capture(p, 'geste-fort');
+  await doigt('pointerup', ox - 50, oy - 4);
+  await attends(100);
   // CHANGE (touche U) : en plein point, on prend la main sur le partenaire, l'ancien joueur repasse au CPU
   const avant = await p.evaluate(() => {
     const j = window.bandeja.jeu;

@@ -32,7 +32,6 @@ export function nouveauJoueur(id: number, eq: Equipe, poste: 0 | 1, humain: bool
     poseCoup: 'attente',
     intent: null,
     charge: 0,
-    trait: null,
     cd: 0,
     saut: 0,
     pas: 0,

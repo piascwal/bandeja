@@ -16,11 +16,8 @@ export const TYPES_SERV: Partial<Record<Bouton, TypeService>> = { plat: 'plat', 
 const DUREE_CHARGE = 0.6;
 /** Un appui reste en attente de la balle ce temps-là : il faut se placer d'abord, puis déclencher au bon moment. */
 const OUBLI_APPUI = 0.7;
-/** Après le trait (le doigt se relève), le coup attend la balle au plus ce temps-là (s). */
-const FENETRE_TRAIT = 0.25;
 /** Charge d'une frappe lourde (le trait normal du geste) : presque à fond dès le départ. */
 const CHARGE_LOURD = 0.9;
-const CHARGE_COURBE = 0.7;
 /** Portée de la raquette d'un humain : il faut être bien placé, la balle n'est pas rattrapée de partout. */
 export const BONUS_PORTEE = 1;
 /** Après le relâchement du joystick, sa dernière direction compte encore ce temps-là (s). */
@@ -84,23 +81,17 @@ export function appliqueCommande(jeu: Partie, s: Joueur, cmd: Commande, dt: numb
     }
     // le bouton du haut n'existe que pour le super coup : sans jauge pleine, son appui (touche I ou Espace) vaut FRAPPE
     const bouton: Bouton = a === 'smash' && jeu.jaugeSmash[s.eq] < 1 ? 'plat' : a;
-    if (s.intent) {
-      s.intent.type = bouton;
-      // le doigt était tenu (le coup attendait) et se relève : le trait fini redonne un court délai pour trouver la balle
-      if (s.intent.t >= OUBLI_APPUI - 0.06) s.intent.t = FENETRE_TRAIT;
-    } else {
+    if (s.intent) s.intent.type = bouton;
+    else {
       s.intent = { type: bouton, t: 0 };
       s.charge = 0;
     }
-    // le trait fini accompagne l'appui du coup choisi : sa zone voulue
-    if (cmd.trait) s.trait = cmd.trait;
   }
   if (s.intent) {
     s.intent.t += dt;
     s.charge = Math.min(1, s.charge + dt / DUREE_CHARGE);
     // le trait « lourd » est une frappe à fond
     if (s.intent.type === 'lourd') s.charge = Math.max(s.charge, CHARGE_LOURD);
-    else if (s.intent.type === 'courbe') s.charge = Math.max(s.charge, CHARGE_COURBE);
     // tant que le doigt tient ARMER, le coup armé n'est pas oublié
     if (cmd.arme) s.intent.t = Math.min(s.intent.t, OUBLI_APPUI - 0.05);
     if (s.intent.t > OUBLI_APPUI) {
@@ -116,14 +107,13 @@ export function appliqueCommande(jeu: Partie, s: Joueur, cmd: Commande, dt: numb
     const perdue = b.sol >= 1 && b.z < 0.5 && b.vz < 0;
     // visée vers une vitre : on attend que la balle soit assez basse (pas de renvoi de vitre sur une balle de smash)
     const tropHaute =
-      (s.intent.type === 'plat' || s.intent.type === 'lourd' || s.intent.type === 'courbe') &&
+      (s.intent.type === 'plat' || s.intent.type === 'lourd') &&
       b.z > HAUT_SMASH &&
       murVise(directionVisee(s), s.eq) !== null;
     if (tropHaute) s.intent.t = Math.min(s.intent.t, OUBLI_APPUI - 0.05);
     const attend = tropHaute || (d > DISTANCE_IDEALE && d <= s.dBalle && !perdue);
     s.dBalle = d;
-    // le doigt est encore posé : le trait n'est pas fini, le coup attend son relâchement
-    if (!attend && !cmd.arme) coupHumain(jeu, s);
+    if (!attend) coupHumain(jeu, s);
   } else s.dBalle = 99;
 }
 
@@ -158,7 +148,6 @@ export function coupPrevu(jeu: Partie, s: Joueur, bouton: Bouton, charge: number
   const p = 0.25 + 0.75 * charge;
   const haut = jeu.balle.z > HAUT_SMASH;
   switch (bouton) {
-    case 'courbe':
     case 'lourd':
     case 'plat':
       // joystick poussé vers une vitre : FRAPPE la renvoie, dans toutes les situations (voir `murVise`)
@@ -169,8 +158,6 @@ export function coupPrevu(jeu: Partie, s: Joueur, bouton: Bouton, charge: number
         case 'bas':
           return 'cote';
       }
-      // un trait courbe est un coup à effet : une víbora, à toute hauteur
-      if (bouton === 'courbe') return 'vibora';
       // balle haute : le joueur est déjà en position d'attaque, FRAPPE donne le coup aérien (smash, víbora ou bandeja)
       if (haut) return coupAerien(s, p);
       return charge < 0.5 ? 'coupe' : 'plat';
@@ -201,27 +188,6 @@ export function cibleCoup(s: Joueur, type: Coup): { tx: number; ty: number } {
   return { tx: xProf(autre(s.eq), m), ty: clamp(ty, 0.3, LARG - 0.3) };
 }
 
-/**
- * La zone que dessine le trait : son côté (de -1, haut du terrain à l'écran, à 1) règle la ligne visée
- * (un coin pour la víbora), sa longueur la profondeur (long : profond). Sans trait ou pour le lob,
- * le côté reste celui du joystick.
- */
-export function zoneDuTrait(
-  eq: Joueur['eq'],
-  type: Coup,
-  base: { tx: number; ty: number },
-  trait: Joueur['trait'],
-): { tx: number; ty: number } {
-  if (!trait) return base;
-  let { tx, ty } = base;
-  if (trait.side !== null) ty = type === 'vibora' ? (trait.side < 0 ? 1.1 : 8.9) : 5 + 3.9 * trait.side;
-  // profondeur : un trait court raccourcit la balle, un trait long l'allonge (distance à la vitre adverse)
-  const m = PROF[type];
-  if (m !== undefined && type !== 'amorti' && type !== 'vibora')
-    tx = xProf(autre(eq), m * (1.5 - 0.7 * trait.prof));
-  return { tx, ty: clamp(ty, 0.3, LARG - 0.3) };
-}
-
 function coupHumain(jeu: Partie, s: Joueur): void {
   const b = jeu.balle;
   const bouton = s.intent!.type;
@@ -230,19 +196,13 @@ function coupHumain(jeu: Partie, s: Joueur): void {
     bouton === 'smash' && jeu.jaugeSmash[s.eq] >= 1 ? varianteSuper(b, Math.abs(s.x - MIL)) : 0;
   const prevu = coupPrevu(jeu, s, bouton, s.charge);
   // le joueur a poussé son joystick vers une vitre : son coup part dessus (bien dirigé s'il est bien placé, sinon de travers)
-  const mur =
-    variante || (bouton !== 'plat' && bouton !== 'lourd' && bouton !== 'courbe')
-      ? null
-      : murVise(directionVisee(s), s.eq);
+  const mur = variante || (bouton !== 'plat' && bouton !== 'lourd') ? null : murVise(directionVisee(s), s.eq);
   const type = mur ? 'vitre' : prevu;
   const p = 0.25 + 0.75 * s.charge;
-  const base = cibleCoup(s, type);
-  const { tx, ty } = zoneDuTrait(s.eq, type, base, mur ? null : s.trait);
-  s.trait = null;
+  const { tx, ty } = cibleCoup(s, type);
   executeCoup(jeu, s, type, p, tx + alea(jeu.rng, -0.2, 0.2), ty, mur, {
     precision: precisionContact(jeu, s),
-    // une courbe basse n'est pas jugée comme une víbora (coup aérien) : un coup d'effet joué à plat
-    intention: type === 'vibora' && b.z <= HAUT_SMASH ? 'plat' : type,
+    intention: type,
     vitreLibre: mur !== null,
     charge: s.charge,
     super: variante,

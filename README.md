@@ -286,45 +286,32 @@ Pour changer l'icône : remplacer `assets/icone-app.jpg` (carrée), puis
 
 ## Commandes du jeu
 
-|               | Tactile                                 | Clavier                    |
-| ------------- | --------------------------------------- | -------------------------- |
-| Se déplacer   | joystick (moitié gauche)                | flèches / ZQSD / WASD      |
-| Armer         | poser le doigt sur la piste (implicite) | K (FRAPPE)                 |
-| Frappe        | relever le doigt sans trait             | K                          |
-| Amorti        | un tout petit trait                     | J                          |
-| Lob           | un trait vers le haut                   | L                          |
-| Frappe lourde | un trait droit                          | —                          |
-| Coup à effet  | un trait courbe (víbora dans un coin)   | —                          |
-| Change        | bouton violet, dans le coin (seul)      | U                          |
-| Super coup    | bouton doré, au-dessus, jauge pleine    | I ou Espace (jauge pleine) |
-| Pause         | ⏸ en haut à droite                      | Échap / P                  |
+|               | Tactile                                          | Clavier                    |
+| ------------- | ------------------------------------------------ | -------------------------- |
+| Se déplacer   | joystick (moitié gauche)                         | flèches / ZQSD / WASD      |
+| Armer         | bouton rouge ARMER, dans le coin en bas à droite | K (FRAPPE)                 |
+| Lob           | ARMER puis un trait vers le haut                 | L                          |
+| Amorti        | ARMER puis un tout petit trait                   | J                          |
+| Frappe lourde | ARMER puis un trait normal, pas vers le haut     | —                          |
+| Change        | bouton violet, à gauche d'ARMER (seul)           | U                          |
+| Super coup    | bouton doré, au-dessus d'ARMER, jauge pleine     | I ou Espace (jauge pleine) |
+| Pause         | ⏸ en haut à droite                               | Échap / P                  |
 
-**Le geste tactile** (`input/geste.ts`, `render/trait-vue.ts`). Il n'y a plus de bouton pour armer ni pour
-choisir le coup. Un doigt qui se pose sur la piste (moitié droite) **arme** le coup, implicitement
-(la charge monte, le joueur ralentit) ; il trace alors un trait, visible à l'écran, de la couleur du
-coup qu'il dessine ; **au relâchement**, la forme du trait déclenche le coup (`analyseTrait`) :
+**Le geste tactile** (`input/geste.ts`). On tient ARMER avec le pouce droit, puis le même doigt trace un
+trait qui choisit le coup, jusqu'à l'impact : **pas de trait** (moins de 6 px) = FRAPPE (plus on arme
+tôt, plus c'est fort) ; **un tout petit trait** (moins de 26 px) = AMORTI ; **un trait vers le haut**
+(à moins de 45° de la verticale) = LOB ; **tout autre trait** = frappe **lourde**, armée presque à
+fond (`CHARGE_LOURD` 0,9). Un guide s'affiche autour du doigt, le coup choisi en or. Tant que le
+doigt tient ARMER, le coup armé n'est pas oublié (`Commande.arme`, transmis aux invités : protocole 11) ; relâché, il est oublié au bout de 0,7 s. Le joystick, au moment du coup, choisit toujours la
+vitre (voir plus bas). Il n'y a plus de boutons FRAPPE, LOBE ni AMORTI au toucher ; au service, PLAT
+et COUPE restent.
 
-- **pas de trait** (moins de 6 px) : FRAPPE, plus fort si on a armé tôt ;
-- **un tout petit trait** (moins de 26 px) : AMORTI ;
-- **un trait vers le haut** (à moins de 45° de la verticale) : LOB ;
-- **un trait droit** dans une autre direction : frappe **lourde** (armée presque à fond) ;
-- **un trait courbe** (flèche d'au moins 20 % de la corde) : coup à effet, une víbora jouée à toute
-  hauteur.
-
-La **zone** vient aussi du trait : pour la frappe lourde et l'amorti, le côté suit la direction où le
-trait finit (vers le haut de l'écran : haut du terrain) ; pour la courbe, le coin vers lequel il se
-creuse ; la longueur règle la profondeur (un trait long : balle profonde). Le lob garde le côté du
-joystick, qui choisit toujours la vitre (voir plus bas). Le trait reste un instant à l'écran après le
-relâchement (0,55 s, il s'efface). Tant que le doigt est posé, aucun coup ne part : le coup attend le
-trait, puis cherche la balle pendant 0,45 s. La zone voyage aux invités avec l'appui du coup
-(protocole 12). Au service, les boutons PLAT et COUPE restent.
-
-Les boutons restants occupent le coin en bas à droite (`zonesBoutons`) : CHANGE dans le coin, SUPER
-au-dessus (jauge pleine) ; sans eux, toute la piste sert à tracer. **CHANGE** n'existe que pour un seul
-humain face au CPU (`changePossible`) : en plein point il prend la main sur son partenaire
-(`changeDeJoueur`), et l'ancien joueur repasse au CPU ; une onde violette signale le nouveau joueur.
-À deux humains (coéquipiers, adversaires ou réseau), le bouton n'apparaît pas. Quand la balle passe
-près d'un bouton, celui-ci devient transparent (mais reste visible), pour ne pas cacher le jeu.
+Les boutons occupent le coin en bas à droite (`zonesBoutons`) : ARMER (le plus gros) dans le coin,
+CHANGE à sa gauche, SUPER au-dessus. **CHANGE** n'existe que pour un seul humain face au CPU
+(`changePossible`) : en plein point il prend la main sur son partenaire (`changeDeJoueur`), et
+l'ancien joueur repasse au CPU ; une onde violette signale le nouveau joueur. À deux humains
+(coéquipiers, adversaires ou réseau), le bouton n'apparaît pas. Quand la balle passe près d'un
+bouton, celui-ci devient transparent (mais reste visible), pour ne pas cacher le jeu.
 
 **Arcade, pas simulation.** Il n'y a plus de course : le joueur est plus rapide
 que le CPU et la portée est généreuse. En option (Réglages › _Aide au
