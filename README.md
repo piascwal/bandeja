@@ -399,7 +399,7 @@ voit venir le coup.
 quasi sans erreur, **imparable** (aucun adversaire ne peut toucher la balle) et qui gagne
 le point à son premier rebond. Il est toujours rapide (la balle file au plus vite que le
 filet le permet, puis repart comme un boulet après son rebond), avec une longue traînée de
-feu, et finit en cassant quelque chose. Six variantes, choisies selon la situation :
+feu, et finit en cassant quelque chose. Six variantes, tirées au hasard à chances égales :
 la **MÉTÉORE** sur une balle haute (boule de feu qui s'écrase, cratère, puis repart dans
 l'espace), la **COMÈTE** à mi-court (feu bleu et blanc, défonce la vitre du fond et sort de
 la piste), le **PHÉNIX** depuis le fond (oiseau de feu aux ailes dorées qui défonce la vitre
@@ -409,7 +409,7 @@ le court** (pas de rebond) et plonge à travers la croûte, le manteau et le noy
 lave, avant de ressortir de l'autre côté de la Terre en geyser de volcan, la balle à son sommet
 (`render/finale-volcan.ts`) ; l'**ORBITE**, une balle haute frappée de loin qui rebondit en orbite
 autour de la Terre à toute vitesse : un petit ralenti montre la balle percuter un satellite, qui
-explose (`render/finale-orbite.ts`). La situation donne la variante la plus probable, mais toutes peuvent sortir (`varianteSuper`, poids : situation +3, volcan et orbite 3, les autres 1) : sinon la lune, seule scène des balles qui s'envolent, reviendrait à chaque fois. Vitre brisée = gerbe d'éclats, écran qui tremble et flashe. Le CPU lâche aussi
+explose (`render/finale-orbite.ts`). Le choix est **au hasard, à chances égales** (`varianteSuper` : 1 sur 6 pour chaque animation, quelle que soit la situation ; sans hasard, comme dans les tests, la situation donne la variante la plus naturelle). Vitre brisée = gerbe d'éclats, écran qui tremble et flashe. Le CPU lâche aussi
 son super coup, rarement (12 % de ses coups quand sa jauge est pleine). Les coups ordinaires
 restent plafonnés à 0,97 de puissance.
 

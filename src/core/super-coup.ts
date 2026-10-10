@@ -9,7 +9,7 @@ import type { Balle, Coup, Effet, Equipe, Joueur, Partie } from './types';
  * Les super coups : jauge pleine, le bouton SMASH déclenche une frappe
  * monstrueuse, qui gagne forcément le point (la balle est imparable : aucun
  * adversaire ne peut la toucher, et le point est compté à son premier rebond).
- * Six variantes, choisies selon la situation, et toujours spectaculaires :
+ * Six variantes, tirées au hasard (chacune a la même chance ; sans hasard, la situation donne la plus naturelle), et toujours spectaculaires :
  * la balle traîne le feu, puis sort de la piste en cassant quelque chose.
  */
 export type VarianteSuper = 1 | 2 | 3 | 4 | 5 | 6;
@@ -38,16 +38,8 @@ export function varianteSuper(b: Balle, loin: number, rng?: Aleatoire): Variante
   const naturelle: VarianteSuper =
     b.z > 1.9 ? (loin > 6 ? 6 : loin < 3.5 ? 5 : 1) : loin < 3.5 ? 4 : loin > 6 ? 3 : 2;
   if (!rng) return naturelle;
-  // la situation donne la variante la plus probable, mais toutes peuvent sortir : sinon on ne verrait que la
-  // même scène (la lune) à chaque super coup, les balles hautes étant rares. Poids : volcan et orbite plus que les autres, pour qu'on les voie.
-  const poids = [0, 1, 1, 1, 1, 3, 3];
-  poids[naturelle] = (poids[naturelle] ?? 0) + 3;
-  let tirage = rng() * poids.reduce((a, c) => a + c, 0);
-  for (let v = 1; v <= 6; v++) {
-    tirage -= poids[v]!;
-    if (tirage < 0) return v as VarianteSuper;
-  }
-  return naturelle;
+  // dans le jeu, le choix est au hasard : chaque variante (donc chaque animation) a la même chance, quelle que soit la situation
+  return (1 + Math.floor(rng() * 6)) as VarianteSuper;
 }
 
 /** Où viser : le côté le plus loin des adversaires. */
