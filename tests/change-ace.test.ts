@@ -66,6 +66,7 @@ describe('ACE : la zone or au milieu du vert', () => {
     for (let i = 0; i < n; i++) {
       const jeu = partieTest({ mode: 'match', sieges: [0] }, 100 + i);
       jeu.rng = graine(1000 + i);
+      jeu.serveur.humain = true; // le CPU, lui, n'a presque jamais d'ace
       servir(jeu, jeu.serveur, 'plat', gv, 0);
       if (jeu.balle.ace) nb++;
     }
@@ -84,7 +85,7 @@ describe('ACE : la zone or au milieu du vert', () => {
     let essais = 0;
     for (let i = 0; i < 20; i++) {
       const jeu = partieTest({ mode: 'match', sieges: [0] }, 200 + i);
-      jeu.humain = null;
+      jeu.serveur.humain = true;
       jeu.rng = graine(2000 + i);
       servir(jeu, jeu.serveur, 'plat', (ZONE_ACE.min + ZONE_ACE.max) / 2, 0);
       if (!jeu.balle.ace) continue;

@@ -21,6 +21,7 @@ export function nouvelleBalle(): Balle {
     por: 0,
     vif: 0,
     super: 0,
+    rebonds: 0,
     ace: false,
     eqF: 0,
     camp: 1,
@@ -48,21 +49,36 @@ const coteDe = (x: number): Equipe => (x < MIL ? 0 : 1);
 const COUP_VITRE = 2.0;
 
 /** Contre une vitre du fond, la balle « monte » dans son camp plus souvent qu'elle ne revient chez celui qui a frappé. */
-const PART_VITRE_HAUTE = 0.65;
+const PART_VITRE_HAUTE = 0.85;
 /** Le rebond « monté » : peu de vitesse conservée vers le filet (jamais plus de 5 m/s, même après un coup très fort), et une chandelle (m/s). */
 const E_VITRE_HAUTE = 0.28;
 const VX_VITRE_HAUTE_MAX = 5;
+/** Arcade : même hors du rebond « monté », la balle ne repart jamais plus vite que ça (m/s) vers le filet : elle ne repasse pas toute seule. */
+const VX_VITRE_MAX = 5.5;
+/** … et ne remonte jamais plus vite que ça (m/s) : son vol reste court (au plus ~8 m de retour), elle retombe chez celui qui a reçu. */
+const VZ_VITRE_MAX = 7.5;
 const VZ_VITRE_HAUTE = 5.2;
 
 function rebondVitre(b: CorpsBalle, axe: 'x' | 'y'): void {
+  // une balle déjà rebondie (arcade) : les vitres la freinent beaucoup, elle ne repasse pas toute seule chez celui qui a frappé
+  const freine = b.rebonds >= 1;
   // contre le fond, la plupart des balles montent haut et restent dans leur camp ; les autres reviennent
-  const haute = axe === 'x' && b.spin !== 'vibora' && (bruit(b) + 1) / 2 < PART_VITRE_HAUTE;
-  const e = haute ? E_VITRE_HAUTE : b.spin === 'vibora' ? 0.62 : 0.8;
-  if (axe === 'x') b.vx = -b.vx * e;
+  const haute = axe === 'x' && b.spin !== 'vibora' && (bruit(b) + 1) / 2 < (freine ? PART_VITRE_HAUTE : 0.65);
+  const e = haute
+    ? E_VITRE_HAUTE
+    : freine
+      ? b.spin === 'vibora'
+        ? 0.5
+        : 0.55
+      : b.spin === 'vibora'
+        ? 0.62
+        : 0.8;
+  if (axe === 'x') b.vx = freine ? Math.max(-VX_VITRE_MAX, Math.min(VX_VITRE_MAX, -b.vx * e)) : -b.vx * e;
   else b.vy = -b.vy * e;
+  const vzMax = freine ? VZ_VITRE_MAX : 14;
   if (haute) {
     b.vx = Math.max(-VX_VITRE_HAUTE_MAX, Math.min(VX_VITRE_HAUTE_MAX, b.vx));
-    b.vz = Math.min(Math.max(b.vz * 0.9, 0) + VZ_VITRE_HAUTE, 11); // haute, pas hors du jeu
+    b.vz = Math.min(Math.max(b.vz * 0.9, 0) + VZ_VITRE_HAUTE, freine ? VZ_VITRE_MAX : 11); // haute, pas hors du jeu
     return;
   }
   // le coupé revient mollement vers le filet, la víbora « meurt » contre la vitre : la balle redescend aussitôt
@@ -70,7 +86,7 @@ function rebondVitre(b: CorpsBalle, axe: 'x' | 'y'): void {
   else if (b.spin === 'vibora') {
     b.vz = Math.min(b.vz, 0) * 0.5 - 1.1;
     if (axe === 'x') b.vy += (b.spinDir || 0) * 1.2;
-  } else b.vz = Math.min(Math.max(b.vz * 0.9, 0) + COUP_VITRE, 14);
+  } else b.vz = Math.min(Math.max(b.vz * 0.9, 0) + COUP_VITRE, vzMax);
 }
 
 function passageFilet(b: CorpsBalle, x0: number, y0: number, z0: number, ev?: SurContact): void {
@@ -113,12 +129,13 @@ function rebondSol(b: CorpsBalle, ev?: SurContact): void {
   if (b.z >= 0 || b.roule) return;
   b.z = 0;
   if (b.vz >= 0) return;
+  b.rebonds++;
   const [rz, rh] = RESTIT[b.spin] ?? RESTIT.plat;
   const vImpact = -b.vz; // vitesse d'arrivée, avant le rebond : c'est elle qui donne la force du choc
   b.vz = vImpact * rz;
   b.vx *= rh;
   b.vy *= rh;
-  if (b.spin === 'vibora') b.vy += (b.spinDir || 0) * 1.6;
+  if (b.spin === 'vibora') b.vy += (b.spinDir || 0) * 0.9;
   if (b.super > 0 && b.vif > 0) {
     superRebond(b);
     b.vif = 0;

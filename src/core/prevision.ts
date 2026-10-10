@@ -21,6 +21,7 @@ export function predit(b0: Balle, eq: Equipe): Prediction {
     por: b0.por,
     vif: b0.vif,
     super: b0.super,
+    rebonds: b0.rebonds,
   };
   let sol = b0.sol;
   let fin = false;

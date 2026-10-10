@@ -468,11 +468,18 @@ seule une balle qui en a le droit passe par-dessus les murs).
   En simulation CPU contre CPU, les por sont passés de 38 % des points à environ 7 %.
   Non repris du guide : le vent et la température (pas de météo), le rulo à la grille.
 
-**Rebond contre la vitre du fond.** La balle qui tape le sol puis la vitre du fond monte
-maintenant haut et reste dans son camp près de deux fois sur trois (`rebondVitre` : vitesse
-vers le filet plafonnée à 5 m/s, chandelle de 5,2 m/s) ; sinon elle revient comme avant.
-Avant, un plat chargé ou une bandeja revenait seul chez celui qui avait frappé neuf fois sur
-dix ; maintenant une sur trois environ (`tests/vitres.test.ts`).
+**Échanges arcade** (`balle.ts`, `constants.ts`, `coups.ts`). Une balle qui a déjà rebondi chez
+l'adversaire ne repasse plus chez celui qui a frappé : au sol, le frein horizontal est bien plus
+fort (`RESTIT`, de 0,5 à 0,6 ; 0,35 pour un smash), et contre la vitre du fond (`rebondVitre`) une
+balle rebondie repart au plus à 5,5 m/s vers le filet et monte au plus à 7,5 m/s (`VX_VITRE_MAX`,
+`VZ_VITRE_MAX`) : son vol de retour fait moins de 8 m, elle retombe chez celui qui a reçu. Les
+balles non rebondies (le renvoi voulu contre sa propre vitre, les super coups) gardent leur vitesse.
+La víbora donne un coup de côté moins fort au rebond (0,9 m/s) et « meurt » dans son coin. L'erreur
+d'un coup ordinaire ne sort plus la balle du terrain (`MARGE_FOND` 0,9 m, `MARGE_COTE` 0,5 m). La
+balle accélère moins au fil de l'échange (+50 % au plus, au lieu de +90 %), et le CPU lâche moins
+son super coup (5 % au lieu de 12 %) et n'a un ace que rarement (`ACE_PROBA_CPU`, 8 %). En CPU
+contre CPU : 14 à 23 coups par point (6 à 7 avant), « ELLE REVIENT ! » presque disparu (un point
+sur cinq avant).
 
 **Repère au sol.** Après le premier rebond de la balle (donc aussi quand elle revient de la
 vitre), une croix au sol marque l'endroit où se placer pour la jouer : clignotante si c'est

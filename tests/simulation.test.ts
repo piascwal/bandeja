@@ -60,3 +60,28 @@ describe('match', () => {
     expect(Math.max(...jeu.jeux)).toBe(2);
   });
 });
+
+describe('échanges arcade (CPU contre CPU)', () => {
+  it('de vrais échanges, et la balle rebondie ne repasse (presque) jamais chez celui qui a frappé', () => {
+    let points = 0;
+    let reviennent = 0;
+    let frappes = 0;
+    for (const seed of [1, 2, 3, 4]) {
+      const jeu = partieTest({ mode: 'match', sieges: [], jeux: 1 }, seed);
+      for (let i = 0; i < 120 * 60 * 4 && jeu.phase !== 'fin'; i++) {
+        pas(jeu, PAS);
+        for (const e of jeu.evenements) {
+          if (e.type === 'frappe') frappes++;
+          if (e.type === 'point') {
+            points++;
+            if (e.raison === 'ELLE REVIENT !') reviennent++;
+          }
+        }
+        jeu.evenements.length = 0;
+      }
+    }
+    expect(points).toBeGreaterThan(20);
+    expect(frappes / points).toBeGreaterThan(8); // avant : 6 à 7 coups par point, dont beaucoup de balles qui revenaient
+    expect(reviennent / points).toBeLessThan(0.08); // avant : près d'un point sur cinq
+  });
+});

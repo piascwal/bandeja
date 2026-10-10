@@ -109,6 +109,8 @@ export interface CorpsBalle {
   vif: number;
   /** super coup en vol (0 aucun, 1 météore, 2 comète, 3 phénix, 4 fantôme) : imparable, il gagne le point à son premier rebond */
   super: number;
+  /** rebonds au sol depuis la dernière frappe (la physique les compte elle-même, prévision comprise) : les vitres freinent une balle déjà rebondie */
+  rebonds: number;
 }
 
 export interface Balle extends CorpsBalle {

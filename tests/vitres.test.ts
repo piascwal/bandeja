@@ -61,16 +61,15 @@ function partRevenante(type: Coup, p: number): { vitres: number; reviennent: num
 }
 
 describe('rebond contre la vitre du fond', () => {
-  it('la balle monte souvent dans son camp au lieu de revenir chez celui qui a frappé', () => {
+  it('la balle rebondie monte dans son camp au lieu de revenir chez celui qui a frappé', () => {
     for (const [type, p] of [
       ['plat', 0.95],
       ['bandeja', 0.6],
     ] as const) {
       const { vitres, reviennent } = partRevenante(type, p);
       expect(vitres, type).toBeGreaterThan(40);
-      // avant : plus de neuf balles sur dix revenaient ; maintenant une sur trois environ
-      expect(reviennent / vitres, type).toBeLessThan(0.5);
-      expect(reviennent / vitres, type).toBeGreaterThan(0.1);
+      // arcade : une balle déjà rebondie ne repasse (presque) jamais chez celui qui a frappé
+      expect(reviennent / vitres, type).toBeLessThan(0.1);
     }
   });
 });

@@ -1,11 +1,11 @@
 import { clamp, gauss } from './aleatoire';
 import { lance } from './balle';
-import { ACCEL_ECHANGE, ACCEL_MAX, HAUT_MAX, HAUT_SMASH, MIL, PORTEE } from './constants';
+import { ACCEL_ECHANGE, ACCEL_MAX, HAUT_MAX, HAUT_SMASH, LARG, MIL, PORTEE } from './constants';
 import { contreVitre, placementVitre, vitreBrute } from './contre-vitre';
 import { typeDePor } from './por';
 import { GAIN_JAUGE, GAIN_VITRE, niveauDe, qualite, situationDe } from './qualite';
 import { lanceSuper, ouvreParade, type VarianteSuper } from './super-coup';
-import { autre, xProf } from './terrain';
+import { autre, fond, xProf } from './terrain';
 import type { Balle, Coup, Effet, Equipe, Joueur, Mur, Partie } from './types';
 
 /** Distance visée par rapport à la vitre adverse, selon le coup. */
@@ -29,6 +29,10 @@ export const PROF: Partial<Record<Coup, number>> = {
  */
 export const contrainte = (b: Balle, s: Joueur): boolean =>
   b.coup === 'lobe' && b.camp === s.eq && (b.sol >= 1 || Math.abs(s.x - MIL) > 5);
+
+/** Une balle ordinaire retombe au moins à ces distances (m) des vitres adverses : l'erreur ne la sort pas du terrain. */
+const MARGE_FOND = 0.9;
+const MARGE_COTE = 0.5;
 
 /** Puissance maximale d'un coup ordinaire (1 est réservé au super coup). */
 const P_MAX = 0.97;
@@ -201,6 +205,10 @@ export function executeCoup(
     }
     tx += gauss(rng) * e * 1.4;
     ty += gauss(rng) * e * 1.15;
+    // arcade : l'erreur ne sort pas la balle du terrain (sauf le coup voulu long, par 3 / par 4) : plus d'échanges
+    const fondAdv = fond(autre(eq));
+    if (Math.abs(tx - fondAdv) < MARGE_FOND) tx = fondAdv + (eq === 0 ? -MARGE_FOND : MARGE_FOND);
+    ty = clamp(ty, MARGE_COTE, LARG - MARGE_COTE);
     const t = trajectoire(type, p, Math.hypot(tx - b.x, ty - b.y));
     t.v *= vitesse;
     if (type !== 'lobe' && type !== 'amorti') t.v *= accelerationEchange(jeu.echange);
@@ -220,6 +228,7 @@ export function executeCoup(
   b.eqF = eq;
   b.camp = autre(eq);
   b.sol = 0;
+  b.rebonds = 0;
   b.service = false;
   b.filet = false;
   b.mur = false;

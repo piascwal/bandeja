@@ -38,7 +38,7 @@ export const DUREE_MAX_ECHANGE = 9;
  * deuxième, jusqu'à +ACCEL_MAX, sauf pour le lob et l'amorti (qui restent lents).
  */
 export const ACCEL_ECHANGE = 0.06;
-export const ACCEL_MAX = 0.9;
+export const ACCEL_MAX = 0.5;
 /**
  * Parade d'un super coup : le jeu se fige, un curseur balaie une jauge et le camp
  * qui subit doit l'arrêter dans la zone verte (plus étroite et plus rapide qu'au
@@ -85,12 +85,12 @@ export const LIB_PTS = ['0', '15', '30', '40'] as const;
 
 /** [rebond vertical, frein horizontal] au sol selon l'effet. */
 export const RESTIT: Record<Effet, readonly [number, number]> = {
-  plat: [0.7, 0.84],
-  lobe: [0.56, 0.8],
-  lift: [0.84, 0.9],
-  smash: [0.82, 0.92],
-  coupe: [0.5, 0.94],
-  vibora: [0.52, 0.8],
+  plat: [0.7, 0.55],
+  lobe: [0.56, 0.5],
+  lift: [0.84, 0.42],
+  smash: [0.82, 0.35],
+  coupe: [0.5, 0.6],
+  vibora: [0.52, 0.5],
 };
 
 /** Jauge de service : en dessous, trop faible ; au-dessus, trop fort ; entre, parfait. */
@@ -98,5 +98,6 @@ export const JAUGE_PARFAITE = { min: 0.62, max: 0.82 } as const;
 /** Zone or, au milieu du vert : un service lâché là est un ace presque à coup sûr (`ACE_PROBA`). */
 export const ZONE_ACE = { min: 0.695, max: 0.745 } as const;
 export const ACE_PROBA = 0.85;
+export const ACE_PROBA_CPU = 0.08;
 /** Période d'un aller (ou d'un retour) de la jauge de service (s). */
 export const PERIODE_JAUGE = 0.65;

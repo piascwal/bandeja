@@ -134,6 +134,7 @@ function simule(x: number, y: number, z: number, vx: number, vy: number, vz: num
     por: 0,
     vif: 0,
     super: 0,
+    rebonds: 0,
   };
   let res: { ok: boolean; x: number; y: number } | null = null;
   let touche = false;
