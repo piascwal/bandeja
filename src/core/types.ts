@@ -107,6 +107,8 @@ export interface CorpsBalle {
   por: number;
   /** rebond vif : le prochain rebond au sol relance la balle (0 : aucun, 1 : vers la vitre en hauteur, au-delà : hors de la piste) */
   vif: number;
+  /** facteur de vitesse de l'échange au départ du coup (1 : normal, voir `accelerationEchange`) : plus il est grand, moins la balle perd de vitesse en rebondissant */
+  accel: number;
   /** super coup en vol (0 aucun, 1 météore, 2 volcan, 3 orbite, 4 Pise, 5 Sphinx) : imparable, il gagne le point à son premier rebond */
   super: number;
   /** rebonds au sol depuis la dernière frappe (la physique les compte elle-même, prévision comprise) : les vitres freinent une balle déjà rebondie */

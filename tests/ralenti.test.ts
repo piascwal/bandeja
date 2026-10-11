@@ -31,7 +31,7 @@ describe('ralenti des points', () => {
     for (let i = 0; i < 90 / PAS; i++) {
       pas(jeu, PAS);
       // (un point long qui finit dans les dernières secondes n'a pas le temps de démarrer son rejeu : on ne le compte pas)
-      if (jeu.phase === 'point' && phase !== 'point' && jeu.dureePoint > DUREE_POINT && i < (90 - 12) / PAS)
+      if (jeu.phase === 'point' && phase !== 'point' && jeu.dureePoint > DUREE_POINT && i < (90 - 2) / PAS)
         pointsLongs++;
       phase = jeu.phase;
       jeu.evenements.length = 0;

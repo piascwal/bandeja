@@ -1,12 +1,6 @@
-import {
-  FINALE_SUPER_S,
-  RALENTI_CLIP,
-  RALENTI_DEBUT,
-  RALENTI_ECHANGE,
-  RALENTI_RYTHME,
-  VITESSE,
-} from '@core/constants';
+import { FINALE_SUPER_S, RALENTI_CLIP, RALENTI_DEBUT, RALENTI_RYTHME, VITESSE } from '@core/constants';
 import { nouvellePartie } from '@core/partie';
+import { sceneAttendue } from '@core/regles';
 import type { Partie } from '@core/types';
 import { Effets } from '@render/effets';
 import { VueJoueurs } from '@render/regard';
@@ -40,8 +34,7 @@ export class Ralenti {
   private cadres: Instantane[] = [];
   private clip: Instantane[] = [];
   private position = 0;
-  /** début de l'échange en cours, et du point une fois joué */
-  private debutEchange = 0;
+  /** fin de l'échange, une fois le point joué */
   private finEchange: number | null = null;
   private dejaRejoue = false;
 
@@ -69,7 +62,6 @@ export class Ralenti {
     if (jeu.mode !== 'match') return;
     const dernier = this.cadres[this.cadres.length - 1];
     if (!dernier || jeu.temps < dernier.t) this.cadres = [];
-    if (jeu.phase === 'jeu' && (!dernier || dernier.phase !== 'jeu')) this.debutEchange = jeu.temps;
     if (!dernier || jeu.temps - dernier.t >= PAS_CADRE) {
       this.cadres.push(instantaneDe(jeu, 0));
       while (this.cadres[0]!.t < jeu.temps - MEMOIRE_S - RALENTI_DEBUT) this.cadres.shift();
@@ -94,7 +86,8 @@ export class Ralenti {
     )
       return;
     this.dejaRejoue = true;
-    if (!superCoup && this.finEchange - this.debutEchange < RALENTI_ECHANGE) return;
+    // le point doit avoir une scène (décidé par l'hôte, le même sur tous les écrans : voir `sceneAttendue`)
+    if (!sceneAttendue(jeu)) return;
     const debut = this.finEchange - RALENTI_CLIP;
     this.clip = this.cadres.filter((c) => c.t >= debut && c.t <= this.finEchange! + 0.5);
     if (this.clip.length < 8) return;

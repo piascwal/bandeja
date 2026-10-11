@@ -105,4 +105,18 @@ describe('lance', () => {
     expect(Math.abs(b.x - 16)).toBeLessThan(0.3);
     expect(Math.abs(b.y - 7)).toBeLessThan(0.3);
   });
+
+  it("plus l'échange est rapide, moins la balle perd de vitesse au rebond : elle reste rapide en l'air", () => {
+    const apres = (accel: number) => {
+      const b = nouvelleBalle();
+      Object.assign(b, { x: 4, y: 5, z: 0.05, vx: 20, vy: 0, vz: -8, spin: 'plat', accel });
+      vole(b, (k) => k.t === 'sol');
+      return b.vx;
+    };
+    const [normal, rapide, tresRapide] = [apres(1), apres(2), apres(3)];
+    expect(rapide).toBeGreaterThan(normal * 1.1);
+    expect(tresRapide).toBeGreaterThan(rapide * 1.05);
+    // jamais plus rapide qu'avant le rebond
+    expect(tresRapide).toBeLessThan(20);
+  });
 });

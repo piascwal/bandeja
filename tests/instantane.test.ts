@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PAS } from '@core/constants';
+import { DUREE_POINT, DUREE_POINT_RALENTI, DUREE_POINT_SUPER, PAS } from '@core/constants';
 import { pas } from '@core/partie';
 import { appliqueInstantane } from '../src/net/appliquer';
 import { decodeInstantane, encodeInstantane, instantaneDe, TAILLE_INSTANTANE } from '../src/net/instantane';
@@ -108,5 +108,21 @@ describe('instantané binaire', () => {
       octets[0] = VERSION_PROTOCOLE; // on passe la porte de la version pour atteindre le reste
       expect(() => decodeInstantane(octets.buffer)).not.toThrow();
     }
+  });
+
+  it("transmet la vitesse de l'échange et la scène du point", () => {
+    const { jeu } = instants(3, 2);
+    jeu.balle.accel = 2.5;
+    jeu.dureePoint = DUREE_POINT_SUPER;
+    const lu = decodeInstantane(encodeInstantane(instantaneDe(jeu, 1)))!;
+    expect(lu.balle.accel).toBeCloseTo(2.5, 1);
+    expect(lu.scene).toBe(2);
+    jeu.dureePoint = DUREE_POINT_RALENTI;
+    expect(decodeInstantane(encodeInstantane(instantaneDe(jeu, 1)))!.scene).toBe(1);
+    jeu.dureePoint = DUREE_POINT;
+    const invite = partieTest({ mode: 'match', sieges: [0, 1] }, 3);
+    appliqueInstantane(invite, decodeInstantane(encodeInstantane(instantaneDe(jeu, 1)))!);
+    expect(invite.dureePoint).toBe(DUREE_POINT);
+    expect(invite.balle.accel).toBeCloseTo(2.5, 1);
   });
 });

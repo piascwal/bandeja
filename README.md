@@ -345,9 +345,13 @@ au-dessus de 4,5 m) ; l'approche s'annule après 1,3 s.
 la pose de préparation (`smash1`, pieds au sol) ; seuls le smash et les coups SUPER utilisent
 la pose pieds en l'air (`smash2`).
 
-**La balle accélère** de 6 % à chaque coup après le deuxième, **sans plafond** : plus on joue,
+**La balle accélère** de 8 % à chaque coup après le deuxième, **sans plafond** : plus on joue,
 plus elle va vite (`ACCEL_ECHANGE` dans `core/constants.ts` ; `ACCEL_LIMITE`, ×5, n'est qu'une borne
-technique pour la physique, jamais atteinte), sauf le lob et l'amorti. Un compteur
+technique pour la physique, jamais atteinte), sauf le lob et l'amorti. Le facteur du coup est gardé
+dans `Balle.accel` : au rebond au sol la balle perd d'autant moins de vitesse horizontale
+(`KEEP_PAR_ACCEL`, `KEEP_MAX` dans `core/balle.ts`), donc elle reste rapide en l'air après le rebond,
+et pas seulement avant. (Mesure sur des matchs CPU contre CPU : de 18 m/s au départ à 35-45 m/s
+après vingt coups, et de 8 m/s à 25-35 m/s après le premier rebond.) Un compteur
 « ECHANGE n » sous le tableau des scores chauffe de couleur (blanc, or, orange,
 rouge) et affiche le bonus de vitesse de la balle.
 

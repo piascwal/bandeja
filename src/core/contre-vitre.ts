@@ -131,6 +131,7 @@ function simule(x: number, y: number, z: number, vx: number, vy: number, vz: num
     portres: false,
     por: 0,
     vif: 0,
+    accel: 1,
     super: 0,
     rebonds: 0,
   };

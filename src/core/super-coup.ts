@@ -124,6 +124,7 @@ function resoudParade(jeu: Partie, ok: boolean): void {
   const b = jeu.balle;
   b.super = 0;
   b.vif = 0;
+  b.accel = 1;
   // un gros coup, mais jouable : on ramène sa vitesse à celle d'un smash ordinaire
   const v = Math.hypot(b.vx, b.vy, b.vz);
   const k = Math.min(1, 24 / Math.max(1, v));

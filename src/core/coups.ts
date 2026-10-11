@@ -181,6 +181,7 @@ export function executeCoup(
     b.portres = false;
     b.por = 0;
     b.vif = 1; // le premier rebond déclenche la suite du super coup (voir `superRebond`)
+    b.accel = 1;
   } else if (type !== 'vitre' && type !== 'cote') {
     const versFond = eq === 0 ? 1 : -1; // sens de x vers la vitre adverse
     let e = s.err * (0.45 + 0.8 * p + vin / 34 + (b.mur ? 0.3 : 0));
@@ -211,7 +212,8 @@ export function executeCoup(
     ty = clamp(ty, MARGE_COTE, LARG - MARGE_COTE);
     const t = trajectoire(type, p, Math.hypot(tx - b.x, ty - b.y));
     t.v *= vitesse;
-    if (type !== 'lobe' && type !== 'amorti') t.v *= accelerationEchange(jeu.echange);
+    const acc = type !== 'lobe' && type !== 'amorti' ? accelerationEchange(jeu.echange) : 1;
+    t.v *= acc;
     // quelques fautes directes dans le filet, surtout en forçant et en jouant mal
     const risque = type === 'plat' || type === 'smash' ? 0.01 + 0.05 * p * e : 0.006 * e;
     lance(b, tx, ty, t.v, t.spin, rng() < risque ? -0.3 : (marge ?? t.marge));
@@ -220,8 +222,10 @@ export function executeCoup(
     b.por = typeDePor(type, p, score, situation, subi, ty, rng());
     b.portres = b.por > 0;
     b.vif = rebondVif(type, p, rng());
+    b.accel = acc;
   } else {
     b.vif = 0;
+    b.accel = 1;
     b.por = 0;
     b.portres = false;
   }

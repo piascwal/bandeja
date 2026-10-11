@@ -1,4 +1,5 @@
 import { prevoir } from '@core/prevision';
+import { dureeDeScene } from '@core/regles';
 import type { Partie } from '@core/types';
 import type { Instantane } from './instantane';
 
@@ -18,6 +19,7 @@ export function appliqueInstantane(jeu: Partie, s: Instantane): void {
   jeu.faute = s.faute;
   jeu.rejoue = s.rejoue;
   jeu.echange = s.echange;
+  jeu.dureePoint = dureeDeScene(s.scene);
   jeu.jaugeSmash = [s.smash[0], s.smash[1]];
   jeu.parade = s.parade ? { eq: s.parade.eq, t: s.parade.t, ecoule: 0, tCpu: null } : null;
   jeu.pts = [s.pts[0], s.pts[1]];
@@ -64,6 +66,7 @@ export function appliqueInstantane(jeu: Partie, s: Instantane): void {
     dehors: sb.dehors,
     portres: sb.portres,
     vif: sb.vif,
+    accel: sb.accel,
     super: sb.super,
     service: sb.service,
     filet: sb.filet,

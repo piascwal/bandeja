@@ -101,6 +101,14 @@ export function dansCarre(jeu: Partie): boolean {
 export const sceneAttendue = (jeu: Partie): boolean =>
   jeu.mode === 'match' && jeu.phase === 'point' && jeu.dureePoint > DUREE_POINT;
 
+/** La scène du point en un code qui voyage sur le réseau : 0 aucune, 1 ralenti, 2 fin de super coup puis ralenti. */
+export const codeScene = (jeu: Partie): number =>
+  jeu.dureePoint === DUREE_POINT_SUPER ? 2 : jeu.dureePoint === DUREE_POINT_RALENTI ? 1 : 0;
+
+/** … et sa durée d'annonce (voir `gagne`). */
+export const dureeDeScene = (code: number): number =>
+  [DUREE_POINT, DUREE_POINT_RALENTI, DUREE_POINT_SUPER][code] ?? DUREE_POINT;
+
 /** Quand le point finit tout seul : l'annonce, ou, avec une scène, la scène avec sa marge. */
 export const dureeMaxPoint = (jeu: Partie): number =>
   jeu.dureePoint + (sceneAttendue(jeu) ? SCENE_MARGE_S : 0);

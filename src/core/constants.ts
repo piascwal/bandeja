@@ -40,7 +40,7 @@ export const DUREE_MAX_ECHANGE = 9;
  * à pas fixe n'aime pas les vitesses folles), jamais atteinte en pratique : il faudrait
  * plus de soixante coups. ACCEL_JAUGE : la vitesse (en plus) où la jauge de l'écran est pleine.
  */
-export const ACCEL_ECHANGE = 0.06;
+export const ACCEL_ECHANGE = 0.08;
 export const ACCEL_LIMITE = 4;
 export const ACCEL_JAUGE = 1;
 /**

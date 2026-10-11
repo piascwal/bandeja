@@ -20,6 +20,7 @@ export function nouvelleBalle(): Balle {
     portres: false,
     por: 0,
     vif: 0,
+    accel: 1,
     super: 0,
     rebonds: 0,
     ace: false,
@@ -44,6 +45,10 @@ export function bruit(b: CorpsBalle): number {
 }
 
 const coteDe = (x: number): Equipe => (x < MIL ? 0 : 1);
+
+/** La vitesse gardée au rebond au sol grandit avec la vitesse de l'échange : part de la perte évitée par unité d'accélération, et son plafond. */
+const KEEP_PAR_ACCEL = 0.3;
+const KEEP_MAX = 0.6;
 
 /** Arcade : la vitre relance la balle vers le haut (m/s), pour qu'elle revienne à hauteur de jeu. */
 const COUP_VITRE = 2.0;
@@ -126,7 +131,9 @@ function rebondSol(b: CorpsBalle, ev?: SurContact): void {
   b.z = 0;
   if (b.vz >= 0) return;
   b.rebonds++;
-  const [rz, rh] = RESTIT[b.spin] ?? RESTIT.plat;
+  const [rz, rh0] = RESTIT[b.spin] ?? RESTIT.plat;
+  // plus l'échange s'accélère, moins la balle perd de vitesse au rebond : elle reste rapide en l'air jusqu'à son second rebond
+  const rh = rh0 + (1 - rh0) * Math.min(KEEP_MAX, (b.accel - 1) * KEEP_PAR_ACCEL);
   const vImpact = -b.vz; // vitesse d'arrivée, avant le rebond : c'est elle qui donne la force du choc
   b.vz = vImpact * rz;
   b.vx *= rh;

@@ -1,3 +1,4 @@
+import { codeScene } from '@core/regles';
 import type { Bouton, Coup, Effet, Equipe, Partie, Phase, PoseCoup, TypeService } from '@core/types';
 import { Ecrivain, Lecteur } from './binaire';
 import { BOUTONS, COUPS, EFFETS, indice, PHASES, POSES_COUP, SERVICES, VERSION_PROTOCOLE } from './protocole';
@@ -43,6 +44,8 @@ export interface BalleInstantane {
   super: number;
   /** rebond vif en attente (0 → 1,25) */
   vif: number;
+  /** facteur de vitesse de l'échange (1 → 5) */
+  accel: number;
   service: boolean;
   filet: boolean;
   mur: boolean;
@@ -67,6 +70,8 @@ export interface Instantane {
   rejoue: boolean;
   /** coups de l'échange en cours */
   echange: number;
+  /** scène du point (voir `dureePoint`) : 0 aucune, 1 ralenti, 2 fin de super coup puis ralenti */
+  scene: number;
   /** jauges de smash des deux équipes (0 → 1) */
   smash: [number, number];
   /** parade d'un super coup en cours : le camp qui la tente et la phase du curseur (s) */
@@ -80,8 +85,8 @@ export interface Instantane {
   stats: { gagnants: [number, number]; portres: [number, number]; fautes: [number, number]; vitres: number };
 }
 
-/** Taille fixe : 7 (en-tête) + 10 (score) + 5 (jauge) + 4 x 28 (joueurs) + 31 (balle) + 7 (stats). */
-export const TAILLE_INSTANTANE = 178;
+/** Taille fixe : 7 (en-tête) + 10 (score) + 5 (jauge) + 4 x 28 (joueurs) + 32 (balle) + 7 (stats). */
+export const TAILLE_INSTANTANE = 179;
 const TOURNE_MAX = 0.5;
 const POS_MAX = 100;
 const VIT_MAX = 200;
@@ -99,6 +104,7 @@ export function instantaneDe(jeu: Partie, seq: number): Instantane {
     faute: jeu.faute,
     rejoue: jeu.rejoue,
     echange: Math.min(255, jeu.echange),
+    scene: codeScene(jeu),
     smash: [jeu.jaugeSmash[0], jeu.jaugeSmash[1]],
     parade: jeu.parade ? { eq: jeu.parade.eq, t: jeu.parade.t } : null,
     pts: [jeu.pts[0], jeu.pts[1]],
@@ -135,6 +141,7 @@ export function instantaneDe(jeu: Partie, seq: number): Instantane {
       dehors: b.dehors,
       portres: b.portres,
       vif: b.vif,
+      accel: b.accel,
       super: b.super,
       service: b.service,
       filet: b.filet,
@@ -156,7 +163,7 @@ export function instantaneDe(jeu: Partie, seq: number): Instantane {
 export function encodeInstantane(s: Instantane): ArrayBuffer {
   const w = new Ecrivain(TAILLE_INSTANTANE);
   w.u8(VERSION_PROTOCOLE).u16(s.seq).f32(s.t);
-  w.u8(indice(PHASES, s.phase)).bits(s.pret, s.rejoue, s.jauge !== null);
+  w.u8(indice(PHASES, s.phase)).bits(s.pret, s.rejoue, s.jauge !== null, s.scene >= 1, s.scene === 2);
   w.u8(s.echange)
     .u8(s.smash[0] * 100)
     .u8(s.smash[1] * 100);
@@ -181,7 +188,7 @@ export function encodeInstantane(s: Instantane): ArrayBuffer {
   w.u8(b.sol)
     .u8(b.coup ? indice(COUPS, b.coup) : 255)
     .u8(b.vif * 100);
-  w.u8(b.super);
+  w.u8(b.super).u8((b.accel - 1) * 50);
   const st = s.stats;
   w.u8(st.gagnants[0]).u8(st.gagnants[1]).u8(st.portres[0]).u8(st.portres[1]);
   w.u8(st.fautes[0]).u8(st.fautes[1]).u8(st.vitres);
@@ -203,7 +210,8 @@ export function decodeInstantane(buf: ArrayBuffer): Instantane | null {
     const seq = r.u16();
     const t = r.f32(1e7);
     const phase = PHASES[r.enumere(PHASES.length)]!;
-    const [pret, rejoue, avecJauge] = r.bits() as [boolean, boolean, boolean];
+    const drapeaux = r.bits();
+    const [pret, rejoue, avecJauge] = drapeaux as [boolean, boolean, boolean];
     const echange = r.u8();
     const smash: [number, number] = [Math.min(100, r.u8()) / 100, Math.min(100, r.u8()) / 100];
     const codeParade = r.enumere(3);
@@ -267,6 +275,7 @@ export function decodeInstantane(buf: ArrayBuffer): Instantane | null {
     const c = r.u8();
     const vif = Math.min(125, r.u8());
     const superCoup = Math.min(5, r.u8());
+    const accel = 1 + Math.min(250, r.u8()) / 50;
     if (c !== 255 && c >= COUPS.length) return null;
     const stats = {
       gagnants: [r.u8(), r.u8()] as [number, number],
@@ -285,6 +294,7 @@ export function decodeInstantane(buf: ArrayBuffer): Instantane | null {
       faute,
       rejoue,
       echange,
+      scene: drapeaux[4] ? 2 : drapeaux[3] ? 1 : 0,
       smash,
       parade: codeParade > 0 ? { eq: equipe(codeParade - 1), t: tParade } : null,
       pts,
@@ -305,6 +315,7 @@ export function decodeInstantane(buf: ArrayBuffer): Instantane | null {
         dehors: dehors!,
         portres: portres!,
         vif: vif / 100,
+        accel,
         super: superCoup,
         service: service!,
         filet: filet!,

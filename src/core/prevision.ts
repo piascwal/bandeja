@@ -20,6 +20,7 @@ export function predit(b0: Balle, eq: Equipe): Prediction {
     portres: b0.portres,
     por: b0.por,
     vif: b0.vif,
+    accel: b0.accel,
     super: b0.super,
     rebonds: b0.rebonds,
   };
