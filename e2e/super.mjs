@@ -78,12 +78,15 @@ export default async function (env) {
   );
 
   // les scènes qui quittent la lune : le volcan (plongée dans la Terre, geyser), l'orbite (satellite),
-  // et les deux voyages au-dessus de la Terre : la tour de Pise qui penche, le nez du Sphinx cassé
+  // les voyages au-dessus de la Terre (la tour de Pise qui penche, le nez du Sphinx cassé, le Titanic coupé en deux)
+  // et l'erreur 404 (écran fissuré, écran bleu)
   for (const [variante, temps] of [
     [2, [0.7, 1.1, 1.5, 1.8, 2.0, 2.2, 2.35, 2.6, 3.0]],
     [3, [1.6, 1.9, 2.3, 2.6, 2.8, 2.9, 2.97, 3.1, 3.3]],
     [4, [0.8, 1.2, 1.6, 1.85, 2.15, 2.3, 2.45, 2.7, 3.3]],
     [5, [1.2, 1.9, 2.15, 2.4, 2.55, 2.75, 2.8, 3.0, 3.3]],
+    [6, [1.0, 1.9, 2.3, 2.7, 3.0, 3.25, 3.6, 3.75, 4.0, 4.4, 4.75]],
+    [7, [0.9, 1.15, 1.3, 1.5, 1.85, 2.2, 2.9, 3.9, 4.1, 4.25]],
   ]) {
     await p.evaluate((v) => {
       const b = window.bandeja;
@@ -92,7 +95,11 @@ export default async function (env) {
     }, variante);
     for (const t of temps) {
       await p.evaluate((x) => {
-        const f = window.bandeja.effets.finale;
+        const b = window.bandeja;
+        // le jeu tourne derrière la scène : on l'empêche de finir son échange (le point suivant arrêterait la scène)
+        b.jeu.phase = 'jeu';
+        b.jeu.tFrappe = 0;
+        const f = b.effets.finale;
         f.t = x;
         f.actif = true;
       }, t);
@@ -139,6 +146,11 @@ export default async function (env) {
       const j = b.jeu;
       const eq = j.humain.eq;
       j.phase = 'jeu';
+      // un échange qui démarre : ni durée de point héritée (rejeu), ni délai d'échange épuisé, ni scène en cours
+      j.tPhase = 0;
+      j.tFrappe = 0;
+      j.dureePoint = 1.9;
+      b.ralenti.arrete();
       j.parade = null;
       b.effets.finale.reinitialise();
       j.jaugeSmash[eq] = 1;

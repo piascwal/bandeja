@@ -2,8 +2,10 @@ import { ASCENSION_FIN_S, CHOC_S, VOYAGE_FIN_S, type FinaleSuper } from './final
 import { clamp01, h, melange } from './finale-outils';
 import { lune } from './lune';
 import { orbite } from './finale-orbite';
+import { erreur } from './finale-erreur';
 import { pise } from './finale-pise';
 import { sphinx } from './finale-sphinx';
+import { titanic } from './finale-titanic';
 import { voyage } from './finale-voyage';
 import { volcan } from './finale-volcan';
 import { C, COULEURS_SUPER } from './palette';
@@ -111,10 +113,12 @@ export function dessineFinale(
   if (!f.actif) return;
   const { g, W, H } = v;
   // le volcan plonge dans la Terre au lieu de monter ; l'orbite monte comme la lune puis tourne autour de la Terre ;
-  // Pise et le Sphinx partent en voyage au-dessus de la Terre, puis arrivent sur leur monument
-  const voyageur = f.variante === 4 || f.variante === 5;
+  // Pise, le Sphinx et le Titanic partent en voyage au-dessus de la Terre, puis arrivent sur leur destination ;
+  // l'erreur 404 reste sur l'écran du jeu : la balle vient fissurer la vitre de la caméra
+  const voyageur = f.variante >= 4 && f.variante <= 6;
   if (f.variante === 2 && f.t >= CHOC_S) volcan(v, f);
-  else if (voyageur && f.t >= VOYAGE_FIN_S) (f.variante === 4 ? pise : sphinx)(v, f);
+  else if (f.variante === 7 && f.t >= CHOC_S) erreur(v, f);
+  else if (voyageur && f.t >= VOYAGE_FIN_S) [pise, sphinx, titanic][f.variante - 4]!(v, f);
   else if (voyageur && f.t >= CHOC_S) voyage(v, f);
   else if (f.t >= ASCENSION_FIN_S) (f.variante === 3 ? orbite : lune)(v, f);
   else if (f.t >= CHOC_S) ascension(v, f);

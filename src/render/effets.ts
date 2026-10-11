@@ -1,6 +1,6 @@
 import { C, EQUIPES } from './palette';
 import type { Equipe } from '@core/types';
-import { BANDEAU_S, FinaleSuper } from './finale-super';
+import { FinaleSuper, minutage } from './finale-super';
 
 interface Particule {
   x: number;
@@ -182,7 +182,7 @@ export class Effets {
     if (this.bandeau) {
       this.bandeau.attente += dt;
       const f = this.finale;
-      if ((f.declenchee && (!f.actif || f.t >= BANDEAU_S)) || this.bandeau.attente > 7) {
+      if ((f.declenchee && (!f.actif || f.t >= minutage(f.variante).bandeau)) || this.bandeau.attente > 10) {
         this.annonce(this.bandeau.txt, this.bandeau.sous, this.bandeau.c, 1.4);
         this.bandeau = null;
       }

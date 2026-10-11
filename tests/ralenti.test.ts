@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { DUREE_POINT, DUREE_POINT_RALENTI, DUREE_POINT_SUPER, PAS } from '@core/constants';
 import { pas } from '@core/partie';
+import { gagne } from '@core/regles';
+import { FinaleSuper, minutage, RYTHME_FINALE } from '../src/render/finale-super';
 import { Ralenti } from '../src/app/ralenti';
 import { partieTest } from './outils';
 
@@ -43,5 +45,41 @@ describe('ralenti des points', () => {
     }
     expect(pointsLongs).toBeGreaterThan(0);
     expect(debuts).toBe(pointsLongs);
+  });
+
+  it('le rejeu d’un super coup attend la fin de sa scène finale, puis part aussitôt', () => {
+    const jeu = partieTest({ mode: 'match', jeux: 3, sieges: [] }, 7);
+    const r = new Ralenti();
+    const f = new FinaleSuper();
+    const joue = (secondes: number, quand?: () => void) => {
+      for (let i = 0; i < secondes / PAS; i++) {
+        pas(jeu, PAS);
+        jeu.evenements.length = 0;
+        f.maj(PAS);
+        r.suit(jeu, PAS, true, f);
+        quand?.();
+      }
+    };
+    // un échange en cours pendant quelques secondes, puis le point gagné par un super coup (scène du Titanic, la plus longue)
+    for (let i = 0; i < 60 / PAS && jeu.phase !== 'jeu'; i++) {
+      pas(jeu, PAS);
+      jeu.evenements.length = 0;
+      r.suit(jeu, PAS, true, f);
+    }
+    joue(2);
+    jeu.balle.super = 6;
+    gagne(jeu, 0, 'TITANIC !');
+    f.declenche(6, 0, 0);
+    expect(jeu.dureePoint).toBe(DUREE_POINT_SUPER);
+    let rejeuPendantScene = false;
+    let debutRejeu = -1;
+    joue((minutage(6).fin / RYTHME_FINALE) * 1.2, () => {
+      if (r.actif && f.actif) rejeuPendantScene = true;
+      if (r.actif && debutRejeu < 0) debutRejeu = f.t;
+    });
+    expect(rejeuPendantScene).toBe(false);
+    expect(debutRejeu).toBeGreaterThan(minutage(6).fin);
+    // le rejeu part dans la seconde qui suit la fin de la scène, pas à un délai fixe plus tardif
+    expect((debutRejeu - minutage(6).fin) / RYTHME_FINALE).toBeLessThan(0.5);
   });
 });

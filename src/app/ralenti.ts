@@ -3,6 +3,7 @@ import { nouvellePartie } from '@core/partie';
 import { sceneAttendue } from '@core/regles';
 import type { Partie } from '@core/types';
 import { Effets } from '@render/effets';
+import type { FinaleSuper } from '@render/finale-super';
 import { VueJoueurs } from '@render/regard';
 import { appliqueInstantane } from '../net/appliquer';
 import { instantaneDe, type Instantane } from '../net/instantane';
@@ -10,8 +11,8 @@ import { interpole } from '../net/synchro';
 
 /** Cadence d'enregistrement (en secondes de simulation) : assez fine pour un ralenti fluide une fois interpolé. */
 const PAS_CADRE = 1 / 30;
-/** On garde un peu plus que la durée rejouée. */
-const MEMOIRE_S = RALENTI_CLIP + 1;
+/** On garde de quoi rejouer les dernières secondes, même après l'attente de la scène d'un super coup. */
+const MEMOIRE_S = RALENTI_CLIP + Math.max(RALENTI_DEBUT, FINALE_SUPER_S) + 0.5;
 
 /**
  * Le ralenti des points : chaque écran enregistre ce qu'il affiche (la partie
@@ -57,16 +58,16 @@ export class Ralenti {
   }
 
   /** À chaque image, avec la partie telle qu'elle est affichée (après simulation ou application du réseau). */
-  suit(jeu: Partie, dt: number, miroir: boolean): void {
+  suit(jeu: Partie, dt: number, miroir: boolean, finale?: FinaleSuper): void {
     this.vue.miroir = miroir;
     if (jeu.mode !== 'match') return;
     const dernier = this.cadres[this.cadres.length - 1];
     if (!dernier || jeu.temps < dernier.t) this.cadres = [];
     if (!dernier || jeu.temps - dernier.t >= PAS_CADRE) {
       this.cadres.push(instantaneDe(jeu, 0));
-      while (this.cadres[0]!.t < jeu.temps - MEMOIRE_S - RALENTI_DEBUT) this.cadres.shift();
+      while (this.cadres[0]!.t < jeu.temps - MEMOIRE_S) this.cadres.shift();
     }
-    if (jeu.phase === 'point' && !jeu.rejoue) this.pendantPoint(jeu);
+    if (jeu.phase === 'point' && !jeu.rejoue) this.pendantPoint(jeu, finale);
     else if (jeu.phase !== 'point') {
       this.finEchange = null;
       this.dejaRejoue = false;
@@ -75,16 +76,15 @@ export class Ralenti {
     if (this.actif) this.avance(dt);
   }
 
-  private pendantPoint(jeu: Partie): void {
+  private pendantPoint(jeu: Partie, finale?: FinaleSuper): void {
     if (this.finEchange === null) this.finEchange = jeu.temps;
-    // un super coup est toujours rejoué, une fois sa scène finale terminée
+    const ecoule = jeu.temps - this.finEchange;
+    // un super coup est toujours rejoué, dès que sa scène finale est terminée (ou, à défaut, au bout de FINALE_SUPER_S)
     const superCoup = jeu.balle.super > 0;
-    if (
-      this.actif ||
-      this.dejaRejoue ||
-      jeu.temps - this.finEchange < (superCoup ? FINALE_SUPER_S : RALENTI_DEBUT)
-    )
-      return;
+    const pret = superCoup
+      ? (!!finale?.declenchee && !finale.actif) || ecoule >= FINALE_SUPER_S
+      : ecoule >= RALENTI_DEBUT;
+    if (this.actif || this.dejaRejoue || !pret) return;
     this.dejaRejoue = true;
     // le point doit avoir une scène (décidé par l'hôte, le même sur tous les écrans : voir `sceneAttendue`)
     if (!sceneAttendue(jeu)) return;

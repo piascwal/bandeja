@@ -410,8 +410,8 @@ voit venir le coup.
 quasi sans erreur, **imparable** (aucun adversaire ne peut toucher la balle) et qui gagne
 le point à son premier rebond. Il est toujours rapide (la balle file au plus vite que le
 filet le permet, puis repart comme un boulet après son rebond), avec une longue traînée de
-feu, et finit sur une scène. **Cinq animations**, tirées au hasard à chances égales
-(`VARIANTES_SUPER`, `varianteSuper` : 1 sur 5 chacune, quelle que soit la situation), toutes jouées
+feu, et finit sur une scène. **Sept animations**, tirées au hasard à chances égales
+(`VARIANTES_SUPER`, `varianteSuper` : 1 sur 7 chacune, quelle que soit la situation), toutes jouées
 un peu au ralenti (`RYTHME_FINALE` 0,7 : environ 5,4 s), sans aucun texte d'explication :
 
 - la **MÉTÉORE** (1) : boule de feu qui s'écrase, repart dans l'espace et finit sur la lune ;
@@ -435,7 +435,24 @@ un peu au ralenti (`RYTHME_FINALE` 0,7 : environ 5,4 s), sans aucun texte d'expl
   large (pyramides, chameau, guide et son groupe qui voient la lueur arriver), puis le gros plan du
   visage qui écarquille les yeux en voyant la balle grossir... et elle lui casse le nez, qui part en
   tournoyant pendant que les touristes au pied s'enfuient. Les petits personnages sont dans
-  `render/finale-foule.ts`.
+  `render/finale-foule.ts` ;
+- le **TITANIC** (6) : voyage jusqu'à l'Atlantique nord (`finale-voyage.ts`, la destination est en pleine
+  mer), puis `render/finale-titanic.ts`, dessiné sur une toile à part : nuit, lune, le paquebot (quatre
+  cheminées, ponts éclairés, fumée ; `finale-navire.ts`) fonce droit sur l'iceberg, la vigie crie, il
+  **braque au dernier moment** et passe devant sans le toucher... mais la balle tombe du ciel sur le
+  sommet de l'iceberg, qui bascule et pousse sa pointe sous l'eau dans la coque : onde de choc, éclats de
+  glace, la coque se fend, **se casse en deux** (la poupe se dresse autour de la cassure, la proue pique du
+  nez), les deux moitiés coulent, bulles. Sa scène dure plus longtemps (`TITANIC_FIN_S`, voir `minutage`) ;
+- l'**ERREUR 404** (7) : pas de voyage, tout se passe sur l'image du jeu (`render/finale-erreur.ts`) : la balle
+  rebondit et fonce vers la caméra qui filme la piste, grossit, frappe la vitre : l'écran se **fissure**
+  (rayons, anneaux, les éclats reprennent l'image du jeu un peu décalée), l'image **bugge** (bandes
+  décalées, teintes, neige), puis **écran bleu** quelques secondes (`finale-ecran-bleu.ts`) avec
+  `CRT_TENNIS_ERREUR_404` et une barre de redémarrage, et le téléviseur s'éteint (l'image se réduit en
+  une ligne puis un point).
+
+Chaque scène a son minutage (`minutage(variante)` dans `finale-super.ts` : début du fondu, fin, instant du
+bandeau) ; le rejeu d'un super coup part dès que sa scène est finie (au plus tard `FINALE_SUPER_S`) et la
+mémoire du rejeu garde assez d'images pour cela.
 
 Le CPU lâche aussi son super coup, rarement (5 % de ses coups quand sa jauge est pleine). Les coups ordinaires
 restent plafonnés à 0,97 de puissance.

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { BANDEAU_S, FINALE_FIN_S, FinaleSuper, RYTHME_FINALE } from '../src/render/finale-super';
+import { BANDEAU_S, FINALE_FIN_S, FinaleSuper, minutage, RYTHME_FINALE } from '../src/render/finale-super';
 import { Effets } from '../src/render/effets';
 import { DUREE_POINT_SUPER, FINALE_SUPER_S, RALENTI_CLIP, RALENTI_RYTHME } from '@core/constants';
 
@@ -38,6 +38,29 @@ describe('fin spectaculaire du super coup', () => {
     expect(FINALE_SUPER_S / 0.8).toBeGreaterThanOrEqual(FINALE_FIN_S / RYTHME_FINALE);
     // elle dure plus longtemps qu'avant (3,8 s)
     expect(FINALE_FIN_S / RYTHME_FINALE).toBeGreaterThan(5);
+  });
+});
+
+describe('le temps de chaque scène', () => {
+  it('le Titanic et l’erreur 404 durent plus longtemps, mais tiennent avant le ralenti', () => {
+    for (const v of [6, 7]) {
+      const m = minutage(v);
+      expect(m.fin).toBeGreaterThan(FINALE_FIN_S);
+      expect(m.bandeau).toBeLessThan(m.fin);
+      expect(m.fondu).toBeLessThanOrEqual(m.fin);
+      // la scène (temps réel) tient dans le délai maximal avant le ralenti (temps de simulation, à 0,8 du réel)
+      expect(FINALE_SUPER_S / 0.8).toBeGreaterThanOrEqual(m.fin / RYTHME_FINALE);
+      const fx = new Effets();
+      fx.finale.declenche(v, 0, 0);
+      for (let t = 0; t < (m.fin - 0.1) / RYTHME_FINALE; t += 0.05) fx.maj(0.05);
+      expect(fx.finale.actif).toBe(true);
+      for (let t = 0; t < 0.5; t += 0.05) fx.maj(0.05);
+      expect(fx.finale.actif).toBe(false);
+    }
+  });
+
+  it('les autres scènes gardent le minutage de base', () => {
+    for (const v of [1, 2, 3, 4, 5]) expect(minutage(v).fin).toBe(FINALE_FIN_S);
   });
 });
 

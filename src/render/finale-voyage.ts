@@ -14,10 +14,11 @@ const A_CIBLE = 0.5; // la destination, à droite
 const ROTATION = 0.3; // la Terre tourne pendant le voyage : le décor défile sous la balle
 
 /** Les terres du globe : [angle, profondeur sous l'horizon, demi-largeur, demi-hauteur (px), couleur]. */
-function terres(sphinx: boolean): [number, number, number, number, string][] {
+function terres(variante: number): [number, number, number, number, string][] {
+  const sphinx = variante === 5;
   const vert = '#3e9a4a';
   const cible = sphinx ? '#d8b45a' : vert;
-  return [
+  const liste: [number, number, number, number, string][] = [
     [A_DEPART, 16, 34, 20, vert],
     [A_DEPART - 0.25, 40, 60, 34, '#4aa856'],
     [-0.02, 26, 9, 5, '#4aa856'],
@@ -26,11 +27,12 @@ function terres(sphinx: boolean): [number, number, number, number, string][] {
     [A_CIBLE + ROTATION + 0.22, 44, 66, 36, sphinx ? '#c9a24a' : '#4aa856'],
     [1.5, 30, 50, 30, vert],
   ];
+  // le Titanic : la destination est en pleine mer, sans la moindre terre
+  return variante === 6 ? liste.filter((_, i) => i !== 4 && i !== 5) : liste;
 }
 
 export function voyage(v: Vue, f: FinaleSuper): void {
   const { g, W, H } = v;
-  const sphinx = f.variante === 5;
   const duree = VOYAGE_FIN_S - CHOC_S;
   const tau = f.t - CHOC_S;
   const k = clamp01(tau / (duree - 0.2)); // avancée de la balle
@@ -75,7 +77,7 @@ export function voyage(v: Vue, f: FinaleSuper): void {
   g.clip();
   g.translate(cx, cy);
   g.rotate(rot);
-  for (const [a, d, rx, ry, c] of terres(sphinx)) {
+  for (const [a, d, rx, ry, c] of terres(f.variante)) {
     g.save();
     g.rotate(a);
     g.fillStyle = c;
@@ -98,7 +100,7 @@ export function voyage(v: Vue, f: FinaleSuper): void {
   px(g, dx - 6, dy - 4, 12, 5, '#2f7d3a');
   px(g, dx - 6, dy - 4, 12, 1, '#ffffff');
   px(g, dx, dy - 4, 1, 5, '#ffffff');
-  repere(g, cibleX, cibleY, sphinx, f.t);
+  repere(g, cibleX, cibleY, f.variante, f.t);
   // la balle : un arc au-dessus de la mer, qui retombe sur la cible
   const alt = (q: number) => Math.sin(Math.PI * q) * H * 0.38;
   const posBalle = (q: number) => ecran(A_DEPART + (A_CIBLE + ROTATION - A_DEPART) * q, alt(q));
@@ -127,8 +129,13 @@ export function voyage(v: Vue, f: FinaleSuper): void {
 }
 
 /** Le repère de la destination : une épingle qui clignote et la silhouette du monument (tour ou pyramides). */
-function repere(g: CanvasRenderingContext2D, x: number, y: number, sphinx: boolean, t: number): void {
-  if (sphinx) {
+function repere(g: CanvasRenderingContext2D, x: number, y: number, variante: number, t: number): void {
+  if (variante === 6) {
+    // l'Atlantique nord : un iceberg et le sillage d'un paquebot
+    px(g, x - 4, y - 3, 8, 3, '#e8f6ff');
+    px(g, x - 2, y - 6, 4, 3, '#ffffff');
+    px(g, x - 7, y + 2, 14, 1, '#9fd0ee');
+  } else if (variante === 5) {
     for (const [ox, s] of [
       [-5, 5],
       [3, 4],

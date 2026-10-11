@@ -274,7 +274,7 @@ export function decodeInstantane(buf: ArrayBuffer): Instantane | null {
     const sol = r.u8();
     const c = r.u8();
     const vif = Math.min(125, r.u8());
-    const superCoup = Math.min(5, r.u8());
+    const superCoup = Math.min(7, r.u8());
     const accel = 1 + Math.min(250, r.u8()) / 50;
     if (c !== 255 && c >= COUPS.length) return null;
     const stats = {

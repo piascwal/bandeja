@@ -9,24 +9,36 @@ import type { Balle, Coup, Effet, Equipe, Joueur, Partie } from './types';
  * Les super coups : jauge pleine, le bouton SMASH déclenche une frappe
  * monstrueuse, qui gagne forcément le point (la balle est imparable : aucun
  * adversaire ne peut la toucher, et le point est compté à son premier rebond).
- * Cinq animations, tirées au hasard à chances égales :
+ * Sept animations, tirées au hasard à chances égales :
  * - MÉTÉORE : un smash de feu qui s'écrase puis repart dans l'espace et finit sur la lune ;
  * - VOLCAN : il perfore le court (pas de rebond), traverse la Terre par son centre et ressort de
  *   l'autre côté en geyser de lave ;
  * - ORBITE : la balle rebondit en orbite et fait exploser un satellite (petit ralenti) ;
  * - PISE : la balle file au-dessus de la Terre jusqu'en Italie et fait pencher la tour de Pise ;
- * - SPHINX : la balle file jusqu'en Égypte et casse le nez du Sphinx.
+ * - SPHINX : la balle file jusqu'en Égypte et casse le nez du Sphinx ;
+ * - TITANIC : la balle file jusqu'à l'Atlantique nord : le Titanic évitait l'iceberg, c'est elle qui l'envoie
+ *   dans sa coque, qui se casse en deux ;
+ * - ERREUR 404 : la balle remonte vers la caméra, fissure l'écran et fait planter le jeu (écran bleu).
  */
-export type VarianteSuper = 1 | 2 | 3 | 4 | 5;
+export type VarianteSuper = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
-export const NOMS_SUPER = ['', 'METEORE !', 'VOLCAN !', 'ORBITE !', 'PISE !', 'SPHINX !'] as const;
+export const NOMS_SUPER = [
+  '',
+  'METEORE !',
+  'VOLCAN !',
+  'ORBITE !',
+  'PISE !',
+  'SPHINX !',
+  'TITANIC !',
+  'ERREUR 404 !',
+] as const;
 
-/** Les cinq animations du super coup : la lune (météore), le volcan, le satellite (orbite), la tour de Pise, le Sphinx. */
-export const VARIANTES_SUPER: readonly VarianteSuper[] = [1, 2, 3, 4, 5];
+/** Les sept animations du super coup : la lune (météore), le volcan, le satellite (orbite), Pise, le Sphinx, le Titanic, l'erreur 404. */
+export const VARIANTES_SUPER: readonly VarianteSuper[] = [1, 2, 3, 4, 5, 6, 7];
 
 export function varianteSuper(b: Balle, loin: number, rng?: Aleatoire): VarianteSuper {
   if (!rng) return loin < 3.5 ? 2 : loin > 6 ? 3 : 1;
-  // dans le jeu, le choix est au hasard : chacune des cinq animations a la même chance, quelle que soit la situation
+  // dans le jeu, le choix est au hasard : chacune des sept animations a la même chance, quelle que soit la situation
   return VARIANTES_SUPER[Math.floor(rng() * VARIANTES_SUPER.length)]!;
 }
 
