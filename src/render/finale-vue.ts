@@ -7,6 +7,7 @@ import { sphinx } from './finale-sphinx';
 import { voyage } from './finale-voyage';
 import { volcan } from './finale-volcan';
 import { C, COULEURS_SUPER } from './palette';
+import { texte } from './police';
 import { px } from './primitives';
 import type { ZoneBouton } from './ui';
 import type { Vue } from './vue';
@@ -100,7 +101,13 @@ function ascension(v: Vue, f: FinaleSuper): void {
  * et le filtre de particules. Renvoie vrai si l'écran est caché par une scène
  * plein cadre ; un appui passe la scène.
  */
-export function dessineFinale(v: Vue, f: FinaleSuper, zones: ZoneBouton[], onPasse: () => void): void {
+export function dessineFinale(
+  v: Vue,
+  f: FinaleSuper,
+  zones: ZoneBouton[],
+  onPasse: () => void,
+  attend = false,
+): void {
   if (!f.actif) return;
   const { g, W, H } = v;
   // le volcan plonge dans la Terre au lieu de monter ; l'orbite monte comme la lune puis tourne autour de la Terre ;
@@ -116,5 +123,7 @@ export function dessineFinale(v: Vue, f: FinaleSuper, zones: ZoneBouton[], onPas
   g.fillStyle = '#000';
   g.fillRect(0, 0, W, 6);
   g.fillRect(0, H - 6, W, 6);
+  // en réseau, quelqu'un qui a touché attend que les autres joueurs aient fini ou touché aussi
+  if (attend) texte(g, 'EN ATTENTE DES AUTRES JOUEURS...', W - 8, H - 18, C.or, 1, 'd');
   zones.push({ x: 0, y: 0, w: W, h: H, act: onPasse });
 }

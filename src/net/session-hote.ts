@@ -1,6 +1,7 @@
 import { Annuaire, Limiteur, idAleatoire, type Signal } from '@piascwal/lan-kit';
 import { COMMANDE_VIDE } from '@core/partie';
 import type { Commande } from '@core/types';
+import { Passes } from './passes';
 import { basculePause, finAbsence, marqueAbsent, Minuteries, revient } from './absences';
 import { valideAnnonceBandeja, type AnnonceBandeja } from './annonce';
 import { lisCtrl, type MsgCtrl } from './ctrl';
@@ -62,6 +63,8 @@ export class SessionHote {
   private readonly minuteries = new Minuteries();
   private score: [number, number] = [0, 0];
   private ferme_ = false;
+  /** qui a vu ou passé la scène du point en cours */
+  readonly passes = new Passes();
 
   private constructor(
     private readonly annuaire: Annuaire<AnnonceBandeja>,
@@ -308,6 +311,8 @@ export class SessionHote {
       if (appliqueAction(e, m.appareil, msg.x)) this.diffuse();
     } else if (msg.t === 'pause') {
       if (siegeDe(e, m.appareil) >= 0) this.pause(msg.oui);
+    } else if (msg.t === 'passe') {
+      this.passes.ajoute(siegeDe(e, m.appareil));
     } else if (msg.t === 'quitte') {
       this.retire(m);
     }

@@ -7,6 +7,7 @@ import {
   LONG,
   MIL,
   RALENTI_ECHANGE,
+  SCENE_MARGE_S,
   SERV,
 } from './constants';
 import { placeService } from './service';
@@ -94,6 +95,20 @@ export function dansCarre(jeu: Partie): boolean {
   const b = jeu.balle;
   if (Math.abs(b.x - MIL) > SERV) return false;
   return jeu.serveur.y > 5 ? b.y < 5 : b.y > 5;
+}
+
+/** Le point en cours a-t-il une scène (fin de super coup, ralenti) que chaque écran joue ? */
+export const sceneAttendue = (jeu: Partie): boolean =>
+  jeu.mode === 'match' && jeu.phase === 'point' && jeu.dureePoint > DUREE_POINT;
+
+/** Quand le point finit tout seul : l'annonce, ou, avec une scène, la scène avec sa marge. */
+export const dureeMaxPoint = (jeu: Partie): number =>
+  jeu.dureePoint + (sceneAttendue(jeu) ? SCENE_MARGE_S : 0);
+
+/** Tous ont vu ou passé la scène : le point finit au prochain pas (jamais avant la fin de l'annonce). */
+export function termineScene(jeu: Partie): void {
+  if (jeu.phase === 'point' && jeu.tPhase >= DUREE_POINT)
+    jeu.tPhase = Math.max(jeu.tPhase, dureeMaxPoint(jeu) + 1e-6);
 }
 
 export function gagne(jeu: Partie, eq: Equipe, raison: string): void {

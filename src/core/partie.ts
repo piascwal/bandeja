@@ -7,7 +7,7 @@ import { appliqueCommande } from './humain';
 import { pilotageIA } from './ia';
 import { nouveauJoueur } from './joueurs';
 import { prevoir } from './prevision';
-import { finPoint, gagne, regle } from './regles';
+import { dureeMaxPoint, finPoint, gagne, regle } from './regles';
 import { majService, placeService } from './service';
 import { avanceParade } from './super-coup';
 import type { Commande, Joueur, Mode, Partie } from './types';
@@ -150,5 +150,5 @@ export function pas(
   if (b.trace.length > (b.super ? 40 : 16)) b.trace.shift();
   if (jeu.phase === 'jeu' && jeu.tFrappe > DUREE_MAX_ECHANGE)
     gagne(jeu, b.sol >= 1 ? b.eqF : b.camp, 'POINT');
-  if (jeu.phase === 'point' && jeu.tPhase > jeu.dureePoint) finPoint(jeu);
+  if (jeu.phase === 'point' && jeu.tPhase > dureeMaxPoint(jeu)) finPoint(jeu);
 }

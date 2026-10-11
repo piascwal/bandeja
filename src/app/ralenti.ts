@@ -58,6 +58,11 @@ export class Ralenti {
     this.actif = false;
   }
 
+  /** Le rejeu du point en cours est terminé, ou n'aura pas lieu : cet écran n'a plus rien à montrer. */
+  get termine(): boolean {
+    return this.dejaRejoue && !this.actif;
+  }
+
   /** À chaque image, avec la partie telle qu'elle est affichée (après simulation ou application du réseau). */
   suit(jeu: Partie, dt: number, miroir: boolean): void {
     this.vue.miroir = miroir;

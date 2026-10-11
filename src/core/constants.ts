@@ -76,6 +76,11 @@ export const RALENTI_RYTHME = 0.6;
 export const DUREE_POINT_RALENTI = RALENTI_DEBUT + RALENTI_CLIP / RALENTI_RYTHME + 0.9;
 /** Un point gagné par un super coup : la fin spectaculaire d'abord, puis le ralenti. */
 export const DUREE_POINT_SUPER = FINALE_SUPER_S + RALENTI_CLIP / RALENTI_RYTHME + 0.9;
+/**
+ * Une scène (fin de super coup, ralenti) se joue sur chaque écran : le point dure jusqu'à ce que tous
+ * les joueurs l'aient vue ou passée, mais au plus DUREE_POINT_* + cette marge (appareil lent ou muet).
+ */
+export const SCENE_MARGE_S = 4;
 
 export const NIVEAUX: readonly Niveau[] = [
   { nom: 'FACILE', vit: 0.8, reac: 0.34, err: 0.9, agress: 0.25, serv: 0.13 },

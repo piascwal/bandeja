@@ -208,9 +208,16 @@ qu'utilisent les tests de bout en bout).
 Un échange d'au moins 2,5 s est rejoué après l'annonce du point : ses 2,4 dernières
 secondes, à 60 % de la vitesse, sous une pastille RALENTI (constantes `RALENTI_*`
 dans `core/constants.ts`). Chaque écran enregistre ce qu'il affiche (`app/ralenti.ts`)
-et rejoue sur une partie à part : aucun message réseau. Le cœur ne fait qu'allonger
-l'annonce du point (`jeu.dureePoint`). Toucher l'écran passe le rejeu ; seul ou chez
-l'hôte, cela passe aussi l'annonce, un invité ne ferme que le sien.
+et rejoue sur une partie à part. Le cœur ne fait qu'allonger l'annonce du point
+(`jeu.dureePoint`, plus une marge de sécurité `SCENE_MARGE_S`).
+
+**Passer une scène (fin de super coup, rejeu).** Le point ne finit pas sur un délai fixe : il
+reprend dès que **tous les joueurs** ont vu leur scène en entier ou ont touché l'écran pour la
+passer (`app/passe-scene.ts`), sans attente de plus. Seul, un appui passe tout de suite. En
+réseau, celui qui touche reste sur sa scène avec « EN ATTENTE DES AUTRES JOUEURS... » jusqu'à ce
+que les autres aient touché ou fini la leur : chaque invité prévient l'hôte (message `passe`, une
+fois par point, `net/passes.ts`), et c'est l'hôte qui reprend le jeu (`termineScene`), ce qui
+coupe les scènes de tout le monde. Si un appareil ne répond pas, le point finit à la marge.
 
 ### Tests de bout en bout
 
@@ -449,7 +456,7 @@ filtre de particules sur tout l'écran, puis (météore et orbite) la balle mont
 et, pour la météore, arrive à toute vitesse sur la lune (une grosse boule grise à l'horizon arrondi, criblée d'un ensemble fixe de
 cratères) et s'y écrase (éclair, onde de choc, débris) toujours dans le même cratère
 (rien n'est mémorisé d'une partie à l'autre). Le bandeau du point s'affiche alors ; un
-appui passe la scène. Le ralenti d'un super coup est toujours rejoué, après la scène.
+appui passe la scène (en réseau : quand tous ont touché, voir « Ralenti des points »). Le ralenti d'un super coup est toujours rejoué, après la scène.
 
 **Lob subi.** Quand un lob a passé le joueur (la balle a rebondi, ou il est loin
 du filet), le renvoi est normal, son coup est limité à mi-puissance

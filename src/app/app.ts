@@ -19,6 +19,7 @@ import { chargePreferences, sauvePreferences, type Preferences } from './prefere
 import { ParcoursLan } from './parcours-lan';
 import { MiseAJour } from './mise-a-jour';
 import { codeDuLien } from '@piascwal/lan-kit';
+import { PasseScene } from './passe-scene';
 import { Ralenti } from './ralenti';
 import { rendu } from './rendu';
 
@@ -79,6 +80,7 @@ export class BandejaApp {
   private jaugePleine: [boolean, boolean] = [false, false];
   private cumul = 0;
   private ralentiAvant = false;
+  readonly passe = new PasseScene();
 
   constructor(readonly ecran: HTMLCanvasElement) {
     this.g = ecran.getContext('2d')!;
@@ -227,17 +229,11 @@ export class BandejaApp {
   }
 
   /**
-   * Toucher l'écran pendant le rejeu : seul, ou chez l'hôte, on passe aussi
-   * l'annonce du point ; un invité ne fait que fermer son propre rejeu.
+   * Toucher l'écran pendant une scène (fin de super coup, rejeu) : seul, on passe tout de suite ;
+   * en réseau, la scène continue jusqu'à ce que tous les joueurs aient touché (voir `PasseScene`).
    */
   passeRalenti(): void {
-    if (this.effets.finale.actif) {
-      // d'abord la scène du super coup ; le bandeau tombe aussitôt
-      this.effets.finale.arrete();
-      return;
-    }
-    this.ralenti.arrete();
-    if (!this.lan.actif || this.lan.hote) this.jeu.tPhase = Math.max(this.jeu.tPhase, this.jeu.dureePoint);
+    this.passe.demande();
   }
 
   ouvreCommandes(oui: boolean): void {
@@ -339,6 +335,7 @@ export class BandejaApp {
       // le ralenti commence : le cratère du super coup ne restent pas affichés après lui
       if (this.ralenti.actif && !this.ralentiAvant) this.effets.repare();
       this.ralentiAvant = this.ralenti.actif;
+      this.passe.maj(this);
       this.surveilleJauges();
     }
     if (!lan.actif && this.jeu.mode === 'match' && this.jeu.phase === 'fin' && this.ecranUI === 'jeu')

@@ -76,7 +76,7 @@ export function rendu(app: BandejaApp, t: number): void {
 
   const reglages = app.pref;
   if (rejeu) {
-    dessineRalenti(v, app.boutons, app.ralenti.progression, t, () => app.passeRalenti());
+    dessineRalenti(v, app.boutons, app.ralenti.progression, t, () => app.passeRalenti(), app.passe.touche);
   } else if (ecranUI === 'jeu') {
     dessineJauge(v, jeu);
     if (app.lan.actif) dessinePings(v, construitPings(app.lan.contexte()));
@@ -173,7 +173,8 @@ export function rendu(app: BandejaApp, t: number): void {
   }
   const attente = ecranUI === 'jeu' || ecranUI === 'pause' ? app.lan.vueAttente() : null;
   if (attente) dessineAttente(v, app.boutons, attente, t);
-  if (!rejeu && ecranUI === 'jeu') dessineFinale(v, effets.finale, app.boutons, () => app.passeRalenti());
+  if (!rejeu && ecranUI === 'jeu')
+    dessineFinale(v, effets.finale, app.boutons, () => app.passeRalenti(), app.passe.touche);
   if (effets.flash > 0) {
     g.fillStyle = `rgba(255,255,255,${effets.flash * 0.5})`;
     g.fillRect(0, 0, W, H);

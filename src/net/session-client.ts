@@ -229,6 +229,11 @@ export class SessionClient {
     this.envoie({ t: 'pause', oui });
   }
 
+  /** Cet appareil a vu (ou passé) la scène du point : l'hôte attend que tous les joueurs l'aient fait. */
+  passe(): void {
+    this.envoie({ t: 'passe' });
+  }
+
   /** À appeler à chaque pas ou presque : retient la commande et l'envoie à l'hôte (joueurs seulement). */
   envoieCommande(c: Commande): void {
     this.emetteur.suit(c);

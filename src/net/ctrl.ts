@@ -8,7 +8,7 @@ import { valideAction, valideEtat, type ActionSalon, type EtatSalon } from './sa
  * Messages du canal fiable (JSON). Dans les deux sens, ni ordre ni débit ne
  * sont à craindre ; tout est tout de même validé à la réception.
  *
- * Invité → hôte : `bonjour` (se présente), `action` (siège), `pause`, `quitte`.
+ * Invité → hôte : `bonjour` (se présente), `action` (siège), `pause`, `passe` (a vu ou passé la scène du point), `quitte`.
  * Hôte → invité : `etat` (le salon), `debut` (le match commence), `evt`, `pings` (la latence de chaque siège vue par l'hôte, en ms).
  * Dans les deux sens : `ping` / `pong` (latence et coupure, voir lan-kit).
  */
@@ -16,6 +16,7 @@ export type MsgCtrl =
   | { t: 'bonjour'; v: number; nom: string; appareil: string; jeton: string }
   | { t: 'action'; x: ActionSalon }
   | { t: 'pause'; oui: boolean }
+  | { t: 'passe' }
   | { t: 'quitte' }
   | { t: 'etat'; e: EtatSalon }
   | { t: 'debut'; siege: number; niveau: number; jeux: number; sieges: number[]; graine: number }
@@ -58,6 +59,8 @@ export function lisCtrl(o: unknown): MsgCtrl | null {
     }
     case 'pause':
       return typeof m.oui === 'boolean' ? { t: 'pause', oui: m.oui } : null;
+    case 'passe':
+      return { t: 'passe' };
     case 'quitte':
       return { t: 'quitte' };
     case 'etat': {
