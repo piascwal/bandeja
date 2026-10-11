@@ -171,10 +171,10 @@ describe('le super coup', () => {
     expect(v({ z: 2.5 }, 6)).toBe(1);
     expect(v({ z: 2.5 }, 2)).toBe(3);
     expect(v({ z: 2.5 }, 8.5)).toBe(2);
-    expect(NOMS_SUPER.filter(Boolean)).toHaveLength(3);
+    expect(NOMS_SUPER.filter(Boolean)).toHaveLength(5);
   });
 
-  it('dans le jeu, trois animations seulement (lune, volcan, satellite), chacune avec la même chance', () => {
+  it('dans le jeu, cinq animations (lune, volcan, satellite, Pise, Sphinx), chacune avec la même chance', () => {
     for (const [balle, x] of [
       [{ z: 0.8, vx: -20 }, 5],
       [{ z: 2.5 }, 8.5],
@@ -182,13 +182,13 @@ describe('le super coup', () => {
     ] as [Partial<Balle>, number][]) {
       const { jeu } = situation(balle, x);
       const rng = graine(5);
-      const vus = [0, 0, 0, 0];
-      const N = 6000;
+      const vus = [0, 0, 0, 0, 0, 0];
+      const N = 10000;
       for (let i = 0; i < N; i++) vus[varianteSuper(jeu.balle, Math.abs(x - 10), rng)]!++;
       expect(vus[0]).toBe(0);
       for (const v of VARIANTES_SUPER) {
-        expect(vus[v]! / N, `variante ${v}`).toBeGreaterThan(1 / 3 - 0.03);
-        expect(vus[v]! / N, `variante ${v}`).toBeLessThan(1 / 3 + 0.03);
+        expect(vus[v]! / N, `variante ${v}`).toBeGreaterThan(1 / 5 - 0.025);
+        expect(vus[v]! / N, `variante ${v}`).toBeLessThan(1 / 5 + 0.025);
       }
     }
   });
@@ -198,6 +198,8 @@ describe('le super coup', () => {
       [1, { z: 2.5 }, 6],
       [2, { z: 2.5 }, 8.5],
       [3, { z: 2.5 }, 2],
+      [4, { z: 2.5 }, 6],
+      [5, { z: 0.8, vx: -20 }, 5],
       [1, { z: 0.8, vx: -20 }, 5],
       [2, { z: 0.5, vx: -3 }, 8.5],
     ] as [number, Partial<Balle>, number][]) {

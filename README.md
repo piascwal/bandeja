@@ -399,9 +399,9 @@ voit venir le coup.
 quasi sans erreur, **imparable** (aucun adversaire ne peut toucher la balle) et qui gagne
 le point à son premier rebond. Il est toujours rapide (la balle file au plus vite que le
 filet le permet, puis repart comme un boulet après son rebond), avec une longue traînée de
-feu, et finit sur une scène. **Trois animations**, tirées au hasard à chances égales
-(`VARIANTES_SUPER`, `varianteSuper` : 1 sur 3 chacune, quelle que soit la situation), toutes jouées
-un peu au ralenti (`RYTHME_FINALE` 0,7 : environ 5,4 s) :
+feu, et finit sur une scène. **Cinq animations**, tirées au hasard à chances égales
+(`VARIANTES_SUPER`, `varianteSuper` : 1 sur 5 chacune, quelle que soit la situation), toutes jouées
+un peu au ralenti (`RYTHME_FINALE` 0,7 : environ 5,4 s), sans aucun texte d'explication :
 
 - la **MÉTÉORE** (1) : boule de feu qui s'écrase, repart dans l'espace et finit sur la lune ;
 - le **VOLCAN** (2) : il **perfore le court** (pas de rebond) ; un seul plan continu
@@ -409,13 +409,22 @@ un peu au ralenti (`RYTHME_FINALE` 0,7 : environ 5,4 s) :
   balle descend tout droit en creusant un tunnel, passe le centre (la lave s'accroche à elle), la Terre
   fait un demi-tour ; la caméra se colle alors à la balle qui fonce vers la surface (traits de vitesse,
   lave dans son sillage, l'image tremble), elle jaillit du volcan dans une explosion (éclair, anneaux
-  de choc, bombes de lave), puis l'éruption (`render/finale-geyser.ts`), la balle au sommet du geyser.
-  Des légendes disent ce qui se passe ;
+  de choc, bombes de lave), puis l'éruption (`render/finale-geyser.ts`), la balle au sommet du geyser ;
 - l'**ORBITE** (3) : la Terre entière, la balle se met en orbite et en fait **deux tours** à toute
   vitesse (elle passe derrière la Terre), puis un petit ralenti la montre arriver sur un **satellite
   immobile** : explosion en chaîne, quatre anneaux de choc de couleurs, gerbe de rayons, panneaux
   solaires arrachés qui tournoient, la Terre éclairée, l'image qui tremble ; la balle file tout droit
-  à travers le nuage (`render/finale-orbite.ts`).
+  à travers le nuage (`render/finale-orbite.ts`) ;
+- **PISE** (4) et le **SPHINX** (5) partent en voyage (`render/finale-voyage.ts`) : vue de l'espace,
+  la Terre défile, la balle quitte le petit court, file au-dessus de la mer et retombe sur sa
+  destination, puis la caméra plonge. À **Pise** (`render/finale-pise.ts`), la tour est encore bien
+  droite ; la balle la frappe en haut, elle part, oscille et reste penchée (`inclinaisonPise`) : les
+  pigeons s'envolent, les touristes sursautent, montrent du doigt, s'enfuient, puis deux d'entre eux
+  prennent la pose pour « retenir » la tour. Au **Sphinx** (`render/finale-sphinx.ts`) : le plan
+  large (pyramides, chameau, guide et son groupe qui voient la lueur arriver), puis le gros plan du
+  visage qui écarquille les yeux en voyant la balle grossir... et elle lui casse le nez, qui part en
+  tournoyant pendant que les touristes au pied s'enfuient. Les petits personnages sont dans
+  `render/finale-foule.ts`.
 
 Le CPU lâche aussi son super coup, rarement (5 % de ses coups quand sa jauge est pleine). Les coups ordinaires
 restent plafonnés à 0,97 de puissance.

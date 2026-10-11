@@ -49,5 +49,5 @@ export const NOMS_COUPS: Record<Coup, string> = {
   cote: 'VITRE DE COTE',
 };
 
-/** Couleur de chaque super coup : 1 météore, 2 volcan, 3 orbite. */
-export const COULEURS_SUPER: readonly string[] = ['', '#ff6a2a', '#ff3b12', '#9ab8ff'];
+/** Couleur de chaque super coup : 1 météore, 2 volcan, 3 orbite, 4 Pise, 5 Sphinx. */
+export const COULEURS_SUPER: readonly string[] = ['', '#ff6a2a', '#ff3b12', '#9ab8ff', '#ffd27a', '#ff9a3a'];

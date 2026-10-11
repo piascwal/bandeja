@@ -83,8 +83,8 @@ export default async function (env) {
   await attends(150);
   await env.capture(p, 'hud-echange');
 
-  // les trois super coups, joués pour de bon : en vol (traînée de feu), puis le choc (cratère) et la scène
-  for (const v of [1, 2, 3]) {
+  // les cinq super coups, joués pour de bon : en vol (traînée de feu), puis le choc (cratère) et la scène
+  for (const v of [1, 2, 3, 4, 5]) {
     await p.evaluate(async (variante) => {
       const { executeCoup } = await import('/src/core/coups.ts');
       const { xProf } = await import('/src/core/terrain.ts');

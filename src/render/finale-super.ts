@@ -1,13 +1,15 @@
 /**
  * La fin spectaculaire d'un super coup, côté affichage (chaque écran la joue pour
  * lui-même) : le choc (zoom sur l'impact, terrain qui casse), puis la scène de la
- * variante (la lune, le volcan ou le satellite), puis le bandeau du point. Voir
- * `finale-vue.ts` pour le dessin. Les temps ci-dessous sont ceux de la scène, qui
+ * variante (la lune, le volcan, le satellite, la tour de Pise ou le Sphinx), puis
+ * le bandeau du point. Voir `finale-vue.ts` pour le dessin. Les temps ci-dessous sont ceux de la scène, qui
  * avance à RYTHME_FINALE du temps réel : elle dure FINALE_FIN_S / RYTHME_FINALE s.
  */
 export const RYTHME_FINALE = 0.7;
 export const CHOC_S = 0.55;
 export const ASCENSION_FIN_S = 1.55;
+/** Pise et Sphinx : le voyage au-dessus de la Terre (depuis le choc) finit ici, la destination commence. */
+export const VOYAGE_FIN_S = 1.75;
 export const LUNE_FIN_S = 3.45;
 export const FINALE_FIN_S = 3.8;
 /** Le bandeau du point s'affiche à ce moment. */

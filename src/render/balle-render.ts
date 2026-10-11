@@ -6,11 +6,13 @@ import { C, TRAINEES } from './palette';
 import { px } from './primitives';
 import type { Vue } from './vue';
 
-/** Les trois super coups : couleurs de la traînée (queue, milieu, tête), épaisseur et couleur du halo. */
+/** Les cinq super coups : couleurs de la traînée (queue, milieu, tête), épaisseur et couleur du halo. */
 const STYLES_SUPER: Record<number, { couleurs: [string, string, string]; taille: number; halo: string }> = {
   1: { couleurs: ['#c81e0a', '#ff6a1f', '#fff2b0'], taille: 6, halo: '#ff6a2a' }, // météore : boule de feu
   2: { couleurs: ['#5a0800', '#ff3b12', '#ffd27a'], taille: 6, halo: '#ff3b12' }, // volcan : lave
   3: { couleurs: ['#2a2fb0', '#9ab8ff', '#ffffff'], taille: 5, halo: '#9ab8ff' }, // orbite : feu bleu pâle
+  4: { couleurs: ['#8a6a10', '#ffd27a', '#ffffff'], taille: 6, halo: '#ffd27a' }, // Pise : feu doré
+  5: { couleurs: ['#7a3a08', '#ff9a3a', '#fff2b0'], taille: 6, halo: '#ff9a3a' }, // Sphinx : feu de sable
 };
 
 /**

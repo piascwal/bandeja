@@ -77,10 +77,13 @@ export default async function (env) {
     'la scène finale se termine',
   );
 
-  // les deux scènes qui quittent la lune : le volcan (plongée dans la Terre, geyser) et l'orbite (satellite)
+  // les scènes qui quittent la lune : le volcan (plongée dans la Terre, geyser), l'orbite (satellite),
+  // et les deux voyages au-dessus de la Terre : la tour de Pise qui penche, le nez du Sphinx cassé
   for (const [variante, temps] of [
     [2, [0.7, 1.1, 1.5, 1.8, 2.0, 2.2, 2.35, 2.6, 3.0]],
     [3, [1.6, 1.9, 2.3, 2.6, 2.8, 2.9, 2.97, 3.1, 3.3]],
+    [4, [0.8, 1.2, 1.6, 1.85, 2.15, 2.3, 2.45, 2.7, 3.3]],
+    [5, [1.2, 1.9, 2.15, 2.4, 2.55, 2.75, 2.8, 3.0, 3.3]],
   ]) {
     await p.evaluate((v) => {
       const b = window.bandeja;

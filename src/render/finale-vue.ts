@@ -1,7 +1,10 @@
-import { ASCENSION_FIN_S, CHOC_S, type FinaleSuper } from './finale-super';
+import { ASCENSION_FIN_S, CHOC_S, VOYAGE_FIN_S, type FinaleSuper } from './finale-super';
 import { clamp01, h, melange } from './finale-outils';
 import { lune } from './lune';
 import { orbite } from './finale-orbite';
+import { pise } from './finale-pise';
+import { sphinx } from './finale-sphinx';
+import { voyage } from './finale-voyage';
 import { volcan } from './finale-volcan';
 import { C, COULEURS_SUPER } from './palette';
 import { px } from './primitives';
@@ -93,15 +96,19 @@ function ascension(v: Vue, f: FinaleSuper): void {
 }
 
 /**
- * Le bandeau de la fin d'un super coup : les trois temps (choc, ascension, lune)
+ * Le bandeau de la fin d'un super coup : les temps (choc, montée ou voyage, scène de la variante)
  * et le filtre de particules. Renvoie vrai si l'écran est caché par une scène
  * plein cadre ; un appui passe la scène.
  */
 export function dessineFinale(v: Vue, f: FinaleSuper, zones: ZoneBouton[], onPasse: () => void): void {
   if (!f.actif) return;
   const { g, W, H } = v;
-  // le volcan plonge dans la Terre au lieu de monter ; l'orbite monte comme les autres puis tourne autour de la Terre
+  // le volcan plonge dans la Terre au lieu de monter ; l'orbite monte comme la lune puis tourne autour de la Terre ;
+  // Pise et le Sphinx partent en voyage au-dessus de la Terre, puis arrivent sur leur monument
+  const voyageur = f.variante === 4 || f.variante === 5;
   if (f.variante === 2 && f.t >= CHOC_S) volcan(v, f);
+  else if (voyageur && f.t >= VOYAGE_FIN_S) (f.variante === 4 ? pise : sphinx)(v, f);
+  else if (voyageur && f.t >= CHOC_S) voyage(v, f);
   else if (f.t >= ASCENSION_FIN_S) (f.variante === 3 ? orbite : lune)(v, f);
   else if (f.t >= CHOC_S) ascension(v, f);
   filtre(v, f);

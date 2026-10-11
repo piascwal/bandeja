@@ -2,7 +2,6 @@ import { CHOC_S, FINALE_FIN_S, LUNE_FIN_S, type FinaleSuper } from './finale-sup
 import { clamp01, h } from './finale-outils';
 import { geyser } from './finale-geyser';
 import { C } from './palette';
-import { texte } from './police';
 import { px } from './primitives';
 import type { Vue } from './vue';
 
@@ -158,7 +157,6 @@ function coupe(v: Vue, f: FinaleSuper): void {
     g.fillRect(0, 0, W, H);
     g.globalAlpha = 1;
   }
-  legendes(v, t);
 }
 
 /** La Terre en coupe, dans son repère (centre à l'origine) : les couches, la surface, le court en haut, le volcan en bas. */
@@ -208,19 +206,4 @@ function terre(g: CanvasRenderingContext2D, R: number, t: number, entree: number
   g.closePath();
   g.fill();
   px(g, -4, R + 11, 8, 2, t > ARRIVEE - 0.25 ? '#ffb24a' : '#5a1a10');
-}
-
-/** Ce qui se passe, écrit en clair au bon moment. */
-function legendes(v: Vue, t: number): void {
-  const { g, W, H } = v;
-  const legende = (txt: string, a: number, b: number) => {
-    if (t < a || t > b) return;
-    g.globalAlpha = clamp01(Math.min(t - a, b - t) / 0.12);
-    texte(g, txt, W / 2, H - 24, '#ffd27a', 1, 'c');
-    g.globalAlpha = 1;
-  };
-  legende('LA BALLE PERFORE LE COURT', RECUL_FIN - 0.2, 1.2);
-  legende('CENTRE DE LA TERRE', 1.2, 1.6);
-  legende('DE L AUTRE COTE...', 1.6, 1.95);
-  legende('VERS LA SURFACE !', 1.95, ARRIVEE);
 }

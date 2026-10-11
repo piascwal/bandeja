@@ -72,11 +72,17 @@ describe('la fin spectaculaire des super coups', () => {
     expect(fin(3, { z: 2.5 }, 2).zMax).toBeGreaterThan(40);
   });
 
+  it('Pise et le Sphinx rebondissent eux aussi très haut : la balle part en voyage', () => {
+    for (const v of [4, 5]) expect(fin(v, { z: 2.5 }, 6).zMax, `variante ${v}`).toBeGreaterThan(40);
+  });
+
   it('aucun super coup n’est lent : de la frappe à la sortie, la balle file', () => {
     for (const [v, balle, x] of [
       [1, { z: 2.5 }, 6],
       [2, { z: 2.5 }, 8.5],
       [3, { z: 2.5 }, 2],
+      [4, { z: 2.5 }, 6],
+      [5, { z: 2.5 }, 6],
     ] as [number, Partial<Balle>, number][])
       expect(fin(v, balle, x).vitesseMax, `variante ${v}`).toBeGreaterThan(35);
   });
