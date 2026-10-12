@@ -68,6 +68,7 @@ export function nouvellePartie(o: OptionsPartie): Partie {
     aide: o.aide ?? false,
     echange: 0,
     jaugeSmash: [0, 0],
+    superVus: Array.from({ length: 8 }, () => 0),
     parade: null,
     approche: null,
     avantage: null,

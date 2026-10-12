@@ -36,10 +36,22 @@ export const NOMS_SUPER = [
 /** Les sept animations du super coup : la lune (météore), le volcan, le satellite (orbite), Pise, le Sphinx, le Titanic, l'erreur 404. */
 export const VARIANTES_SUPER: readonly VarianteSuper[] = [1, 2, 3, 4, 5, 6, 7];
 
-export function varianteSuper(b: Balle, loin: number, rng?: Aleatoire): VarianteSuper {
+/**
+ * Quelle animation jouer. Dans le jeu (`rng`), le choix est au hasard, quelle que soit la situation, mais seulement
+ * parmi les animations les moins jouées du match (`vus`, voir `Partie.superVus`) : une animation ne revient que si
+ * toutes les autres sont déjà passées, et ainsi de suite, pour les parcourir toutes systématiquement. Sans `vus`,
+ * toutes ont la même chance ; sans `rng` (tests), la situation décide.
+ */
+export function varianteSuper(
+  b: Balle,
+  loin: number,
+  rng?: Aleatoire,
+  vus?: readonly number[],
+): VarianteSuper {
   if (!rng) return loin < 3.5 ? 2 : loin > 6 ? 3 : 1;
-  // dans le jeu, le choix est au hasard : chacune des sept animations a la même chance, quelle que soit la situation
-  return VARIANTES_SUPER[Math.floor(rng() * VARIANTES_SUPER.length)]!;
+  const moins = vus ? Math.min(...VARIANTES_SUPER.map((v) => vus[v] ?? 0)) : 0;
+  const candidates = vus ? VARIANTES_SUPER.filter((v) => (vus[v] ?? 0) === moins) : VARIANTES_SUPER;
+  return candidates[Math.floor(rng() * candidates.length)]!;
 }
 
 /** Où viser : le côté le plus loin des adversaires. */

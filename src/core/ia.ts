@@ -99,7 +99,9 @@ export function pilotageIA(jeu: Partie, s: Joueur): void {
       const c = choixIA(jeu, s);
       // jauge pleine : le CPU lâche parfois son super coup
       const sv =
-        jeu.jaugeSmash[s.eq] >= 1 && jeu.rng() < 0.05 ? varianteSuper(b, Math.abs(s.x - MIL), jeu.rng) : 0;
+        jeu.jaugeSmash[s.eq] >= 1 && jeu.rng() < 0.05
+          ? varianteSuper(b, Math.abs(s.x - MIL), jeu.rng, jeu.superVus)
+          : 0;
       executeCoup(jeu, s, c.type, c.p, c.tx, c.ty, c.mur, sv ? { super: sv } : undefined);
     }
   } else if (jeu.tFrappe > s.niv.reac * 0.5) s.cible = formation(jeu, s);

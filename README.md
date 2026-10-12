@@ -212,8 +212,9 @@ et rejoue sur une partie à part. Le cœur ne fait qu'allonger l'annonce du poin
 (`jeu.dureePoint`, plus une marge de sécurité `SCENE_MARGE_S`).
 
 **Passer une scène (fin de super coup, rejeu).** Le point ne finit pas sur un délai fixe : il
-reprend dès que **tous les joueurs** ont vu leur scène en entier ou ont touché l'écran pour la
-passer (`app/passe-scene.ts`), sans attente de plus. Seul, un appui passe tout de suite. En
+reprend dès que **tous les joueurs** ont vu leur scène en entier ou ont touché le bouton **PASSER**
+(`boutonPasser` dans `render/ui.ts`, un appui ailleurs ne fait rien : on ne coupe plus la scène en
+tapant vite ; `app/passe-scene.ts`), sans attente de plus. Seul, un appui sur PASSER passe tout de suite. En
 réseau, celui qui touche reste sur sa scène avec « EN ATTENTE DES AUTRES JOUEURS... » jusqu'à ce
 que les autres aient touché ou fini la leur : chaque invité prévient l'hôte (message `passe`, une
 fois par point, `net/passes.ts`), et c'est l'hôte qui reprend le jeu (`termineScene`), ce qui
@@ -410,9 +411,11 @@ voit venir le coup.
 quasi sans erreur, **imparable** (aucun adversaire ne peut toucher la balle) et qui gagne
 le point à son premier rebond. Il est toujours rapide (la balle file au plus vite que le
 filet le permet, puis repart comme un boulet après son rebond), avec une longue traînée de
-feu, et finit sur une scène. **Sept animations**, tirées au hasard à chances égales
-(`VARIANTES_SUPER`, `varianteSuper` : 1 sur 7 chacune, quelle que soit la situation), toutes jouées
-un peu au ralenti (`RYTHME_FINALE` 0,7 : environ 5,4 s), sans aucun texte d'explication :
+feu, et finit sur une scène. **Sept animations**, tirées au hasard quelle que soit la situation, mais
+**en rotation** : `varianteSuper` ne tire que parmi les animations **les moins jouées du match**
+(`Partie.superVus`, compté quand le super coup gagne le point) : une animation ne revient que quand
+toutes les autres sont passées, et ainsi de suite. Elles sont jouées un peu au ralenti (`RYTHME_FINALE`
+0,7 : environ 5,4 s), sans aucun texte d'explication :
 
 - la **MÉTÉORE** (1) : boule de feu qui s'écrase, repart dans l'espace et finit sur la lune ;
 - le **VOLCAN** (2) : il **perfore le court** (pas de rebond) ; un seul plan continu
@@ -439,9 +442,9 @@ un peu au ralenti (`RYTHME_FINALE` 0,7 : environ 5,4 s), sans aucun texte d'expl
 - le **TITANIC** (6) : voyage jusqu'à l'Atlantique nord (`finale-voyage.ts`, la destination est en pleine
   mer), puis `render/finale-titanic.ts`, dessiné sur une toile à part : nuit, lune, le paquebot (quatre
   cheminées, ponts éclairés, fumée ; `finale-navire.ts`) fonce droit sur l'iceberg, la vigie crie, il
-  **braque au dernier moment** et passe devant sans le toucher... mais la balle tombe du ciel sur le
-  sommet de l'iceberg, qui bascule et pousse sa pointe sous l'eau dans la coque : onde de choc, éclats de
-  glace, la coque se fend, **se casse en deux** (la poupe se dresse autour de la cassure, la proue pique du
+  **braque au dernier moment** et passe devant sans le toucher... mais la balle tombe du ciel **sur le
+  paquebot**, en plein milieu du pont (l'iceberg ne bouge pas) : onde de choc, le coup rejette le navire
+  contre le pied de l'iceberg (éclats de glace), la coque se fend, **se casse en deux** (la poupe se dresse autour de la cassure, la proue pique du
   nez), les deux moitiés coulent, bulles. Sa scène dure plus longtemps (`TITANIC_FIN_S`, voir `minutage`) ;
 - l'**ERREUR 404** (7) : pas de voyage, tout se passe sur l'image du jeu (`render/finale-erreur.ts`) : la balle
   rebondit et fonce vers la caméra qui filme la piste, grossit, frappe la vitre : l'écran se **fissure**
@@ -477,7 +480,7 @@ filtre de particules sur tout l'écran, puis (météore et orbite) la balle mont
 et, pour la météore, arrive à toute vitesse sur la lune (une grosse boule grise à l'horizon arrondi, criblée d'un ensemble fixe de
 cratères) et s'y écrase (éclair, onde de choc, débris) toujours dans le même cratère
 (rien n'est mémorisé d'une partie à l'autre). Le bandeau du point s'affiche alors ; un
-appui passe la scène (en réseau : quand tous ont touché, voir « Ralenti des points »). Le ralenti d'un super coup est toujours rejoué, après la scène.
+bouton PASSER passe la scène (en réseau : quand tous l'ont touché, voir « Ralenti des points »). Le ralenti d'un super coup est toujours rejoué, après la scène.
 
 **Lob subi.** Quand un lob a passé le joueur (la balle a rebondi, ou il est loin
 du filet), le renvoi est normal, son coup est limité à mi-puissance

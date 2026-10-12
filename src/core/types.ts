@@ -233,6 +233,8 @@ export interface Partie {
   avantage: Equipe | null;
   /** jauge de smash de chaque équipe (0 → 1) : pleine, le prochain smash en hauteur est garanti par 3 / par 4 */
   jaugeSmash: [number, number];
+  /** combien de fois chaque animation de super coup (indice = variante) s'est jouée dans ce match : on les parcourt toutes avant de rejouer la même */
+  superVus: number[];
   /** parade d'un super coup en cours : le jeu est figé, le camp qui subit doit arrêter le curseur */
   /** un super coup est demandé : la scène est figée, seul ce joueur (son siège) court puis saute vers la balle pour le lancer */
   approche: { id: number; t: number } | null;

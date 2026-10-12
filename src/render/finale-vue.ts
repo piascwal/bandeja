@@ -9,9 +9,8 @@ import { titanic } from './finale-titanic';
 import { voyage } from './finale-voyage';
 import { volcan } from './finale-volcan';
 import { C, COULEURS_SUPER } from './palette';
-import { texte } from './police';
 import { px } from './primitives';
-import type { ZoneBouton } from './ui';
+import { boutonPasser, LARGEUR_PASSER, type ZoneBouton } from './ui';
 import type { Vue } from './vue';
 
 /**
@@ -101,7 +100,7 @@ function ascension(v: Vue, f: FinaleSuper): void {
 /**
  * Le bandeau de la fin d'un super coup : les temps (choc, montée ou voyage, scène de la variante)
  * et le filtre de particules. Renvoie vrai si l'écran est caché par une scène
- * plein cadre ; un appui passe la scène.
+ * plein cadre ; le bouton PASSER passe la scène.
  */
 export function dessineFinale(
   v: Vue,
@@ -127,7 +126,6 @@ export function dessineFinale(
   g.fillStyle = '#000';
   g.fillRect(0, 0, W, 6);
   g.fillRect(0, H - 6, W, 6);
-  // en réseau, quelqu'un qui a touché attend que les autres joueurs aient fini ou touché aussi
-  if (attend) texte(g, 'EN ATTENTE DES AUTRES JOUEURS...', W - 8, H - 18, C.or, 1, 'd');
-  zones.push({ x: 0, y: 0, w: W, h: H, act: onPasse });
+  // seul le bouton PASSER coupe la scène (en réseau, il faut que tous les joueurs l'aient touché)
+  boutonPasser(g, zones, W - LARGEUR_PASSER - 6, H - 28, onPasse, attend);
 }

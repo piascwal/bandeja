@@ -47,6 +47,7 @@ function regleSol(jeu: Partie, cote: Equipe): void {
   b.sol++;
   // un super coup est imparable : il gagne le point dès son premier rebond chez l'adversaire
   if (b.super > 0 && b.sol === 1) {
+    jeu.superVus[b.super] = (jeu.superVus[b.super] ?? 0) + 1; // cette animation vient de passer
     gagne(jeu, b.eqF, NOMS_SUPER[b.super] ?? 'SUPER COUP !');
     return;
   }

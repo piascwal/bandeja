@@ -40,6 +40,32 @@ export function bouton(
   zones.push({ x, y, w, h, act });
 }
 
+/**
+ * Le bouton PASSER des scènes (fin de super coup, rejeu) : seul lui les coupe, un appui ailleurs ne fait rien (on ne
+ * les saute plus par erreur en tapant vite). Une fois touché, en réseau, il laisse place à l'attente des autres joueurs.
+ * (x, y) : coin haut gauche du bouton ; la zone tactile déborde de quelques pixels.
+ */
+export const LARGEUR_PASSER = 58;
+export function boutonPasser(
+  g: CanvasRenderingContext2D,
+  zones: ZoneBouton[],
+  x: number,
+  y: number,
+  act: () => void,
+  attend = false,
+): void {
+  if (attend) {
+    texte(g, 'EN ATTENTE DES AUTRES JOUEURS...', x + LARGEUR_PASSER, y + 3, C.or, 1, 'd');
+    return;
+  }
+  bouton(g, zones, 'PASSER >', x, y, LARGEUR_PASSER, 14, act, {
+    couleur: '#7a2230',
+    clair: '#b8465a',
+    fonce: '#45101a',
+  });
+  zones[zones.length - 1] = { x: x - 8, y: y - 8, w: LARGEUR_PASSER + 16, h: 30, act };
+}
+
 export function panneau(g: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): void {
   g.fillStyle = 'rgba(7,9,20,0.78)';
   g.fillRect(x, y, w, h);

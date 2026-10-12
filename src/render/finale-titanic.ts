@@ -15,9 +15,9 @@ import type { Vue } from './vue';
 const T_VIRAGE = 0.85; // le paquebot braque (fin à T_VIRAGE_FIN)
 const T_VIRAGE_FIN = 1.3;
 const T_BALLE = 1.3; // la balle apparaît dans le ciel...
-const T_COUP = 1.65; // ... et frappe le sommet de l'iceberg
-const T_CHOC = 1.9; // l'iceberg bascule contre la coque
-const T_SEP = 2.05; // la coque se casse en deux
+const T_COUP = 1.65; // ... et frappe le paquebot, sur le pont, au milieu
+const T_CHOC = 1.85; // le coup le rejette contre l'iceberg
+const T_SEP = 2.0; // la coque se casse en deux
 const ICEBERG_X = 0.69; // (fraction de la largeur)
 
 const lisse = (x: number): number => {
@@ -43,8 +43,21 @@ export function titanic(v: Vue, f: FinaleSuper): void {
   g.globalAlpha = 1;
 }
 
+/** Où est le paquebot : échelle, flottaison et poupe (il braque, puis la balle le rejette contre l'iceberg). */
+function etatNavire(W: number, H: number, L: number, tau: number): { s: number; wl: number; x0: number } {
+  const braque =
+    lisse((tau - T_VIRAGE) / (T_VIRAGE_FIN - T_VIRAGE)) *
+    (1 - 0.85 * lisse((tau - T_COUP) / (T_CHOC - T_COUP)));
+  const s = 1 + 0.08 * braque;
+  return {
+    s,
+    wl: Math.round(H * 0.63 + H * 0.075 * braque),
+    x0: W * 0.14 + W * 0.405 * Math.min(tau, T_COUP) - L * s,
+  };
+}
+
 function dessine(c: CanvasRenderingContext2D, W: number, H: number, tau: number, t: number): void {
-  const age = tau - T_CHOC;
+  const age = tau - T_COUP;
   const secousse = age >= 0 ? 5 * (1 - clamp01(age / 0.6)) : 0;
   const hy = Math.round(H * 0.5);
   c.save();
@@ -53,24 +66,18 @@ function dessine(c: CanvasRenderingContext2D, W: number, H: number, tau: number,
     Math.round((h(Math.floor(t * 50) + 5) - 0.5) * secousse * 2),
   );
   fond(c, W, H, hy, t);
-  // l'iceberg, derrière le paquebot : il bascule vers lui quand la balle le frappe
+  // l'iceberg reste immobile, derrière le paquebot
   const ix = W * ICEBERG_X;
   const ib = Math.round(H * 0.585);
-  const lunge = lisse((tau - T_COUP) / (T_CHOC - T_COUP));
-  c.save();
-  c.translate(ix, ib + H * 0.05 * lunge);
-  c.rotate(-0.28 * lunge);
-  c.scale(1 + 0.25 * lunge, 1 + 0.25 * lunge);
-  glacon(c, W, H, 0, 0);
-  c.restore();
-  const viree = lisse((tau - T_VIRAGE) / (T_VIRAGE_FIN - T_VIRAGE));
+  glacon(c, W, H, ix, ib);
   const n = navire(W);
-  const s = 1 + 0.08 * viree;
-  const wl = Math.round(H * 0.63 + H * 0.075 * viree);
-  const proue = W * 0.14 + W * 0.405 * Math.min(tau, T_CHOC);
-  const x0 = proue - n.L * s;
+  const { s, wl, x0 } = etatNavire(W, H, n.L, tau);
   const xb = Math.round(0.48 * n.L);
   const contact = x0 + xb * s;
+  // le point de la frappe : le pont, au milieu, tel qu'il est à l'instant du coup
+  const coup = etatNavire(W, H, n.L, T_COUP);
+  const cx = coup.x0 + xb * coup.s;
+  const cy = coup.wl - 0.26 * n.L * coup.s;
   sillage(c, x0, wl, tau, t);
   c.save();
   c.beginPath();
@@ -84,7 +91,7 @@ function dessine(c: CanvasRenderingContext2D, W: number, H: number, tau: number,
       Math.round((n.L + 2) * s),
       Math.round((n.haut + n.tirant) * s),
     );
-    if (tau > T_CHOC + 0.05) fissure(c, contact, wl, n.haut * s, n.L * s);
+    if (tau > T_COUP + 0.05) fissure(c, contact, wl, n.haut * s, n.L * s);
   } else {
     const u = Math.max(0, (tau - T_SEP) / 1.0);
     const e = lisse(u);
@@ -106,13 +113,13 @@ function dessine(c: CanvasRenderingContext2D, W: number, H: number, tau: number,
   }
   c.restore();
   fumees(c, n.L, x0, wl, s, tau, t);
-  if (tau > T_CHOC) bulles(c, contact, wl, tau, t);
-  // l'iceberg pousse sa pointe sous l'eau jusqu'à la coque
-  if (lunge > 0) belier(c, ix, ib + H * 0.05 * lunge, contact, wl + n.tirant * s, W, lunge, tau);
+  if (tau > T_SEP) bulles(c, contact, wl, tau, t);
   if (tau > 0.55 && tau < T_VIRAGE_FIN && Math.floor(t * 6) % 2 === 0)
     texte(c, '!', x0 + 0.85 * n.L * s, wl - 0.33 * n.L * s - 12, '#ffffff', 1, 'c');
-  balle(c, W, ix, ib - H * 0.32, tau);
-  if (age >= 0) choc(c, contact, wl, age, W);
+  balle(c, W, cx, cy, tau);
+  if (age >= 0) choc(c, cx, cy, wl, age, W);
+  // la coque racle le pied de l'iceberg : des éclats de glace
+  if (tau > T_CHOC) glace(c, contact, ib, tau - T_CHOC);
   c.restore();
   if (age >= 0 && age < 0.1) {
     c.globalAlpha = 1 - age / 0.1;
@@ -196,31 +203,7 @@ function fumees(
   c.globalAlpha = 1;
 }
 
-/** La pointe immergée de l'iceberg qui s'allonge sous l'eau jusqu'à la coque. */
-function belier(
-  c: CanvasRenderingContext2D,
-  bx: number,
-  by: number,
-  cx: number,
-  cy: number,
-  W: number,
-  k: number,
-  tau: number,
-): void {
-  const a = 1 - clamp01((tau - T_SEP - 0.6) / 0.5);
-  c.globalAlpha = 0.55 * a;
-  c.fillStyle = '#bfeaff';
-  c.beginPath();
-  c.moveTo(bx - 0.07 * W, by);
-  c.lineTo(bx - 0.07 * W + (cx - (bx - 0.07 * W)) * k, by + (cy - by) * k - 3);
-  c.lineTo(bx - 0.07 * W + (cx - (bx - 0.07 * W)) * k, by + (cy - by) * k + 2);
-  c.lineTo(bx - 0.01 * W, by + 0.04 * W);
-  c.closePath();
-  c.fill();
-  c.globalAlpha = 1;
-}
-
-/** La balle : tombe du ciel sur le sommet de l'iceberg, puis repart en rebondissant. */
+/** La balle : tombe du ciel sur le pont du paquebot, puis repart en rebondissant. */
 function balle(c: CanvasRenderingContext2D, W: number, px0: number, py0: number, tau: number): void {
   if (tau < T_BALLE || tau > T_COUP + 0.6) return;
   const couleur = COULEURS_SUPER[6]!;
@@ -258,23 +241,36 @@ function fissure(c: CanvasRenderingContext2D, x: number, wl: number, haut: numbe
   c.stroke();
 }
 
-/** L'onde de choc, l'éclat de glace et les débris qui retombent à l'eau. */
-function choc(c: CanvasRenderingContext2D, x: number, wl: number, age: number, W: number): void {
+/** L'onde de choc du coup sur le pont : anneau, gerbe d'étincelles et d'éclats qui retombent à l'eau. */
+function choc(c: CanvasRenderingContext2D, x: number, y: number, wl: number, age: number, W: number): void {
   c.strokeStyle = '#ffffff';
   c.lineWidth = 3;
   c.globalAlpha = 1 - clamp01(age / 0.4);
   c.beginPath();
-  c.ellipse(x, wl, 8 + age * 0.35 * W, 3 + age * 0.08 * W, 0, 0, Math.PI * 2);
+  c.ellipse(x, y, 8 + age * 0.3 * W, 6 + age * 0.12 * W, 0, 0, Math.PI * 2);
   c.stroke();
   for (let i = 0; i < 44; i++) {
-    const vx = (h(i + 700) - 0.5) * 200;
-    const vy = -(50 + h(i + 710) * 150);
+    const vx = (h(i + 700) - 0.5) * 220;
+    const vy = -(60 + h(i + 710) * 170);
     const px0 = x + vx * age;
-    const py0 = wl - 18 + vy * age + 230 * age * age;
-    if (py0 > wl + 4) continue;
-    c.globalAlpha = 1 - clamp01(age / 1.4);
+    const py0 = y + vy * age + 260 * age * age;
+    if (py0 > wl + 2) continue;
+    c.globalAlpha = 1 - clamp01(age / 1.2);
     const gros = i < 12 ? 3 : 2;
-    px(c, px0, py0, gros, gros, i % 3 === 0 ? '#ffffff' : i % 3 === 1 ? '#bfe6ff' : '#8fb6d0');
+    px(c, px0, py0, gros, gros, i % 3 === 0 ? '#ffffff' : i % 3 === 1 ? '#ffd27a' : '#c8d4e8');
+  }
+  c.globalAlpha = 1;
+}
+
+/** Les éclats de glace arrachés au pied de l'iceberg quand la coque le racle. */
+function glace(c: CanvasRenderingContext2D, x: number, y: number, age: number): void {
+  for (let i = 0; i < 30; i++) {
+    const vx = (h(i + 900) - 0.5) * 120;
+    const vy = -(30 + h(i + 910) * 110);
+    const py0 = y - 6 + vy * age + 220 * age * age;
+    if (py0 > y + 6) continue;
+    c.globalAlpha = 1 - clamp01(age / 1);
+    px(c, x + vx * age, py0, 2, 2, i % 2 ? '#ffffff' : '#bfe6ff');
   }
   c.globalAlpha = 1;
 }

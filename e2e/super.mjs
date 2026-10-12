@@ -54,6 +54,15 @@ export default async function (env) {
     b.effets.finale.declenche(1, b.W / 2, b.H * 0.6, 0.8);
   });
   env.verifie(await p.evaluate(() => window.bandeja.effets.finale.actif), 'la scène finale démarre');
+  await attends(150);
+  // seul le bouton PASSER coupe la scène : pas de zone plein écran, un appui ailleurs ne fait rien
+  env.verifie(
+    await p.evaluate(() => {
+      const z = window.bandeja.boutons;
+      return z.length === 1 && z[0].w < window.bandeja.W / 3 && z[0].h < window.bandeja.H / 3;
+    }),
+    'la scène ne se coupe que par le bouton PASSER',
+  );
   // on photographie les temps clés de la scène en réglant son horloge
   for (const [nom, t] of [
     ['choc', 0.3],
@@ -85,7 +94,7 @@ export default async function (env) {
     [3, [1.6, 1.9, 2.3, 2.6, 2.8, 2.9, 2.97, 3.1, 3.3]],
     [4, [0.8, 1.2, 1.6, 1.85, 2.15, 2.3, 2.45, 2.7, 3.3]],
     [5, [1.2, 1.9, 2.15, 2.4, 2.55, 2.75, 2.8, 3.0, 3.3]],
-    [6, [1.0, 1.9, 2.3, 2.7, 3.0, 3.25, 3.6, 3.75, 4.0, 4.4, 4.75]],
+    [6, [1.0, 2.3, 2.9, 3.2, 3.4, 3.5, 3.75, 3.9, 4.2, 4.7]],
     [7, [0.9, 1.15, 1.3, 1.5, 1.85, 2.2, 2.9, 3.9, 4.1, 4.25]],
   ]) {
     await p.evaluate((v) => {

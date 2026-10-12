@@ -91,7 +91,7 @@ export function avanceApproche(jeu: Partie, dt: number): void {
       precision: 1,
       intention: 'smash',
       charge: 1,
-      super: varianteSuper(b, Math.abs(s.x - MIL), jeu.rng),
+      super: varianteSuper(b, Math.abs(s.x - MIL), jeu.rng, jeu.superVus),
     });
   }
 }
