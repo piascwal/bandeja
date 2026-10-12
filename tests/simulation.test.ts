@@ -100,8 +100,9 @@ describe('la croix au sol dit vrai', () => {
         const P = jeu.pred;
         if (P && P !== derniere) {
           derniere = P;
-          // où la balle sera une seconde plus tard, d'après la prévision faite une fois qu'elle a rebondi
-          const q = P.pts.find((p) => p.t >= 1);
+          // où la balle sera 0,4 s plus tard, d'après la prévision faite une fois qu'elle a rebondi (les balles vont vite : un
+          // échange accéléré ne laisse plus une seconde)
+          const q = P.pts.find((p) => p.t >= 0.4);
           if (jeu.balle.sol >= 1 && !jeu.balle.dehors && q)
             attendues.push({ t1: jeu.temps + q.t, echange: jeu.echange, x: q.x, y: q.y });
         }

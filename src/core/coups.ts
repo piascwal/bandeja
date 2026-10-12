@@ -212,8 +212,6 @@ export function executeCoup(
     ty = clamp(ty, MARGE_COTE, LARG - MARGE_COTE);
     const t = trajectoire(type, p, Math.hypot(tx - b.x, ty - b.y));
     t.v *= vitesse;
-    const acc = type !== 'lobe' && type !== 'amorti' ? accelerationEchange(jeu.echange) : 1;
-    t.v *= acc;
     // quelques fautes directes dans le filet, surtout en forçant et en jouant mal
     const risque = type === 'plat' || type === 'smash' ? 0.01 + 0.05 * p * e : 0.006 * e;
     lance(b, tx, ty, t.v, t.spin, rng() < risque ? -0.3 : (marge ?? t.marge));
@@ -222,13 +220,13 @@ export function executeCoup(
     b.por = typeDePor(type, p, score, situation, subi, ty, rng());
     b.portres = b.por > 0;
     b.vif = rebondVif(type, p, rng());
-    b.accel = acc;
   } else {
     b.vif = 0;
-    b.accel = 1;
     b.por = 0;
     b.portres = false;
   }
+  // la trajectoire est celle d'une balle normale ; seule la vitesse à laquelle elle la parcourt grandit avec l'échange
+  b.accel = variante ? 1 : accelerationEchange(jeu.echange);
   b.eqF = eq;
   b.camp = autre(eq);
   b.sol = 0;

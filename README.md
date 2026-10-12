@@ -346,13 +346,15 @@ au-dessus de 4,5 m) ; l'approche s'annule après 1,3 s.
 la pose de préparation (`smash1`, pieds au sol) ; seuls le smash et les coups SUPER utilisent
 la pose pieds en l'air (`smash2`).
 
-**La balle accélère** de 8 % à chaque coup après le deuxième, **sans plafond** : plus on joue,
-plus elle va vite (`ACCEL_ECHANGE` dans `core/constants.ts` ; `ACCEL_LIMITE`, ×5, n'est qu'une borne
-technique pour la physique, jamais atteinte), sauf le lob et l'amorti. Le facteur du coup est gardé
-dans `Balle.accel` : au rebond au sol la balle perd d'autant moins de vitesse horizontale
-(`KEEP_PAR_ACCEL`, `KEEP_MAX` dans `core/balle.ts`), donc elle reste rapide en l'air après le rebond,
-et pas seulement avant. (Mesure sur des matchs CPU contre CPU : de 18 m/s au départ à 35-45 m/s
-après vingt coups, et de 8 m/s à 25-35 m/s après le premier rebond.) Un compteur
+**La balle accélère** de 8 % à chaque coup après le deuxième, **à l'infini** : plus l'échange dure, plus
+elle va vite, jusqu'à ce que le point soit perdu, et le facteur repart à 1 au service suivant
+(`ACCEL_ECHANGE` dans `core/constants.ts` ; `ACCEL_LIMITE`, ×40, n'est qu'une borne technique, jamais
+atteinte en pratique). **La trajectoire ne change pas** (arcade) : la balle part comme une balle normale,
+même hauteur, mêmes rebonds ; c'est son **temps** qui s'écoule plus vite. Le facteur du coup est gardé
+dans `Balle.accel` et `physique` (`core/balle.ts`) avance la balle de `dt × accel`, découpé en pas qui ne
+dépassent jamais celui d'une balle normale (la physique reste exacte, la prévision de l'IA et la croix au
+sol aussi : elles passent par la même fonction). Tous les coups accélèrent (lob et amorti compris), pas
+le service ni le super coup. Un compteur
 « ECHANGE n » sous le tableau des scores chauffe de couleur (blanc, or, orange,
 rouge) et affiche le bonus de vitesse de la balle.
 
@@ -532,7 +534,7 @@ balle rebondie repart au plus à 5,5 m/s vers le filet et monte au plus à 7,5 m
 balles non rebondies (le renvoi voulu contre sa propre vitre, les super coups) gardent leur vitesse.
 La víbora donne un coup de côté moins fort au rebond (0,9 m/s) et « meurt » dans son coin. L'erreur
 d'un coup ordinaire ne sort plus la balle du terrain (`MARGE_FOND` 0,9 m, `MARGE_COTE` 0,5 m). La
-balle accélère toujours (sans plafond), et le CPU lâche moins
+balle accélère toujours (sans plafond, voir plus haut), et le CPU lâche moins
 son super coup (5 % au lieu de 12 %) et n'a un ace que rarement (`ACE_PROBA_CPU`, 8 %). En CPU
 contre CPU : 14 à 23 coups par point (6 à 7 avant), « ELLE REVIENT ! » presque disparu (un point
 sur cinq avant).

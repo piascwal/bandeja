@@ -171,6 +171,6 @@ export function avanceParade(jeu: Partie, dt: number): void {
   if (!p) return;
   p.t += dt;
   p.ecoule += dt;
-  if (p.tCpu !== null && p.ecoule >= p.tCpu) resoudParade(jeu, jeu.rng() < 0.15 + 0.3 * jeu.niv.agress);
+  if (p.tCpu !== null && p.ecoule >= p.tCpu) resoudParade(jeu, jeu.rng() < 0.08 + 0.17 * jeu.niv.agress);
   else if (p.ecoule >= PARADE_DUREE_MAX) resoudParade(jeu, false);
 }

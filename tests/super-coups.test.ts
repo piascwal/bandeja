@@ -291,8 +291,8 @@ describe('la parade d’un super coup', () => {
       for (let i = 0; i < 240 * 3 && jeu.parade; i++) pas(jeu, PAS);
       if (jeu.balle.super === 0) arretes++;
     }
-    expect(arretes).toBeGreaterThan(2);
-    expect(arretes).toBeLessThan(25);
+    expect(arretes).toBeGreaterThan(0);
+    expect(arretes).toBeLessThan(15);
   });
 });
 

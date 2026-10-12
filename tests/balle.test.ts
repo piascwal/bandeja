@@ -106,17 +106,34 @@ describe('lance', () => {
     expect(Math.abs(b.y - 7)).toBeLessThan(0.3);
   });
 
-  it("plus l'échange est rapide, moins la balle perd de vitesse au rebond : elle reste rapide en l'air", () => {
-    const apres = (accel: number) => {
+  it("l'accélération de l'échange ne change pas la trajectoire : mêmes rebonds au même endroit, parcourus plus vite", () => {
+    const trajet = (accel: number) => {
       const b = nouvelleBalle();
-      Object.assign(b, { x: 4, y: 5, z: 0.05, vx: 20, vy: 0, vz: -8, spin: 'plat', accel });
-      vole(b, (k) => k.t === 'sol');
-      return b.vx;
+      Object.assign(b, { x: 4, y: 3, z: 1.1 });
+      lance(b, 15, 7, 16, 'plat', 0.15);
+      b.accel = accel;
+      const rebonds: { t: number; x: number; y: number }[] = [];
+      let t = 0;
+      for (let i = 0; i < 6000 && rebonds.length < 2; i++) {
+        physique(b, PAS, (surface) => {
+          if (surface === 'sol') rebonds.push({ t, x: b.x, y: b.y });
+        });
+        t += PAS;
+      }
+      return rebonds;
     };
-    const [normal, rapide, tresRapide] = [apres(1), apres(2), apres(3)];
-    expect(rapide).toBeGreaterThan(normal * 1.1);
-    expect(tresRapide).toBeGreaterThan(rapide * 1.05);
-    // jamais plus rapide qu'avant le rebond
-    expect(tresRapide).toBeLessThan(20);
+    const normal = trajet(1);
+    expect(normal).toHaveLength(2);
+    for (const k of [2, 4.5, 12]) {
+      const vite = trajet(k);
+      expect(vite).toHaveLength(2);
+      vite.forEach((r, i) => {
+        // la même trajectoire (au pas d'intégration près)...
+        expect(Math.hypot(r.x - normal[i]!.x, r.y - normal[i]!.y), `k ${k}`).toBeLessThan(0.25);
+        // ... parcourue k fois plus vite
+        expect((r.t * k) / normal[i]!.t, `k ${k}`).toBeGreaterThan(0.93);
+        expect((r.t * k) / normal[i]!.t, `k ${k}`).toBeLessThan(1.07);
+      });
+    }
   });
 });

@@ -44,7 +44,7 @@ export interface BalleInstantane {
   super: number;
   /** rebond vif en attente (0 → 1,25) */
   vif: number;
-  /** facteur de vitesse de l'échange (1 → 5) */
+  /** facteur de vitesse de l'échange (1 → 40) */
   accel: number;
   service: boolean;
   filet: boolean;
@@ -85,8 +85,8 @@ export interface Instantane {
   stats: { gagnants: [number, number]; portres: [number, number]; fautes: [number, number]; vitres: number };
 }
 
-/** Taille fixe : 7 (en-tête) + 10 (score) + 5 (jauge) + 4 x 28 (joueurs) + 32 (balle) + 7 (stats). */
-export const TAILLE_INSTANTANE = 179;
+/** Taille fixe : 7 (en-tête) + 10 (score) + 5 (jauge) + 4 x 28 (joueurs) + 33 (balle) + 7 (stats). */
+export const TAILLE_INSTANTANE = 180;
 const TOURNE_MAX = 0.5;
 const POS_MAX = 100;
 const VIT_MAX = 200;
@@ -188,7 +188,7 @@ export function encodeInstantane(s: Instantane): ArrayBuffer {
   w.u8(b.sol)
     .u8(b.coup ? indice(COUPS, b.coup) : 255)
     .u8(b.vif * 100);
-  w.u8(b.super).u8((b.accel - 1) * 50);
+  w.u8(b.super).u16((b.accel - 1) * 1000);
   const st = s.stats;
   w.u8(st.gagnants[0]).u8(st.gagnants[1]).u8(st.portres[0]).u8(st.portres[1]);
   w.u8(st.fautes[0]).u8(st.fautes[1]).u8(st.vitres);
@@ -275,7 +275,7 @@ export function decodeInstantane(buf: ArrayBuffer): Instantane | null {
     const c = r.u8();
     const vif = Math.min(125, r.u8());
     const superCoup = Math.min(7, r.u8());
-    const accel = 1 + Math.min(250, r.u8()) / 50;
+    const accel = 1 + r.u16() / 1000;
     if (c !== 255 && c >= COUPS.length) return null;
     const stats = {
       gagnants: [r.u8(), r.u8()] as [number, number],

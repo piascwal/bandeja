@@ -35,21 +35,22 @@ export const VITRE_COTE = 4;
 export const DUREE_MAX_ECHANGE = 9;
 /**
  * La balle accélère au fil de l'échange : +ACCEL_ECHANGE par coup après le
- * deuxième, sans plafond de jeu (plus on joue, plus ça monte), sauf pour le lob et
- * l'amorti (qui restent lents). ACCEL_LIMITE n'est qu'une borne technique (la physique
- * à pas fixe n'aime pas les vitesses folles), jamais atteinte en pratique : il faudrait
- * plus de soixante coups. ACCEL_JAUGE : la vitesse (en plus) où la jauge de l'écran est pleine.
+ * deuxième, sans plafond de jeu (plus on joue, plus ça monte, jusqu'à ce que le point soit perdu : le facteur
+ * repart alors à 1 au service), pour tous les coups. La trajectoire ne change pas : c'est le temps de la balle
+ * qui s'accélère (voir `physique`). ACCEL_LIMITE n'est qu'une borne technique (coût de la physique, taille du
+ * champ réseau), jamais atteinte en pratique : il faudrait plus de 480 coups. ACCEL_JAUGE : la vitesse (en plus)
+ * où la jauge de l'écran est pleine.
  */
 export const ACCEL_ECHANGE = 0.08;
-export const ACCEL_LIMITE = 4;
+export const ACCEL_LIMITE = 39;
 export const ACCEL_JAUGE = 1;
 /**
  * Parade d'un super coup : le jeu se fige, un curseur balaie une jauge et le camp
  * qui subit doit l'arrêter dans la zone verte (plus étroite et plus rapide qu'au
  * service). C'est le seul moyen d'arrêter un super coup.
  */
-export const PERIODE_PARADE = 0.6;
-export const ZONE_PARADE = { min: 0.43, max: 0.57 } as const;
+export const PERIODE_PARADE = 0.5;
+export const ZONE_PARADE = { min: 0.455, max: 0.545 } as const;
 /** Au bout de ce délai (s), faute d'avoir arrêté le curseur, la parade est ratée. */
 export const PARADE_DUREE_MAX = 1.6;
 /** Pendant la parade (environ 2 s réelles) le jeu passe au ralenti : cette fraction de sa vitesse. */
