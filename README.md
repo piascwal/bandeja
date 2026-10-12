@@ -339,7 +339,7 @@ sa vitesse) et **s'envole** (`Joueur.saut`, synchronisé dans l'instantané) jus
 l'impact, puis frappe avec la pose pieds en l'air. La scène se débloque sur le coup ; la
 parade (ci-dessous) reprend alors au ralenti jusqu'au clic de l'adversaire. Le gros coup n'est
 jamais raté pour cause de placement, mais la balle doit rester jouable (pas deux rebonds, pas
-au-dessus de 4,5 m) ; l'approche s'annule après 1,3 s.
+au-dessus de 4,5 m) ; l'approche s'annule après 1,3 s. Elle ne part jamais tant que la balle est de l'autre côté du filet, ni sur un service qui n'a pas encore rebondi (`peutApprocher`).
 
 **Poses de coup.** Course en 4 temps (`course`, `course2`, `course`, `course3`, un temps tous les
 0,55 m parcourus ; images produites par `scripts/sprite-course.mjs`). Bandeja et víbora gardent
@@ -568,8 +568,8 @@ profondeur (vers le filet : plus long ; vers sa vitre : plus court). Au
 neutre, la balle part en croisé.
 
 Au service, PLAT ou COUPE lance la jauge, un second appui sert ; le vert de la jauge est le service
-parfait. Au milieu du vert, une **zone or** très fine (`ZONE_ACE`, 0,035 de la jauge, un sixième du vert ; le curseur balaie la jauge en 0,42 s, `PERIODE_JAUGE`) donne un
-**ace** quatre fois sur cinq (`ACE_PROBA`) : service plus rapide et précis, que personne ne peut
+parfait. Au milieu du vert, une **zone or** minuscule (`ZONE_ACE`, 0,015 de la jauge, soit une fenêtre de 6 ms : le curseur balaie la jauge en 0,42 s, `PERIODE_JAUGE`) donne un
+**ace** une fois sur deux seulement (`ACE_PROBA`) : service plus rapide et précis, que personne ne peut
 toucher (`Balle.ace`) ; il gagne le point à son rebond dans le carré (« ACE ! »).
 
 ## Licence

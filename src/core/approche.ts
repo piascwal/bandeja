@@ -29,6 +29,9 @@ export function peutApprocher(jeu: Partie, s: Joueur): boolean {
     !jeu.approche &&
     jeu.jaugeSmash[s.eq] >= 1 &&
     b.camp === s.eq &&
+    // la balle est de notre côté du filet (pas encore chez l'adversaire qui sert), et un service doit d'abord rebondir
+    b.x < MIL === (s.eq === 0) &&
+    !(b.service && b.sol === 0) &&
     b.sol < 2 &&
     !b.dehors &&
     !b.roule &&
